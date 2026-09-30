@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "kind": "artwork",
+  "id": "10000000-0000-4000-8000-000000000002",
+  "revisionId": "30000000-0000-4000-8000-000000000002",
+  "revision": 1,
+  "createdAt": "2026-10-01T00:00:00Z",
+  "metadata": {
+    "title": "Synthetic color grid",
+    "artist": "ExhibitOS contributors",
+    "description": "Original fixture; no private artwork or Capture input.",
+    "medium": "synthetic color grid",
+    "language": "en"
+  },
+  "artworkType": "image",
+  "units": "meter",
+  "coordinates": "right-handed-y-up",
+  "dimensions": {
+    "width": 1,
+    "height": 1
+  },
+  "transform": {
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ]
+  },
+  "primaryAssetId": "20000000-0000-4000-8000-000000000002",
+  "assets": [
+    {
+      "id": "20000000-0000-4000-8000-000000000002",
+      "path": "painting.png",
+      "role": "image",
+      "mime": "image/png",
+      "bytes": 196960,
+      "sha256": "33035fadc694f8a64d89d07425a2ed0babb9352208cf34aab657ed5922a55fe9"
+    }
+  ],
+  "rights": {
+    "holder": "ExhibitOS contributors",
+    "ownership": "owner",
+    "licenseId": "CC0-1.0",
+    "permissions": {
+      "display": true,
+      "download": true,
+      "export": true,
+      "commercial": true
+    },
+    "creditLine": "ExhibitOS original synthetic fixtures (optional credit)"
+  },
+  "provenance": {
+    "events": [
+      {
+        "id": "40000000-0000-4000-8000-000000000002",
+        "type": "created",
+        "at": "2026-10-01T00:00:00Z",
+        "description": "Deterministically generated original fixture with baked meter geometry.",
+        "tool": {
+          "name": "ExhibitOS synthetic generator",
+          "version": "1"
+        }
+      }
+    ],
+    "authorship": "synthetic"
+  }
+}
