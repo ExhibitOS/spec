@@ -1,0 +1,15 @@
+{
+  "name": "@exhibitos/spec",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": "24.21.0", "npm": "11.19.0"},
+  "packageManager": "npm@11.19.0",
+  "scripts": {
+    "fixtures:generate": "node scripts/generate-fixtures.mjs",
+    "fixtures:check": "node scripts/check-fixtures.mjs",
+    "test": "node --test scripts/fixtures.test.mjs",
+    "check": "npm run fixtures:check && npm test"
+  },
+  "devDependencies": {"gltf-validator": "2.0.0-dev.3.10"}
+}
