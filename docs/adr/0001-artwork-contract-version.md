@@ -31,3 +31,11 @@ Choices added beyond the planning examples: UUIDs instead of free-form sample ID
 exact UTC calendar validation, positive scale profile, reference and unit conversion
 semantics, closed core with namespaced extensions, bounded local file checks. These
 make the public contract independently testable without proprietary inputs.
+
+Temporal profile: UTC timestamps use uppercase T/Z, seconds 00–59, and optional
+one to three fractional digits. RFC3339 leap-second values and sub-millisecond
+precision are intentionally rejected rather than passed from a permissive format
+checker to JavaScript Date.parse. Every artifact timestamp must yield a finite
+instant; publication input uses the same profile. Rights intervals are inclusive
+at validFrom and exclusive at expiresAt, with millisecond-boundary regression tests.
+This avoids rights checks silently failing open on NaN or precision truncation.

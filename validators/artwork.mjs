@@ -15,7 +15,7 @@ const schema=JSON.parse(await readFile(new URL('../oes/v1/artwork.schema.json',i
 const ajv=new Ajv2020({strict:true,allErrors:true,validateFormats:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
 addFormats(ajv,['uuid','date-time']);
 const validate=ajv.compile(schema);
-const validateUtc=ajv.compile({type:"string",format:"date-time",pattern:"Z$"});
+const validateUtc=ajv.compile({type:"string",format:"date-time",pattern:schema.properties.createdAt.pattern});
 const issue=(code,path,message)=>({code,path,message});
 
 export function validateArtwork(document,{publicationTime}={}) {
@@ -48,6 +48,10 @@ export function validateArtwork(document,{publicationTime}={}) {
     if(Math.abs(conversion.multiplierToMeters-multiplier)>1e-12) add('UNIT_CONVERSION_MISMATCH','/provenance/scaleConversion/multiplierToMeters','Multiplier must match declared source unit');
     conversion.appliedToAssetIds.forEach(id=>{if(!ids.has(id))add('MISSING_CONVERTED_ASSET','/provenance/scaleConversion/appliedToAssetIds','Converted asset must resolve');});
   }
+  const utcValues=[['/createdAt',document.createdAt],
+    ...document.provenance.events.map((event,i)=>[`/provenance/events/${i}/at`,event.at]),
+    ['/rights/validFrom',document.rights.validFrom],['/rights/expiresAt',document.rights.expiresAt]];
+  for(const [path,value] of utcValues) if(value!==undefined&&!Number.isFinite(Date.parse(value))) add('INVALID_UTC_TIME',path,'Timestamp must parse to a finite instant');
   const rights=document.rights;
   if(rights.validFrom && rights.expiresAt && Date.parse(rights.validFrom)>=Date.parse(rights.expiresAt)) add('RIGHTS_TIME_RANGE','/rights/expiresAt','Expiry must follow validFrom');
   if(publicationTime!==undefined) {

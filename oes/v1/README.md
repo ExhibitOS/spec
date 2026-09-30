@@ -72,6 +72,11 @@ required, together with explicit display/download/export/commercial flags and a
 credit line. This is a claim recorded by the producer, not verification of legal title.
 
 A structurally valid private import may retain display=false or expired rights.
+All timestamps use uppercase T/Z, seconds 00–59 and optional 1–3 fractional
+digits. Leap seconds and sub-millisecond precision are rejected by this draft
+profile. Calendar validation and finite-instant parsing are both required; an
+unparseable expiry must never be treated as an unlimited grant.
+
 Publication requires display=true and a grant active at the supplied publication
 instant; expiry is exclusive. Platform must also enforce tenant ownership and
 authorization and later rights revocation. Validator success does not authorize

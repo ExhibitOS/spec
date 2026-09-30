@@ -82,3 +82,22 @@ test('CLI rejects unsupported version with JSON error and nonzero status',async(
     assert.equal(result.status,1);assert.equal(JSON.parse(result.stdout).errors[0].code,'UNSUPPORTED_VERSION');
   } finally {await rm(directory,{recursive:true,force:true});}
 });
+
+test('leap seconds and unsupported fractional precision cannot bypass temporal rights',()=>{
+  for(const property of ['validFrom','expiresAt']) {
+    const document=mutation(d=>{d.rights[property]='2016-12-31T23:59:60Z';});
+    assert.equal(validateArtwork(document,{publicationTime:'2026-10-01T00:00:00Z'}).valid,false);
+  }
+  for(const timestamp of ['2016-12-31T23:59:60Z','2026-10-01T00:00:00.0001Z']) {
+    assert.equal(validateArtwork(mutation(d=>{d.createdAt=timestamp;})).valid,false);
+    assert.equal(validateArtwork(mutation(d=>{d.provenance.events[0].at=timestamp;})).valid,false);
+    assert.equal(validateArtwork(sculpture,{publicationTime:timestamp}).errors[0].code,'INVALID_PUBLICATION_TIME');
+  }
+});
+test('display grant includes validFrom and excludes expiresAt at millisecond boundaries',()=>{
+  const document=mutation(d=>{d.rights.validFrom='2026-10-01T00:00:00.001Z';d.rights.expiresAt='2026-10-01T00:00:00.003Z';});
+  assert.equal(validateArtwork(document,{publicationTime:'2026-10-01T00:00:00.000Z'}).errors[0].code,'RIGHTS_NOT_YET_VALID');
+  assert.equal(validateArtwork(document,{publicationTime:'2026-10-01T00:00:00.001Z'}).valid,true);
+  assert.equal(validateArtwork(document,{publicationTime:'2026-10-01T00:00:00.002Z'}).valid,true);
+  assert.equal(validateArtwork(document,{publicationTime:'2026-10-01T00:00:00.003Z'}).errors[0].code,'RIGHTS_EXPIRED');
+});
