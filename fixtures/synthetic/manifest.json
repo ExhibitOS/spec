@@ -1,0 +1,98 @@
+{
+  "fixtureVersion": "1.0.0",
+  "status": "synthetic-baseline-not-oes",
+  "generator": "scripts/generate-fixtures.mjs@1",
+  "units": "meter",
+  "coordinates": "right-handed-y-up",
+  "rights": {
+    "holder": "ExhibitOS contributors",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "licenseText": "../../LICENSES/CC0-1.0.txt",
+    "scope": [
+      "sculpture.glb",
+      "painting.png",
+      "manifest.json",
+      "reference-scene.json"
+    ],
+    "display": true,
+    "download": true,
+    "export": true,
+    "commercial": true,
+    "creditLine": "ExhibitOS original synthetic fixtures (optional credit)",
+    "expiresAt": null
+  },
+  "provenance": {
+    "method": "deterministic-original-geometry-and-color-grid",
+    "thirdPartyInputs": [],
+    "realArtwork": false,
+    "rawCapture": false,
+    "scaleConversionApplied": false
+  },
+  "assets": [
+    {
+      "path": "sculpture.glb",
+      "mime": "model/gltf-binary",
+      "bytes": 1516,
+      "sha256": "1e4e53565fdbc5a71b1aaa83d6b25df6e8025add2f08b35fdca20475fbbca460",
+      "dimensions": {
+        "width": 1,
+        "height": 1,
+        "depth": 1
+      },
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          1,
+          0.5
+        ]
+      },
+      "triangles": 12,
+      "vertices": 24,
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "path": "painting.png",
+      "mime": "image/png",
+      "bytes": 196960,
+      "sha256": "33035fadc694f8a64d89d07425a2ed0babb9352208cf34aab657ed5922a55fe9",
+      "dimensions": {
+        "width": 1,
+        "height": 1
+      },
+      "pixels": {
+        "width": 256,
+        "height": 256
+      },
+      "colorSpace": "sRGB"
+    }
+  ],
+  "scene": {
+    "path": "reference-scene.json",
+    "mime": "application/json",
+    "bytes": 2198,
+    "sha256": "d519aa83e8fe91e8655bff9a5a9c112c5370ada5d760796606b3bb46e14e9c2e"
+  }
+}

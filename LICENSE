@@ -1,0 +1,20 @@
+ExhibitOS spec licensing
+
+Copyright 2026 ExhibitOS contributors.
+
+Code, configuration and documentation in this repository are licensed under
+Apache-2.0 unless a more specific notice applies. See LICENSES/Apache-2.0.txt.
+
+The original synthetic assets fixtures/synthetic/sculpture.glb,
+fixtures/synthetic/painting.png, fixtures/synthetic/reference-scene.json and
+their fixtures/synthetic/manifest.json are
+dedicated under CC0-1.0, to the extent copyright and related rights apply.
+See LICENSES/CC0-1.0.txt and fixtures/synthetic/README.md for scope.
+
+The generator and verification programs remain Apache-2.0. The fixture dedication
+does not cover future third-party artworks, dependencies, trademarks or patents.
+Third-party dependencies retain their respective licenses.
+
+License texts were obtained without modification from:
+https://www.apache.org/licenses/LICENSE-2.0.txt
+https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt
