@@ -77,10 +77,32 @@ export function painting() {
   const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(size); ihdr.writeUInt32BE(size,4); ihdr[8]=8; ihdr[9]=2;
   return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('sRGB',Buffer.from([0])),chunk('IDAT',Buffer.concat(blocks)),chunk('IEND',Buffer.alloc(0))]);
 }
-export const generated = () => ({'sculpture.glb': sculpture(), 'painting.png': painting()});
+export function referenceScene() {
+  return Buffer.from(JSON.stringify({
+    fixtureVersion: '1.0.0', status: 'synthetic-baseline-not-oes',
+    units: 'meter', coordinates: 'right-handed-y-up', rightsReference: 'manifest.json#/rights',
+    room: {id: 'baseline-room', dimensions: {width: 12, depth: 8, height: 4},
+      bounds: {min: [-6,0,-4], max: [6,4,4]}},
+    assets: [
+      {id: 'synthetic-cube', path: 'sculpture.glb', sha256: '1e4e53565fdbc5a71b1aaa83d6b25df6e8025add2f08b35fdca20475fbbca460'},
+      {id: 'synthetic-grid', path: 'painting.png', sha256: '33035fadc694f8a64d89d07425a2ed0babb9352208cf34aab657ed5922a55fe9'},
+    ],
+    placements: [
+      {id: 'cube-placement', roomId: 'baseline-room', assetId: 'synthetic-cube',
+        position: [0,0,0], rotation: [0,0,0,1], scale: [1,1,1]},
+      {id: 'painting-placement', roomId: 'baseline-room', assetId: 'synthetic-grid',
+        position: [0,1.5,-3.99], rotation: [0,0,0,1], scale: [1,1,1], dimensions: {width: 1,height: 1}},
+    ],
+    lightCandidates: [[-3,3,-2],[3,3,-2],[-3,3,2],[3,3,2]].map((position,index) =>
+      ({id: `baseline-light-${index+1}`, type: 'point', position})),
+    performanceInventory: {sculptureInstances: 10,paintingInstances: 10,lightCandidates: 4,
+      status: 'description-only-not-instantiated-or-measured'},
+  }, null, 2)+'\n');
+}
+export const generated = () => ({'sculpture.glb': sculpture(), 'painting.png': painting(), 'reference-scene.json': referenceScene()});
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const directory = resolve(process.argv[2] ?? 'fixtures/synthetic');
   await mkdir(directory,{recursive:true});
   for (const [name,bytes] of Object.entries(generated())) await writeFile(resolve(directory,name),bytes);
-  console.log(`Generated synthetic binaries in ${directory}; manifest is intentionally not rewritten.`);
+  console.log(`Generated synthetic baseline files in ${directory}; manifest is intentionally not rewritten.`);
 }

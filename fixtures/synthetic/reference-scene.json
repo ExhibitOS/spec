@@ -1,0 +1,131 @@
+{
+  "fixtureVersion": "1.0.0",
+  "status": "synthetic-baseline-not-oes",
+  "units": "meter",
+  "coordinates": "right-handed-y-up",
+  "rightsReference": "manifest.json#/rights",
+  "room": {
+    "id": "baseline-room",
+    "dimensions": {
+      "width": 12,
+      "depth": 8,
+      "height": 4
+    },
+    "bounds": {
+      "min": [
+        -6,
+        0,
+        -4
+      ],
+      "max": [
+        6,
+        4,
+        4
+      ]
+    }
+  },
+  "assets": [
+    {
+      "id": "synthetic-cube",
+      "path": "sculpture.glb",
+      "sha256": "1e4e53565fdbc5a71b1aaa83d6b25df6e8025add2f08b35fdca20475fbbca460"
+    },
+    {
+      "id": "synthetic-grid",
+      "path": "painting.png",
+      "sha256": "33035fadc694f8a64d89d07425a2ed0babb9352208cf34aab657ed5922a55fe9"
+    }
+  ],
+  "placements": [
+    {
+      "id": "cube-placement",
+      "roomId": "baseline-room",
+      "assetId": "synthetic-cube",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "painting-placement",
+      "roomId": "baseline-room",
+      "assetId": "synthetic-grid",
+      "position": [
+        0,
+        1.5,
+        -3.99
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "dimensions": {
+        "width": 1,
+        "height": 1
+      }
+    }
+  ],
+  "lightCandidates": [
+    {
+      "id": "baseline-light-1",
+      "type": "point",
+      "position": [
+        -3,
+        3,
+        -2
+      ]
+    },
+    {
+      "id": "baseline-light-2",
+      "type": "point",
+      "position": [
+        3,
+        3,
+        -2
+      ]
+    },
+    {
+      "id": "baseline-light-3",
+      "type": "point",
+      "position": [
+        -3,
+        3,
+        2
+      ]
+    },
+    {
+      "id": "baseline-light-4",
+      "type": "point",
+      "position": [
+        3,
+        3,
+        2
+      ]
+    }
+  ],
+  "performanceInventory": {
+    "sculptureInstances": 10,
+    "paintingInstances": 10,
+    "lightCandidates": 4,
+    "status": "description-only-not-instantiated-or-measured"
+  }
+}

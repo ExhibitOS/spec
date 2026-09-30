@@ -12,9 +12,11 @@ Commands: `npm run fixtures:generate`, `npm run check`, independent temporary
 output generation with byte comparison, `git diff --check`.
 
 Results: Khronos GLB validator: 0 errors and 0 warnings. Committed manifest size,
-hash, rights and deterministic generator comparison passed. Three tests passed:
+hash, rights and deterministic generator comparison passed. Four tests passed:
 corrupt/truncated bytes rejected; 12 outward cube triangles, explicit normals,
-1m bounds verified; PNG CRC, dimensions, zlib decoding and every pixel verified.
+1m bounds verified; PNG CRC, dimensions, zlib decoding and every pixel verified; reference scene
+room, placements, rights and exact asset hashes linked and dangling/mutated
+references rejected.
 Temporary generation matched both committed binaries exactly.
 
 Rights: original project synthetic shapes/colors; no third-party inputs. Fixture

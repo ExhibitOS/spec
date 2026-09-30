@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { inflateSync } from 'node:zlib';
-import { sculpture, painting, crc32 } from './generate-fixtures.mjs';
-import { checkIntegrity } from './check-fixtures.mjs';
+import { sculpture, painting, crc32, referenceScene } from './generate-fixtures.mjs';
+import { checkIntegrity, checkScene } from './check-fixtures.mjs';
 const manifest = JSON.parse(await readFile(new URL('../fixtures/synthetic/manifest.json',import.meta.url),'utf8'));
 
 test('mutated bytes and truncated files fail the committed integrity contract', () => {
@@ -54,4 +54,12 @@ test('PNG checksums, pixels and fixed zlib stored blocks decode consistently', (
   for(let y=0;y<256;y++) { assert.equal(raw[y*769],0);
     for(let x=0;x<256;x++) assert.deepEqual([...raw.subarray(y*769+1+x*3,y*769+4+x*3)],colors[(Math.floor(x/64)+Math.floor(y/64))%4]);
   }
+});
+
+test('reference scene links only manifest assets, hashes, rights and room', () => {
+  const scene=JSON.parse(referenceScene()); checkScene(scene,manifest);
+  const wrongHash=structuredClone(scene); wrongHash.assets[0].sha256='0'.repeat(64);
+  assert.throws(()=>checkScene(wrongHash,manifest),/SCENE_HASH_MISMATCH/);
+  const dangling=structuredClone(scene); dangling.placements[0].assetId='missing';
+  assert.throws(()=>checkScene(dangling,manifest),/MISSING_PLACEMENT_ASSET/);
 });
