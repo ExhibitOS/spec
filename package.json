@@ -11,10 +11,12 @@
   "scripts": {
     "fixtures:generate": "node scripts/generate-fixtures.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs",
+    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs",
     "check": "npm run fixtures:check && npm test",
     "validate:artwork": "node validators/artwork-cli.mjs",
-    "validate:exhibition": "node validators/exhibition-cli.mjs"
+    "validate:exhibition": "node validators/exhibition-cli.mjs",
+    "validate:package": "node validators/package-cli.mjs",
+    "fixtures:package": "node scripts/generate-oex-example.mjs"
   },
   "devDependencies": {
     "gltf-validator": "2.0.0-dev.3.10"

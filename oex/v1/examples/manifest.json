@@ -1,0 +1,50 @@
+{
+  "formatVersion": "1.0.0-draft.1",
+  "kind": "oex-manifest",
+  "oesArtworkVersion": "1.0.0-draft.1",
+  "oesExhibitionVersion": "1.0.0-draft.1",
+  "createdAt": "2026-10-01T03:00:00Z",
+  "generator": {
+    "name": "ExhibitOS original synthetic OEX fixture",
+    "version": "1"
+  },
+  "exhibition": {
+    "path": "exhibition.json",
+    "id": "50000000-0000-4000-8000-000000000001",
+    "revisionId": "50000000-0000-4000-8000-000000000120",
+    "bytes": 30508,
+    "sha256": "815b27352b28305812f8cb522dcd8d840b705869cd7aea5fb9d7ba2c7dec4b72",
+    "revisionSha256": "19e20806bc336bf9c2512a04f77d610829995560815888b433409b6c0ef5a481",
+    "hashProfile": "oes-sorted-json-v1"
+  },
+  "assets": [
+    {
+      "id": "20000000-0000-4000-8000-000000000001",
+      "path": "assets/sculpture.glb",
+      "artifactPath": "sculpture.glb",
+      "mime": "model/gltf-binary",
+      "bytes": 1516,
+      "sha256": "1e4e53565fdbc5a71b1aaa83d6b25df6e8025add2f08b35fdca20475fbbca460",
+      "rightsReferences": [
+        "exhibition.json#/artworks/0/rights"
+      ],
+      "provenanceReferences": [
+        "exhibition.json#/artworks/0/provenance"
+      ]
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000002",
+      "path": "assets/painting.png",
+      "artifactPath": "painting.png",
+      "mime": "image/png",
+      "bytes": 196960,
+      "sha256": "33035fadc694f8a64d89d07425a2ed0babb9352208cf34aab657ed5922a55fe9",
+      "rightsReferences": [
+        "exhibition.json#/artworks/1/rights"
+      ],
+      "provenanceReferences": [
+        "exhibition.json#/artworks/1/provenance"
+      ]
+    }
+  ]
+}

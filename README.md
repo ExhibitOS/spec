@@ -5,7 +5,8 @@ portable archives, OED deployment descriptors, and consumer conformance fixtures
 
 Current status: reproducible synthetic baseline fixtures and integrity checks are
 available. OES Artwork, Exhibition and Lifecycle 1.0.0-draft.1 schemas and local validators
-are available; OEX/OED and stable contract release remain pending. Read [agent instructions](AGENTS.md) before editing and
+are available, along with OEX/OED1.0.0-draft.1 package/deployment validation.
+Stable contract release and consumer conformance remain pending. Read [agent instructions](AGENTS.md) before editing and
 [foundation research](docs/research/foundation.md) for the proposed approach.
 
 This repository must be usable without access to private Capture implementations
@@ -27,3 +28,8 @@ Read [OES Artwork rules and validator usage](oes/v1/README.md) and the
 
 Read [spatial references, publication/freeze and validation scopes](oes/v1/exhibition.md)
 and [lifecycle ADR](docs/adr/0002-exhibition-lifecycle.md).
+
+## Portable package and deployment draft
+
+Read [OEX layout, bounds and rights](oex/v1/README.md), [OED secret references](oed/v1/README.md)
+and [package/deployment ADR](docs/adr/0003-package-deployment-profile.md).
