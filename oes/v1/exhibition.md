@@ -18,7 +18,9 @@ npm run validate:exhibition -- publication oes/v1/examples/publication.json --re
 npm run validate:exhibition -- freeze oes/v1/examples/freeze.json --revision oes/v1/examples/exhibition.json --publication oes/v1/examples/publication.json --assets fixtures/synthetic
 ```
 
-Exit status and JSON result match the Artwork CLI. Schema IDs are immutable
+Exit status and JSON result match the Artwork CLI. Explicitly empty `--assets`
+values are rejected; only omitting the option selects document-only mode. Forbidden
+options are rejected by their presence, including empty string values. Schema IDs are immutable
 identities resolved locally; no network fetching or private repository is required.
 The frozen example's zero runtime image digest and synthetic runtime version are
 explicit placeholders illustrating binding fields, not evidence an OCI image exists

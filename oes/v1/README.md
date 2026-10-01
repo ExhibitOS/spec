@@ -21,7 +21,8 @@ npm run validate:artwork -- oes/v1/examples/painting.json fixtures/synthetic 202
 ```
 
 The CLI returns `{valid,errors:[{code,path,message}]}` and exits 0 for acceptance,
-1 for rejection. Omitting asset-root performs document validation only; providing
+1 for rejection. Omitting asset-root performs document validation only; an explicitly empty root is
+rejected rather than silently skipping required file verification; providing
 it additionally verifies files. The optional publication time explicitly checks
 display rights at that UTC instant. There is no implicit current-time decision.
 

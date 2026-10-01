@@ -15,14 +15,15 @@ async function load(filename) {
 try {
   const {values,positionals}=parseArgs({allowPositionals:true,options:{assets:{type:'string'},at:{type:'string'},revision:{type:'string'},publication:{type:'string'}}});
   const [mode,filename]=positionals;if(positionals.length!==2||!['revision','draft','publication','freeze'].includes(mode))throw new Error('USAGE');
+  if(values.assets!==undefined&&values.assets.length===0)throw new Error('USAGE');
   const document=await load(filename);let checked;
   if(mode==='revision') {
-    if(values.revision||values.publication)throw new Error('USAGE');
-    checked=values.assets?await validateExhibitionFiles(document,values.assets,{publicationTime:values.at}):validateExhibition(document,{publicationTime:values.at});
+    if(values.revision!==undefined||values.publication!==undefined)throw new Error('USAGE');
+    checked=values.assets!==undefined?await validateExhibitionFiles(document,values.assets,{publicationTime:values.at}):validateExhibition(document,{publicationTime:values.at});
   }else {
-    if(values.at||document.kind!==(mode==='draft'?'exhibition-draft':mode)||(mode==='draft'&&(values.revision||values.publication))||(mode==='publication'&&values.publication))throw new Error('USAGE');
+    if(values.at!==undefined||document.kind!==(mode==='draft'?'exhibition-draft':mode)||(mode==='draft'&&(values.revision!==undefined||values.publication!==undefined))||(mode==='publication'&&values.publication!==undefined))throw new Error('USAGE');
     const revision=mode==='draft'?undefined:await load(values.revision),publication=mode==='freeze'?await load(values.publication):undefined;
-    checked=values.assets?await validateLifecycleFiles(document,revision,values.assets,{publication}):validateLifecycle(document,revision,{publication});
+    checked=values.assets!==undefined?await validateLifecycleFiles(document,revision,values.assets,{publication}):validateLifecycle(document,revision,{publication});
   }
   console.log(JSON.stringify(checked));process.exitCode=checked.valid?0:1;
 }catch(error){console.log(JSON.stringify({valid:false,errors:[{code:['USAGE','DOCUMENT_LIMIT'].includes(error.message)?error.message:'INVALID_INPUT',path:'',message:'Use revision|draft|publication|freeze document.json [--revision revision.json] [--publication publication.json] [--assets directory] [--at UTC]'}]}));process.exitCode=1;}

@@ -141,3 +141,23 @@ test('empty exhibitions still reject invalid publication timestamps and all non-
     has(validateExhibition(r),'NON_JSON_VALUE');assert.throws(()=>revisionHash(r),/NON_JSON_VALUE/);
   }
 });
+
+test('CLI explicitly empty asset roots fail closed for revision and publication',()=>{
+  const cli=new URL('./exhibition-cli.mjs',import.meta.url).pathname;
+  const referencePath=new URL('../oes/v1/examples/exhibition.json',import.meta.url).pathname;
+  const publicationPath=new URL('../oes/v1/examples/publication.json',import.meta.url).pathname;
+  for(const args of [['revision',referencePath,'--assets',''],['publication',publicationPath,'--revision',referencePath,'--assets','']]){
+    const output=spawnSync(process.execPath,[cli,...args],{encoding:'utf8'});
+    assert.equal(output.status,1);assert.equal(JSON.parse(output.stdout).errors[0].code,'USAGE');
+  }
+});
+test('forbidden options are rejected by presence even with an empty string value',()=>{
+  const cli=new URL('./exhibition-cli.mjs',import.meta.url).pathname;
+  const referencePath=new URL('../oes/v1/examples/exhibition.json',import.meta.url).pathname;
+  const draftPath=new URL('../oes/v1/examples/draft.json',import.meta.url).pathname;
+  const publicationPath=new URL('../oes/v1/examples/publication.json',import.meta.url).pathname;
+  for(const args of [['revision',referencePath,'--revision',''],['revision',referencePath,'--publication',''],['draft',draftPath,'--at',''],['draft',draftPath,'--revision',''],['publication',publicationPath,'--revision',referencePath,'--publication','']]){
+    const output=spawnSync(process.execPath,[cli,...args],{encoding:'utf8'});
+    assert.equal(output.status,1);assert.equal(JSON.parse(output.stdout).errors[0].code,'USAGE');
+  }
+});
