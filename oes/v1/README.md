@@ -101,3 +101,6 @@ Examples reuse the existing CC0 binary fixtures. The new JSON examples/schema,
 validator and documentation use Apache-2.0. Their sample rights records describe
 the referenced original assets and do not change the JSON file license. The
 [fixture license scope](../../LICENSE) remains limited to its four named files.
+
+Exhibition snapshots, spatial references, publication and freeze use the separate
+[Exhibition and lifecycle draft](exhibition.md).

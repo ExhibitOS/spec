@@ -16,6 +16,7 @@ const ajv=new Ajv2020({strict:true,allErrors:true,validateFormats:true,coerceTyp
 addFormats(ajv,['uuid','date-time']);
 const validate=ajv.compile(schema);
 const validateUtc=ajv.compile({type:"string",format:"date-time",pattern:schema.properties.createdAt.pattern});
+const rightsSchema=ajv.compile(schema.$defs.rights);
 const issue=(code,path,message)=>({code,path,message});
 
 export function validateArtwork(document,{publicationTime}={}) {
@@ -52,10 +53,18 @@ export function validateArtwork(document,{publicationTime}={}) {
     ...document.provenance.events.map((event,i)=>[`/provenance/events/${i}/at`,event.at]),
     ['/rights/validFrom',document.rights.validFrom],['/rights/expiresAt',document.rights.expiresAt]];
   for(const [path,value] of utcValues) if(value!==undefined&&!Number.isFinite(Date.parse(value))) add('INVALID_UTC_TIME',path,'Timestamp must parse to a finite instant');
-  const rights=document.rights;
+  errors.push(...validateRights(document.rights,{publicationTime}).errors);
+  return {valid:errors.length===0,errors:errors.slice(0,100)};
+}
+
+export function validateRights(rights,{publicationTime}={}) {
+  if(!rightsSchema(rights))return {valid:false,errors:rightsSchema.errors.slice(0,100).map(error=>issue('SCHEMA_INVALID','/rights'+error.instancePath,error.keyword))};
+  const errors=[];
+  const add=(code,path,message)=>{if(errors.length<100)errors.push(issue(code,path,message));};
+  for(const property of ['validFrom','expiresAt'])if(rights[property]!==undefined&&!Number.isFinite(Date.parse(rights[property])))add('INVALID_UTC_TIME','/rights/'+property,'Timestamp must parse to a finite instant');
   if(rights.validFrom && rights.expiresAt && Date.parse(rights.validFrom)>=Date.parse(rights.expiresAt)) add('RIGHTS_TIME_RANGE','/rights/expiresAt','Expiry must follow validFrom');
   if(publicationTime!==undefined) {
-    const time=Date.parse(publicationTime);
+    const time=typeof publicationTime==='string'&&validateUtc(publicationTime)?Date.parse(publicationTime):NaN;
     if(!validateUtc(publicationTime)||!Number.isFinite(time)) add('INVALID_PUBLICATION_TIME','/rights','Publication time must be a UTC timestamp');
     else {
       if(!rights.permissions.display) add('DISPLAY_PERMISSION_REQUIRED','/rights/permissions/display','Publication requires display permission');
@@ -63,7 +72,7 @@ export function validateArtwork(document,{publicationTime}={}) {
       if(rights.expiresAt && time>=Date.parse(rights.expiresAt)) add('RIGHTS_EXPIRED','/rights/expiresAt','Display grant expired');
     }
   }
-  return {valid:errors.length===0,errors};
+  return {valid:errors.length===0,errors:errors.slice(0,100)};
 }
 
 export async function validateArtworkFiles(document,root,options={}) {
@@ -101,5 +110,5 @@ export async function validateArtworkFiles(document,root,options={}) {
       }
     } catch(error) { errors.push(issue(error.message.match(/^[A-Z_]+$/)?error.message:'ASSET_READ_FAILED',path,'Asset verification failed')); }
   }
-  return {valid:errors.length===0,errors};
+  return {valid:errors.length===0,errors:errors.slice(0,100)};
 }

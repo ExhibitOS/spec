@@ -101,3 +101,9 @@ test('display grant includes validFrom and excludes expiresAt at millisecond bou
   assert.equal(validateArtwork(document,{publicationTime:'2026-10-01T00:00:00.002Z'}).valid,true);
   assert.equal(validateArtwork(document,{publicationTime:'2026-10-01T00:00:00.003Z'}).errors[0].code,'RIGHTS_EXPIRED');
 });
+
+test('combined semantic and rights failures preserve the 100-error output bound',()=>{
+  const document=mutation(d=>{d.assets=Array.from({length:64},()=>structuredClone(d.assets[0]));d.rights.permissions.display=false;});
+  const checked=validateArtwork(document,{publicationTime:'2026-10-01T00:00:00Z'});
+  assert.equal(checked.valid,false);assert.equal(checked.errors.length,100);
+});

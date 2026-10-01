@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "kind": "freeze",
+  "id": "50000000-0000-4000-8000-000000000110",
+  "exhibitionId": "50000000-0000-4000-8000-000000000001",
+  "revisionId": "50000000-0000-4000-8000-000000000002",
+  "revisionSha256": "ce011ac3b94cf4deaa4fc581ca3ee21dd5ad3180e02d8055da61cfaf2fdd9201",
+  "hashProfile": "oes-sorted-json-v1",
+  "frozenAt": "2026-10-01T02:00:00Z",
+  "publicationId": "50000000-0000-4000-8000-000000000100",
+  "runtimeImageDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "runtimeVersion": "synthetic-contract-example-only",
+  "databaseMigrationVersion": "none",
+  "specVersions": {
+    "oesArtwork": "1.0.0-draft.1",
+    "oesExhibition": "1.0.0-draft.1",
+    "oex": "not-used",
+    "oed": "not-used"
+  },
+  "assets": [
+    {
+      "id": "20000000-0000-4000-8000-000000000001",
+      "path": "sculpture.glb",
+      "bytes": 1516,
+      "sha256": "1e4e53565fdbc5a71b1aaa83d6b25df6e8025add2f08b35fdca20475fbbca460"
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000002",
+      "path": "painting.png",
+      "bytes": 196960,
+      "sha256": "33035fadc694f8a64d89d07425a2ed0babb9352208cf34aab657ed5922a55fe9"
+    }
+  ]
+}
