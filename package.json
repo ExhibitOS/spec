@@ -1,6 +1,6 @@
 {
   "name": "@exhibitos/spec",
-  "version": "0.1.0",
+  "version": "0.1.0-draft.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,18 +11,61 @@
   "scripts": {
     "fixtures:generate": "node scripts/generate-fixtures.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs",
-    "check": "npm run fixtures:check && npm test",
+    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs",
+    "check": "npm run types:check && npm run fixtures:check && npm test && npm run conformance",
     "validate:artwork": "node validators/artwork-cli.mjs",
     "validate:exhibition": "node validators/exhibition-cli.mjs",
     "validate:package": "node validators/package-cli.mjs",
-    "fixtures:package": "node scripts/generate-oex-example.mjs"
+    "fixtures:package": "node scripts/generate-oex-example.mjs",
+    "build": "node scripts/generate-types.mjs",
+    "types:check": "node scripts/generate-types.mjs --check && tsc -p conformance/tsconfig.json",
+    "artifact:build": "npm run build && node scripts/build-artifact.mjs",
+    "conformance": "node conformance/cli.mjs",
+    "artifact:check": "npm run artifact:build && node scripts/check-artifact.mjs"
   },
   "devDependencies": {
-    "gltf-validator": "2.0.0-dev.3.10"
+    "typescript": "6.0.3"
   },
   "dependencies": {
     "ajv": "8.20.0",
-    "ajv-formats": "3.0.1"
-  }
+    "ajv-formats": "3.0.1",
+    "gltf-validator": "2.0.0-dev.3.10"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./index.mjs"
+    },
+    "./package.json": "./package.json",
+    "./schemas/artwork.json": "./schemas/artwork.json",
+    "./schemas/exhibition.json": "./schemas/exhibition.json",
+    "./schemas/lifecycle.json": "./schemas/lifecycle.json",
+    "./schemas/oex.json": "./schemas/oex.json",
+    "./schemas/oed.json": "./schemas/oed.json"
+  },
+  "types": "./types/index.d.ts",
+  "bin": {
+    "exhibitos-artwork": "validators/artwork-cli.mjs",
+    "exhibitos-exhibition": "validators/exhibition-cli.mjs",
+    "exhibitos-package": "validators/package-cli.mjs",
+    "exhibitos-conformance": "conformance/cli.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "types/",
+    "schemas/",
+    "validators/*.mjs",
+    "!validators/*.test.mjs",
+    "oes/",
+    "oex/",
+    "oed/",
+    "fixtures/",
+    "scripts/generate-fixtures.mjs",
+    "LICENSES/",
+    "LICENSE",
+    "README.md",
+    "conformance/runner.mjs",
+    "conformance/cli.mjs"
+  ]
 }

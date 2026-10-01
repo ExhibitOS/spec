@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exhibitos.github.io/spec/oed/v1/1.0.0-draft.1/deployment.schema.json",
+  "title": "OED deployment 1.0.0-draft.1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0-draft.1"
+    },
+    "kind": {
+      "const": "deployment"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:[0-5]\\d(?:\\.\\d{1,3})?Z$"
+    },
+    "target": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "local-compose"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "generic-ssh"
+            },
+            "host": {
+              "type": "string",
+              "maxLength": 253,
+              "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "user": {
+              "type": "string",
+              "pattern": "^[a-z_][a-z0-9_-]{0,31}$"
+            },
+            "sshKeySecretRef": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,63}$"
+            }
+          },
+          "required": [
+            "type",
+            "host",
+            "port",
+            "user",
+            "sshKeySecretRef"
+          ]
+        }
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "type": "string",
+          "maxLength": 512,
+          "pattern": "^[a-z0-9][a-z0-9./:_-]+@sha256:[0-9a-f]{64}$"
+        },
+        "httpPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "registrySecretRef": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,63}$"
+        }
+      },
+      "required": [
+        "image",
+        "httpPort",
+        "replicas"
+      ]
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "postgresql"
+            },
+            "host": {
+              "type": "string",
+              "maxLength": 253,
+              "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "database": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,62}$"
+            },
+            "user": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{0,62}$"
+            },
+            "passwordSecretRef": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,63}$"
+            }
+          },
+          "required": [
+            "type",
+            "host",
+            "port",
+            "database",
+            "user",
+            "passwordSecretRef"
+          ]
+        },
+        "assets": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "filesystem"
+                },
+                "path": {
+                  "type": "string",
+                  "maxLength": 240,
+                  "pattern": "^(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*$"
+                }
+              },
+              "required": [
+                "type",
+                "path"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "s3-compatible"
+                },
+                "endpoint": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "pattern": "^https://[A-Za-z0-9.-]+(?::[0-9]{1,5})?/?$"
+                },
+                "bucket": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$"
+                },
+                "accessKeySecretRef": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{0,63}$"
+                },
+                "secretKeySecretRef": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{0,63}$"
+                }
+              },
+              "required": [
+                "type",
+                "endpoint",
+                "bucket",
+                "accessKeySecretRef",
+                "secretKeySecretRef"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "metadata",
+        "assets"
+      ]
+    },
+    "secretRefs": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]{0,63}$"
+              },
+              "source": {
+                "const": "environment"
+              },
+              "variable": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9_]{2,127}$"
+              }
+            },
+            "required": [
+              "id",
+              "source",
+              "variable"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]{0,63}$"
+              },
+              "source": {
+                "const": "os-keychain"
+              },
+              "service": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9.-]{0,127}$"
+              },
+              "account": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]{0,63}$"
+              }
+            },
+            "required": [
+              "id",
+              "source",
+              "service",
+              "account"
+            ]
+          }
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 64
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "createdAt",
+    "target",
+    "runtime",
+    "storage",
+    "secretRefs"
+  ]
+}

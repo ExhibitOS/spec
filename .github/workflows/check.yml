@@ -18,3 +18,4 @@ jobs:
       - run: npm install --global npm@11.19.0
       - run: npm ci --ignore-scripts
       - run: npm run check
+      - run: npm run artifact:check
