@@ -40,3 +40,10 @@ test('all documented JSON schema export aliases resolve with JSON import attribu
   assert.deepEqual(schema,JSON.parse(await readFile(schemaURL(name),'utf8')));
  }
 });
+
+test('artifact checker rejects unknown and repeated CLI flags before packing',()=>{
+ for(const args of [['--unknown'],['--offline','--offline']]){
+  const result=spawnSync(process.execPath,[new URL('../scripts/check-artifact.mjs',import.meta.url).pathname,...args],{encoding:'utf8'});
+  assert.notEqual(result.status,0);assert.match(result.stderr,/Use: node scripts\/check-artifact.mjs/);
+ }
+});

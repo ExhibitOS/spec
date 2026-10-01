@@ -41,3 +41,21 @@ imports the public deterministic fixture generator; importing it performs no wri
 consumer outside the repository with install scripts disabled, runs API/CLI
 conformance and compiles against installed type exports. Local reproducibility does
 not constitute provenance signing or an SBOM/security audit.
+
+## Artifact checker cache policy
+
+`npm run artifact:check` performs the isolated consumer's first install against
+`https://registry.npmjs.org` using a fresh temporary cache, then repeats `npm ci`
+offline against the generated lockfile and populated cache. This is the CI default.
+The source repository's `npm ci` caches tarballs but need not cache registry
+packuments required to resolve dependencies in a new consumer's `npm install`.
+Therefore a cold cache cannot be called an offline install environment.
+
+`npm run artifact:check -- --offline` is an explicit opt-in for a caller's complete
+prepopulated npm cache (both registry metadata and dependency tarballs). It performs
+no registry request during consumer installation and fails if cache entries are
+missing. Unknown/repeated arguments are rejected. Public source install itself
+still requires registry access or an appropriately seeded cache; no private or
+paid registry is required. Temporary online-check cache is removed with the
+isolated consumer. The distributed README already documents the cache requirement;
+its bytes remain unchanged so existing consumer artifact pins remain valid.

@@ -5,6 +5,9 @@ import { tmpdir } from 'node:os';
 import { join,resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
+const args=process.argv.slice(2);
+if(args.length>1||(args.length===1&&args[0]!=='--offline'))throw new Error('Use: node scripts/check-artifact.mjs [--offline]');
+const offline=args[0]==='--offline';
 const npm=process.platform==='win32'?'npm.cmd':'npm';
 const packageJson=JSON.parse(await readFile('package.json','utf8')),filename='exhibitos-spec-'+packageJson.version+'.tgz',path=resolve('dist',filename);
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex'),original=digest(await readFile(path));
@@ -15,8 +18,11 @@ for(const file of packed.files){assert.ok(!/AGENTS|test|operations|node_modules|
 const consumer=await mkdtemp(join(tmpdir(),'exhibitos-public-consumer-'));
 try{
  await writeFile(join(consumer,'package.json'),JSON.stringify({private:true,type:'module',dependencies:{'@exhibitos/spec':'file:'+path}}));
- run(npm,['install','--ignore-scripts','--offline','--no-audit','--no-fund'],consumer);
- run(npm,['ci','--ignore-scripts','--offline','--no-audit','--no-fund'],consumer);
+ // Default proves installation from an empty isolated cache via public npm.
+ // Offline opt-in uses the caller's existing complete metadata + tarball cache.
+ const cacheArgs=offline?[]:['--cache',join(consumer,'npm-cache')];
+ run(npm,['install','--ignore-scripts',...(offline?['--offline']:[]),'--registry','https://registry.npmjs.org','--no-audit','--no-fund',...cacheArgs],consumer);
+ run(npm,['ci','--ignore-scripts','--offline','--no-audit','--no-fund',...cacheArgs],consumer);
  const cli=JSON.parse(run(process.execPath,['node_modules/.bin/exhibitos-conformance'],consumer));assert.equal(cli.valid,true);
  await writeFile(join(consumer,'test.mjs'),"import {runConformance,fixtureURL,schemaURL} from '@exhibitos/spec'; import {readFile} from 'node:fs/promises'; const result=await runConformance(); if(!result.valid)throw Error('Rejected'); const schema=JSON.parse(await readFile(schemaURL('artwork'))); if(!schema.$id.endsWith('/1.0.0-draft.1/artwork.schema.json'))throw Error('Schema'); console.log(JSON.stringify({valid:result.valid,cases:result.cases.length,fixture:String(fixtureURL('oes/v1/examples/sculpture.json'))}));");
  const api=JSON.parse(run(process.execPath,['test.mjs'],consumer));assert.equal(api.cases,15);
@@ -28,5 +34,5 @@ try{
  await writeFile(join(consumer,'types-consumer.mts'),await readFile('conformance/types-consumer.mts'));
  await writeFile(join(consumer,'tsconfig.json'),await readFile('conformance/tsconfig.json'));
  run(process.execPath,[resolve('node_modules/typescript/bin/tsc'),'-p','tsconfig.json'],consumer);
- console.log(JSON.stringify({valid:true,filename,sha256:original,cases:api.cases,installation:'offline isolated npm install + npm ci',types:'installed NodeNext exports',reproduction:'two exact packs',nativeIosTested:false}));
+ console.log(JSON.stringify({valid:true,filename,sha256:original,cases:api.cases,installation:offline?'offline isolated npm install + npm ci (prepopulated metadata/tarball cache)':'public-registry npm install with empty isolated cache + offline npm ci',types:'installed NodeNext exports',reproduction:'two exact packs',nativeIosTested:false}));
 }finally{await rm(consumer,{recursive:true,force:true});}
