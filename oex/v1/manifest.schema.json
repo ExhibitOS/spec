@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exhibitos.github.io/spec/oex/v1/1.0.0-draft.1/manifest.schema.json",
+  "title": "OEX manifest 1.0.0-draft.1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "formatVersion": {
+      "const": "1.0.0-draft.1"
+    },
+    "kind": {
+      "const": "oex-manifest"
+    },
+    "oesArtworkVersion": {
+      "const": "1.0.0-draft.1"
+    },
+    "oesExhibitionVersion": {
+      "const": "1.0.0-draft.1"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:[0-5]\\d(?:\\.\\d{1,3})?Z$"
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "exhibition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "const": "exhibition.json"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "revisionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "revisionSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "hashProfile": {
+          "const": "oes-sorted-json-v1"
+        }
+      },
+      "required": [
+        "path",
+        "id",
+        "revisionId",
+        "bytes",
+        "sha256",
+        "revisionSha256",
+        "hashProfile"
+      ]
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*$"
+          },
+          "artifactPath": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*$"
+          },
+          "mime": {
+            "enum": [
+              "model/gltf-binary",
+              "image/png",
+              "image/jpeg",
+              "image/webp"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 104857600
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "rightsReferences": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^exhibition\\.json#/artworks/[0-9]+/rights$"
+            },
+            "minItems": 1,
+            "maxItems": 1024
+          },
+          "provenanceReferences": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^exhibition\\.json#/artworks/[0-9]+/provenance$"
+            },
+            "minItems": 1,
+            "maxItems": 1024
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "artifactPath",
+          "mime",
+          "bytes",
+          "sha256",
+          "rightsReferences",
+          "provenanceReferences"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 254
+    }
+  },
+  "required": [
+    "formatVersion",
+    "kind",
+    "oesArtworkVersion",
+    "oesExhibitionVersion",
+    "createdAt",
+    "generator",
+    "exhibition",
+    "assets"
+  ]
+}

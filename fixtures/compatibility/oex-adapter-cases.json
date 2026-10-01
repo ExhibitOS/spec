@@ -1,0 +1,10 @@
+{
+  "fixtureVersion": "1.0.0",
+  "support": "identity-only-no-prior-stable-release-no-migration",
+  "cases": [
+    {"sourceVersion": "1.0.0-draft.1", "targetVersion": "1.0.0-draft.1", "expected": "identity-only-no-migration"},
+    {"sourceVersion": "0.9.0", "targetVersion": "1.0.0-draft.1", "expected": "UNSUPPORTED_VERSION"},
+    {"sourceVersion": "2.0.0", "targetVersion": "1.0.0-draft.1", "expected": "UNSUPPORTED_VERSION"},
+    {"sourceVersion": "1.0.0-draft.1", "targetVersion": "2.0.0", "expected": "UNSUPPORTED_TARGET_VERSION"}
+  ]
+}

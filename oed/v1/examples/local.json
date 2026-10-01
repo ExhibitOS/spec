@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "kind": "deployment",
+  "id": "70000000-0000-4000-8000-000000000001",
+  "createdAt": "2026-10-01T03:00:00Z",
+  "target": {
+    "type": "local-compose"
+  },
+  "runtime": {
+    "image": "ghcr.io/exhibitos/platform@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "httpPort": 8080,
+    "replicas": 1
+  },
+  "storage": {
+    "metadata": {
+      "type": "postgresql",
+      "host": "localhost",
+      "port": 5432,
+      "database": "exhibitos",
+      "user": "exhibitos",
+      "passwordSecretRef": "database-password"
+    },
+    "assets": {
+      "type": "filesystem",
+      "path": "data/assets"
+    }
+  },
+  "secretRefs": [
+    {
+      "id": "database-password",
+      "source": "environment",
+      "variable": "EXHIBITOS_DATABASE_PASSWORD"
+    }
+  ]
+}
