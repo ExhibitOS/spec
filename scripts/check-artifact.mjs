@@ -20,6 +20,9 @@ try{
  const cli=JSON.parse(run(process.execPath,['node_modules/.bin/exhibitos-conformance'],consumer));assert.equal(cli.valid,true);
  await writeFile(join(consumer,'test.mjs'),"import {runConformance,fixtureURL,schemaURL} from '@exhibitos/spec'; import {readFile} from 'node:fs/promises'; const result=await runConformance(); if(!result.valid)throw Error('Rejected'); const schema=JSON.parse(await readFile(schemaURL('artwork'))); if(!schema.$id.endsWith('/1.0.0-draft.1/artwork.schema.json'))throw Error('Schema'); console.log(JSON.stringify({valid:result.valid,cases:result.cases.length,fixture:String(fixtureURL('oes/v1/examples/sculpture.json'))}));");
  const api=JSON.parse(run(process.execPath,['test.mjs'],consumer));assert.equal(api.cases,15);
+ const imports=['artwork','exhibition','lifecycle','oex','oed'].map(name=>"import "+name+" from '@exhibitos/spec/schemas/"+name+".json' with {type:'json'};").join('\n');
+ await writeFile(join(consumer,'schemas.mjs'),imports+"\nconst schemas=[artwork,exhibition,lifecycle,oex,oed]; if(schemas.some(s=>!s.$id.includes('/1.0.0-draft.1/')))throw Error('Schema identity');console.log(schemas.length);");
+ assert.equal(run(process.execPath,['schemas.mjs'],consumer).trim(),'5');
  for(const [bin,args]of [['exhibitos-artwork',['oes/v1/examples/sculpture.json','fixtures/synthetic']],['exhibitos-exhibition',['revision','oes/v1/examples/exhibition.json','--assets','fixtures/synthetic']],['exhibitos-package',['oex','oex/v1/examples/synthetic.oex']],['exhibitos-package',['oed','oed/v1/examples/local.json']]]){const cwd=join(consumer,'node_modules/@exhibitos/spec');const output=JSON.parse(run(process.execPath,[join(consumer,'node_modules/.bin',bin),...args],cwd));assert.equal(output.valid,true);}
  // Compile against installed exports, not the source repo's self-reference.
  await writeFile(join(consumer,'types-consumer.mts'),await readFile('conformance/types-consumer.mts'));

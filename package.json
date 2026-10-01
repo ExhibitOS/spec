@@ -37,8 +37,12 @@
       "types": "./types/index.d.ts",
       "import": "./index.mjs"
     },
-    "./schemas/*": "./schemas/*.json",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./schemas/artwork.json": "./schemas/artwork.json",
+    "./schemas/exhibition.json": "./schemas/exhibition.json",
+    "./schemas/lifecycle.json": "./schemas/lifecycle.json",
+    "./schemas/oex.json": "./schemas/oex.json",
+    "./schemas/oed.json": "./schemas/oed.json"
   },
   "types": "./types/index.d.ts",
   "bin": {

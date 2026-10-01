@@ -7,10 +7,43 @@ for(const entry of schemas)entry.schema=JSON.parse(entry.text);
 // Deliberately limited to current schema vocabulary. Unknown structural keywords fail
 // generation rather than silently widening a future schema's types.
 const allowed=new Set(['$schema','$id','$defs','$ref','title','description','type','properties','required','additionalProperties','propertyNames','maxProperties','items','minItems','maxItems','const','enum','anyOf','oneOf','minimum','maximum','exclusiveMinimum','format','pattern','minLength','maxLength']);
+function resolveReference(reference,owner) {
+ if(typeof reference!=='string')throw new Error('Invalid schema reference');
+ const [id,pointer='',extra]=reference.split('#');
+ const target=id?schemas.find(e=>e.schema.$id===id):owner;
+ if(!target)throw new Error('Unresolved schema '+id);
+ if(extra!==undefined||(pointer&&!pointer.startsWith('/')))throw new Error('Unresolved pointer '+pointer);
+ let resolved=target.schema;
+ for(const key of pointer?pointer.slice(1).split('/'):[]){
+  const name=key.replace(/~1/g,'/').replace(/~0/g,'~');
+  if(!resolved||typeof resolved!=='object'||!Object.hasOwn(resolved,name))throw new Error('Unresolved pointer '+pointer);
+  resolved=resolved[name];
+ }
+ if(typeof resolved!=='boolean'&&(!resolved||typeof resolved!=='object'||Array.isArray(resolved)))throw new Error('Reference is not a schema');
+ return {resolved,target};
+}
+// Validate every schema-valued location independently of structural type emission.
+// Property/$defs names and const/enum JSON values are data, not schema keywords.
+function preflight(s,owner) {
+ if(typeof s==='boolean')return;
+ if(!s||typeof s!=='object'||Array.isArray(s))throw new Error('Invalid schema node');
+ for(const key of Object.keys(s))if(!allowed.has(key))throw new Error('Unsupported schema keyword '+key);
+ if(s.$ref!==undefined)resolveReference(s.$ref,owner);
+ for(const key of ['$defs','properties'])if(s[key]!==undefined){
+  if(!s[key]||typeof s[key]!=='object'||Array.isArray(s[key]))throw new Error('Invalid schema map '+key);
+  for(const child of Object.values(s[key]))preflight(child,owner);
+ }
+ for(const key of ['items','additionalProperties','propertyNames'])if(s[key]!==undefined)preflight(s[key],owner);
+ for(const key of ['anyOf','oneOf'])if(s[key]!==undefined){
+  if(!Array.isArray(s[key])||s[key].length===0)throw new Error('Invalid schema combination '+key);
+  for(const child of s[key])preflight(child,owner);
+ }
+}
+for(const entry of schemas)preflight(entry.schema,entry);
 function type(s,owner) {
  if(typeof s==='boolean')return s?'JsonValue':'never';
  for(const key of Object.keys(s))if(!allowed.has(key))throw new Error('Unsupported schema keyword '+key);
- if(s.$ref){const [id,pointer='']=s.$ref.split('#');const target=id?schemas.find(e=>e.schema.$id===id):owner;if(!target)throw new Error('Unresolved schema '+id);const resolved=pointer?pointer.slice(1).split('/').reduce((obj,k)=>obj[k.replace(/~1/g,'/').replace(/~0/g,'~')],target.schema):target.schema;if(!resolved)throw new Error('Unresolved pointer');return type(resolved,target);}
+ if(s.$ref){const {resolved,target}=resolveReference(s.$ref,owner);return type(resolved,target);}
  let base;
  if('const'in s)base=JSON.stringify(s.const);
  else if(s.enum)base=s.enum.map(v=>JSON.stringify(v)).join(' | ');
