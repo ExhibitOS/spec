@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "kind": "publication",
+  "id": "50000000-0000-4000-8000-000000000100",
+  "exhibitionId": "50000000-0000-4000-8000-000000000001",
+  "revisionId": "50000000-0000-4000-8000-000000000002",
+  "revisionSha256": "ce011ac3b94cf4deaa4fc581ca3ee21dd5ad3180e02d8055da61cfaf2fdd9201",
+  "hashProfile": "oes-sorted-json-v1",
+  "publishedAt": "2026-10-01T01:00:00Z",
+  "status": "published"
+}
