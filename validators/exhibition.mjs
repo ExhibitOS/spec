@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 ExhibitOS contributors
+import { validateSpatialProfile } from './spatial-scripting.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { readFile } from 'node:fs/promises';
@@ -146,6 +147,7 @@ export function validateExhibition(revision,{publicationTime}={}) {
   });
   if(revision.scripts.reduce((sum,script)=>sum+script.actions.length,0)>1024)errors.push(issue('SCRIPT_ACTION_LIMIT','/scripts','Maximum 1024 stored actions per exhibition'));
   for(const [path,extensions]of [['/extensions',revision.extensions],...revision.artworks.map((artwork,i)=>[`/artworks/${i}/extensions`,artwork.extensions])])if(extensions)for(const [name,value]of Object.entries(extensions))if(Buffer.byteLength(sortedJson(value))>16384)errors.push(issue('EXTENSION_LIMIT',path+'/'+pointer(name),'Each extension is at most 16KiB'));
+  errors.push(...validateSpatialProfile(revision).errors);
   return result(errors);
 }
 export function validateLifecycle(document,revision,{publication}={}) {
