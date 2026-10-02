@@ -36,8 +36,8 @@ and [package/deployment ADR](docs/adr/0003-package-deployment-profile.md).
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.1` is an ESM Node package; wire contracts
-remain `1.0.0-draft.1`. Use Node 24.21.0/npm 11.19.0. No stable release or
+Package `@exhibitos/spec@0.1.0-draft.2` is an ESM Node package; wire contracts
+remain `1.0.0-draft.1` except the explicit OEX media profile `1.0.0-draft.2`. Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
 `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then
 `npm run artifact:check`. The versioned tarball and SHA-256 are written to `dist/`.
@@ -46,7 +46,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.1.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.2.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```
@@ -89,14 +89,21 @@ runtime publication, perform archive extraction or provision infrastructure.
 `fixtureURL` accepts only these exact public fixture paths:
 
 - `oes/v1/examples/{sculpture,painting,exhibition,draft,publication,freeze}.json`
-- `oex/v1/examples/manifest.json`, `oex/v1/examples/synthetic.oex`
+- `oex/v1/examples/{manifest,media-manifest}.json`, `oex/v1/examples/{synthetic,synthetic-media}.oex`
 - `oed/v1/examples/{local,ssh}.json`
-- `fixtures/synthetic/{sculpture.glb,painting.png,manifest.json,reference-scene.json}`
+- `fixtures/synthetic/{sculpture.glb,painting.png,audio.wav,manifest.json,reference-scene.json}`
 
 Braces above describe choices, not literal API inputs. Other paths are rejected.
 The same 15 conformance cases check original GLB/PNG bytes, Exhibition,
 publication/freeze, OEX and OED plus invalid version, scale, rights, dangling room,
 leap second, corrupted archive and raw credential fields. This is Node consumer
 conformance, not native iOS, image decoding, accessibility or browser evaluation.
-Code, schemas and document metadata use Apache-2.0; the four files explicitly
+Code, schemas and document metadata use Apache-2.0; the five files explicitly
 listed in LICENSE use CC0-1.0. Both original license texts ship in the tarball.
+
+OEX draft.2 adds complete typed artwork/media inventories and bounded PCM16 WAV.
+Public `readOex` and deterministic `writeOex` return validated in-memory data, never
+extract files. See [media profile and caller safety budgets](oex/v1/media.md).
+`schemas/oex-media.json` is a separate export; original schema aliases and draft.1
+fixtures retain exact bytes. `OEX_VERSION` still means draft.1; use
+`OEX_MEDIA_VERSION` for draft.2. Both profiles are accepted without migration.

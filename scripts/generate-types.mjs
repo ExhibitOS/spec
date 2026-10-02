@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-const definitions=[['Artwork','oes/v1/artwork.schema.json','artwork'],['Exhibition','oes/v1/exhibition.schema.json','exhibition'],['Lifecycle','oes/v1/lifecycle.schema.json','lifecycle'],['OexManifest','oex/v1/manifest.schema.json','oex'],['OedDeployment','oed/v1/deployment.schema.json','oed']];
+const definitions=[['Artwork','oes/v1/artwork.schema.json','artwork'],['Exhibition','oes/v1/exhibition.schema.json','exhibition'],['Lifecycle','oes/v1/lifecycle.schema.json','lifecycle'],['OexManifest','oex/v1/manifest.schema.json','oex'],['OexMediaManifest','oex/v1/media-manifest.schema.json','oex-media'],['OedDeployment','oed/v1/deployment.schema.json','oed']];
 const schemas=await Promise.all(definitions.map(async([name,path,alias])=>({name,path,alias,text:await readFile(new URL('../'+path,import.meta.url),'utf8')})));
 for(const entry of schemas)entry.schema=JSON.parse(entry.text);
 // Deliberately limited to current schema vocabulary. Unknown structural keywords fail

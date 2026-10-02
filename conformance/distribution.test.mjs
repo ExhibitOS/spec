@@ -15,7 +15,7 @@ test('public OEX API accepts Buffer and offset Uint8Array views consistently',as
 
 test('generator preflights unsupported nested schema keywords and unused refs in an isolated clone',async()=>{
  const root=await mkdtemp(join(tmpdir(),'exhibitos-generator-mutation-'));
- const paths=['scripts/generate-types.mjs','conformance/api-types.txt','oes/v1/artwork.schema.json','oes/v1/exhibition.schema.json','oes/v1/lifecycle.schema.json','oex/v1/manifest.schema.json','oed/v1/deployment.schema.json'];
+ const paths=['scripts/generate-types.mjs','conformance/api-types.txt','oes/v1/artwork.schema.json','oes/v1/exhibition.schema.json','oes/v1/lifecycle.schema.json','oex/v1/manifest.schema.json','oex/v1/media-manifest.schema.json','oed/v1/deployment.schema.json'];
  try{
   for(const path of paths){await mkdir(dirname(join(root,path)),{recursive:true});await writeFile(join(root,path),await readFile(new URL('../'+path,import.meta.url)));}
   const generate=()=>spawnSync(process.execPath,[join(root,'scripts/generate-types.mjs')],{cwd:root,encoding:'utf8'});
@@ -47,3 +47,5 @@ test('artifact checker rejects unknown and repeated CLI flags before packing',()
   assert.notEqual(result.status,0);assert.match(result.stderr,/Use: node scripts\/check-artifact.mjs/);
  }
 });
+
+test('separate media schema export has exact distinct identity and bytes',async()=>{const {default:schema}=await import('@exhibitos/spec/schemas/oex-media.json',{with:{type:'json'}});assert.ok(schema.$id.includes('/1.0.0-draft.2/'));assert.deepEqual(schema,JSON.parse(await readFile(schemaURL('oex-media'),'utf8')));});

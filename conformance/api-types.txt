@@ -19,8 +19,14 @@ export declare function sealDraft(document: unknown): ValidationResult & { revis
 export declare function validateOex(bytes: Uint8Array): Promise<ValidationResult>;
 export declare function validateOexManifest(document: unknown): ValidationResult;
 export declare function validateOed(document: unknown): ValidationResult;
-export declare function adaptOexManifest(document: unknown, targetVersion: string): ValidationResult & {adapter?: string; document?: OexManifest};
+export declare function adaptOexManifest(document: unknown, targetVersion: string): ValidationResult & {adapter?: string; document?: OexManifest | OexMediaManifest};
 export declare function fixtureURL(relativePath: string): URL;
-export declare function schemaURL(name: 'artwork'|'exhibition'|'lifecycle'|'oex'|'oed'): URL;
+export declare function schemaURL(name: 'artwork'|'exhibition'|'lifecycle'|'oex'|'oex-media'|'oed'): URL;
 export interface ConformanceResult extends ValidationResult { cases: Array<{id: string; valid: boolean}> }
 export declare function runConformance(): Promise<ConformanceResult>;
+
+export declare const OEX_MEDIA_VERSION: '1.0.0-draft.2';
+export declare class OexError extends Error { readonly code: string; readonly errors: ValidationError[]; }
+export declare function readOex(bytes: Uint8Array): Promise<{manifest: OexManifest | OexMediaManifest; exhibition: Exhibition; files: Map<string, Uint8Array>}>;
+export declare function writeOex(exhibition: Exhibition, assets: Map<string, Uint8Array>, options: {createdAt: string; generator: {name: string; version: string}}): Promise<Uint8Array>;
+export declare function packageMediaAssetManifest(exhibition: Exhibition): OexMediaManifest['assets'];

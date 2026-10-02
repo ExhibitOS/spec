@@ -63,3 +63,8 @@ Hash: `d519aa83e8fe91e8655bff9a5a9c112c5370ada5d760796606b3bb46e14e9c2e`;
 The ten sculpture plus ten painting performance inventory is a description,
 not an instantiated or measured scene. Platform baselines may build this workload
 and must separately record placement details, renderer, camera and measurements.
+
+Additional `audio.wav` is original0.1second mono8kHz PCM16 synthetic silence,
+CC0-1.0. It is separate from the immutable original baseline manifest. Its exact
+bytes/rights are bound by the new OEX draft.2 media fixture and deterministic test.
+Generate with `node scripts/generate-media-oex.mjs`; see `oex/v1/media.md`.
