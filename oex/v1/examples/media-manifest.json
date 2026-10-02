@@ -1,0 +1,65 @@
+{
+  "formatVersion": "1.0.0-draft.2",
+  "kind": "oex-manifest",
+  "oesArtworkVersion": "1.0.0-draft.1",
+  "oesExhibitionVersion": "1.0.0-draft.1",
+  "createdAt": "2026-10-02T09:00:00Z",
+  "generator": {
+    "name": "ExhibitOS original synthetic media OEX fixture",
+    "version": "2"
+  },
+  "exhibition": {
+    "path": "exhibition.json",
+    "id": "50000000-0000-4000-8000-000000000001",
+    "revisionId": "50000000-0000-4000-8000-000000000121",
+    "bytes": 26430,
+    "sha256": "77246a0eef52f0b6df3bed89c4a0a5628485ada8edb94361b75c24c6f3485608",
+    "revisionSha256": "4a561248e1f166dfb3ca2ea4cfb692127e1e533440ce0c8a7aba1df069b58f00",
+    "hashProfile": "oes-sorted-json-v1"
+  },
+  "assets": [
+    {
+      "id": "20000000-0000-4000-8000-000000000001",
+      "path": "assets/sculpture.glb",
+      "artifactPath": "sculpture.glb",
+      "mime": "model/gltf-binary",
+      "bytes": 1516,
+      "sha256": "1e4e53565fdbc5a71b1aaa83d6b25df6e8025add2f08b35fdca20475fbbca460",
+      "rightsReferences": [
+        "exhibition.json#/artworks/0/rights"
+      ],
+      "provenanceReferences": [
+        "exhibition.json#/artworks/0/provenance"
+      ],
+      "kind": "artwork"
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000002",
+      "path": "assets/painting.png",
+      "artifactPath": "painting.png",
+      "mime": "image/png",
+      "bytes": 196960,
+      "sha256": "33035fadc694f8a64d89d07425a2ed0babb9352208cf34aab657ed5922a55fe9",
+      "rightsReferences": [
+        "exhibition.json#/artworks/1/rights"
+      ],
+      "provenanceReferences": [
+        "exhibition.json#/artworks/1/provenance"
+      ],
+      "kind": "artwork"
+    },
+    {
+      "id": "50000000-0000-4000-8000-000000000122",
+      "kind": "media",
+      "path": "assets/media/synthetic/audio.wav",
+      "artifactPath": "media/synthetic/audio.wav",
+      "mime": "audio/wav",
+      "bytes": 1644,
+      "sha256": "c726d333dd159a31423f3480dbb1c5c4a9dfcd30efe1f7e12ade390dc92e8908",
+      "rightsReferences": [
+        "exhibition.json#/mediaAssets/0/rights"
+      ],
+      "provenanceReferences": []
+    }
+  ]
+}
