@@ -43,6 +43,7 @@ function semantics(program,scope){
   if(ids.has(rule.id))add(base+'/id','Rule IDs must be distinct');ids.add(rule.id);
   for(const [path,entry]of [[base+'/trigger',rule.trigger],...rule.actions.map((a,i)=>[base+'/actions/'+i,a])]){
    for(const [field,set]of Object.entries(references))if(Object.hasOwn(entry,field)&&!scope[set].has(entry[field]))add(path+'/'+field,'Exact reference must belong to this Exhibition');
+   if(entry.type==='show_text'&&entry.text.length>4096)add(path+'/text','Text exceeds4096 UTF-16 code units');
    if(entry.type==='absolute_time'){const milliseconds=Date.parse(entry.atUtc);if(milliseconds<0||milliseconds>4102444800000||new Date(milliseconds).toISOString()!==entry.atUtc)add(path+'/atUtc','Unsupported or noncanonical UTC time');}
   }
  }
