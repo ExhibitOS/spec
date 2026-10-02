@@ -21,7 +21,7 @@ export declare function validateOexManifest(document: unknown): ValidationResult
 export declare function validateOed(document: unknown): ValidationResult;
 export declare function adaptOexManifest(document: unknown, targetVersion: string): ValidationResult & {adapter?: string; document?: OexManifest | OexMediaManifest};
 export declare function fixtureURL(relativePath: string): URL;
-export declare function schemaURL(name: 'artwork'|'exhibition'|'lifecycle'|'oex'|'oex-media'|'oed'): URL;
+export declare function schemaURL(name: 'artwork'|'exhibition'|'lifecycle'|'oex'|'oex-media'|'oed'|'spatial-scripting'): URL;
 export interface ConformanceResult extends ValidationResult { cases: Array<{id: string; valid: boolean}> }
 export declare function runConformance(): Promise<ConformanceResult>;
 
@@ -30,3 +30,14 @@ export declare class OexError extends Error { readonly code: string; readonly er
 export declare function readOex(bytes: Uint8Array): Promise<{manifest: OexManifest | OexMediaManifest; exhibition: Exhibition; files: Map<string, Uint8Array>}>;
 export declare function writeOex(exhibition: Exhibition, assets: Map<string, Uint8Array>, options: {createdAt: string; generator: {name: string; version: string}}): Promise<Uint8Array>;
 export declare function packageMediaAssetManifest(exhibition: Exhibition): OexMediaManifest['assets'];
+
+export type SpatialEvent = SpatialProgram['rules'][number]['trigger'];
+export type SpatialAction = SpatialProgram['rules'][number]['actions'][number];
+export interface SpatialScope { rooms: ReadonlySet<string>; zones: ReadonlySet<string>; placements: ReadonlySet<string>; lights: ReadonlySet<string>; mediaAssets: ReadonlySet<string> }
+export declare const SPATIAL_SCRIPTING_NAMESPACE: 'org.exhibitos.runtime/spatial-scripting';
+export declare const SPATIAL_SCRIPTING_VERSION: 1;
+export declare function validateSpatialProgram(program: unknown, scope: SpatialScope): ValidationResult;
+export declare function validateSpatialEvent(event: unknown, scope: SpatialScope): ValidationResult;
+export declare function validateSpatialProfile(exhibition: unknown): ValidationResult;
+export declare function parseSpatialProgram(json: string, scope: SpatialScope): ValidationResult & { program?: SpatialProgram };
+export declare function spatialScopeFor(exhibition: Exhibition): SpatialScope;

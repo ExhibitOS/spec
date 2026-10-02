@@ -10,3 +10,5 @@ export function validateOex(bytes) {
   if(bytes instanceof Uint8Array && !Buffer.isBuffer(bytes))bytes=Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   return validateOexBuffer(bytes);
 }
+
+export { SPATIAL_SCRIPTING_NAMESPACE, SPATIAL_SCRIPTING_VERSION, validateSpatialProgram, validateSpatialEvent, validateSpatialProfile, parseSpatialProgram, spatialScopeFor } from './validators/spatial-scripting.mjs';

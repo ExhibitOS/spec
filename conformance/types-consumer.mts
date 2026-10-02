@@ -21,3 +21,14 @@ const mediaVersion: '1.0.0-draft.2' = OEX_MEDIA_VERSION;
 void mediaVersion;
 async function roundTrip(bytes:Uint8Array){const result=await readOex(bytes);const entries=new Map<string,Uint8Array>();for(const asset of result.manifest.assets)entries.set(asset.artifactPath,result.files.get(asset.path)!);const inventory=packageMediaAssetManifest(result.exhibition);void inventory;return writeOex(result.exhibition,entries,{createdAt:result.manifest.createdAt,generator:result.manifest.generator});}
 void roundTrip;
+
+import {validateSpatialProgram,validateSpatialProfile,spatialScopeFor,parseSpatialProgram} from '@exhibitos/spec';
+import type {SpatialProgram,SpatialEvent,SpatialAction,SpatialScope} from '@exhibitos/spec';
+const trigger:SpatialEvent={type:'exhibition_start'};
+const action:SpatialAction={type:'show_text',text:'Synthetic original',locale:'en',delayMs:0};
+const program:SpatialProgram={version:1,rules:[{id:'intro',trigger,actions:[action],once:true}]};
+const scope:SpatialScope={rooms:new Set(),zones:new Set(),placements:new Set(),lights:new Set(),mediaAssets:new Set()};
+validateSpatialProgram(program,scope);parseSpatialProgram(JSON.stringify(program),scope);void validateSpatialProfile;void spatialScopeFor;void schemaURL('spatial-scripting');
+// @ts-expect-error Arbitrary executable actions are unsupported
+const executable:SpatialAction={type:'eval',code:'1',delayMs:0};
+void executable;
