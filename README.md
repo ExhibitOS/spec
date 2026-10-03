@@ -12,6 +12,11 @@ Consumer conformance and draft package distribution are available. Stable releas
 This repository must be usable without access to private Capture implementations
 or project operations. Only original synthetic assets may be used in its fixtures.
 
+## 검사 도구 사용법
+
+[규격 검사 시작하기](docs/usage/cli.md)에서 검사 대상별 명령, 버전 구분과
+선택형 `--help`/`--human` 안내를 읽습니다. 기본 JSON protocol은 유지합니다.
+
 ## Synthetic baseline
 
 Read [fixture scope, hashes and reproduction commands](fixtures/synthetic/README.md).
@@ -36,7 +41,7 @@ and [package/deployment ADR](docs/adr/0003-package-deployment-profile.md).
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.3` is an ESM Node package; wire contracts
+Package `@exhibitos/spec@0.1.0-draft.4` is an ESM Node package; wire contracts
 remain `1.0.0-draft.1` except the explicit OEX media profile `1.0.0-draft.2`. Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
 `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then
@@ -46,7 +51,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.3.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.4.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```
