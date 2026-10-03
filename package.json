@@ -1,6 +1,6 @@
 {
   "name": "@exhibitos/spec",
-  "version": "0.1.0-draft.3",
+  "version": "0.1.0-draft.4",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,7 +11,7 @@
   "scripts": {
     "fixtures:generate": "node scripts/generate-fixtures.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs validators/oex-media.test.mjs validators/spatial-scripting.test.mjs",
+    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs validators/oex-media.test.mjs validators/spatial-scripting.test.mjs validators/cli-ux.test.mjs",
     "check": "npm run types:check && npm run fixtures:check && npm test && npm run conformance",
     "validate:artwork": "node validators/artwork-cli.mjs",
     "validate:exhibition": "node validators/exhibition-cli.mjs",
@@ -68,6 +68,7 @@
     "LICENSE",
     "README.md",
     "conformance/runner.mjs",
-    "conformance/cli.mjs"
+    "conformance/cli.mjs",
+    "docs/usage/cli.md"
   ]
 }
