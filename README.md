@@ -128,3 +128,7 @@ own independently verified runtime and explicit sound consent.
 `SpatialAction` and `SpatialScope` are public exports. The schema alias is
 `schemas/spatial-scripting.json`; fixture locators additionally accept
 `oes/v1/examples/spatial-program.json` and `spatial-exhibition.json`.
+
+## Optional provider contracts
+
+[Auth session observation and Capture producer extension contracts](providers/v1/README.md) are additive opt-in `@exhibitos/spec/providers` interfaces. Two public synthetic OES producers use the existing artifact validator. These contracts neither grant resource authorization nor prove an alternate deployed authentication provider or physical Capture compatibility.

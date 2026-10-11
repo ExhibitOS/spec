@@ -32,3 +32,12 @@ validateSpatialProgram(program,scope);parseSpatialProgram(JSON.stringify(program
 // @ts-expect-error Arbitrary executable actions are unsupported
 const executable:SpatialAction={type:'eval',code:'1',delayMs:0};
 void executable;
+
+import {observeAuthSession,inspectCaptureProducer,validateProviderDescriptor} from '@exhibitos/spec/providers';
+import type {AuthProvider,CaptureProducer,SessionObservation,ProviderDescriptor} from '@exhibitos/spec/providers';
+import {fileArtworkProducer,memoryArtworkProducer,localSessionAdapter} from '@exhibitos/spec/providers/examples';
+const captureDescriptor:ProviderDescriptor={schemaVersion:'1.0.0-draft.1',kind:'capture-producer',id:'org.synthetic.capture',version:'1',contract:'oes-artwork-v1'};
+// @ts-expect-error Separate capabilities cannot claim each other's contract
+const wrongProvider:ProviderDescriptor={...captureDescriptor,contract:'session-observation-v1'};
+const providerConsumer=async(auth:AuthProvider,capture:CaptureProducer,tenantId:string)=>{const session:Readonly<SessionObservation>|null=await observeAuthSession(auth,{}, {tenantId});const output=await inspectCaptureProducer(capture,{});return [session,output.valid];};
+void providerConsumer;void validateProviderDescriptor;void wrongProvider;void fileArtworkProducer;void memoryArtworkProducer;void localSessionAdapter;

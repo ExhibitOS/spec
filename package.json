@@ -11,8 +11,8 @@
   "scripts": {
     "fixtures:generate": "node scripts/generate-fixtures.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs validators/oex-media.test.mjs validators/spatial-scripting.test.mjs validators/cli-ux.test.mjs",
-    "check": "npm run types:check && npm run fixtures:check && npm test && npm run conformance",
+    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs validators/oex-media.test.mjs validators/spatial-scripting.test.mjs validators/cli-ux.test.mjs providers/providers.test.mjs",
+    "check": "npm run types:check && npm run fixtures:check && npm test && npm run conformance && npm run conformance:providers",
     "validate:artwork": "node validators/artwork-cli.mjs",
     "validate:exhibition": "node validators/exhibition-cli.mjs",
     "validate:package": "node validators/package-cli.mjs",
@@ -21,7 +21,8 @@
     "types:check": "node scripts/generate-types.mjs --check && tsc -p conformance/tsconfig.json",
     "artifact:build": "npm run build && node scripts/build-artifact.mjs",
     "conformance": "node conformance/cli.mjs",
-    "artifact:check": "npm run artifact:build && node scripts/check-artifact.mjs"
+    "artifact:check": "npm run artifact:build && node scripts/check-artifact.mjs",
+    "conformance:providers": "node providers/conformance.mjs"
   },
   "devDependencies": {
     "typescript": "6.0.3"
@@ -44,7 +45,15 @@
     "./schemas/oex.json": "./schemas/oex.json",
     "./schemas/oed.json": "./schemas/oed.json",
     "./schemas/oex-media.json": "./schemas/oex-media.json",
-    "./schemas/spatial-scripting.json": "./schemas/spatial-scripting.json"
+    "./schemas/spatial-scripting.json": "./schemas/spatial-scripting.json",
+    "./providers": {
+      "types": "./types/providers.d.ts",
+      "import": "./providers/index.mjs"
+    },
+    "./providers/examples": {
+      "types": "./types/provider-examples.d.ts",
+      "import": "./providers/examples.mjs"
+    }
   },
   "types": "./types/index.d.ts",
   "bin": {
@@ -69,6 +78,8 @@
     "README.md",
     "conformance/runner.mjs",
     "conformance/cli.mjs",
-    "docs/usage/cli.md"
+    "docs/usage/cli.md",
+    "providers/",
+    "!providers/*.test.mjs"
   ]
 }

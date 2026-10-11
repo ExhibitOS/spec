@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "kind": "capture-producer",
+  "id": "org.exhibitos.example.file-artwork",
+  "version": "1",
+  "contract": "oes-artwork-v1"
+}
