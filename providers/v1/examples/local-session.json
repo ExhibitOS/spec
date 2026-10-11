@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "kind": "auth-provider",
+  "id": "org.exhibitos.example.local-session",
+  "version": "1",
+  "contract": "session-observation-v1"
+}

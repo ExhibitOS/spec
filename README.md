@@ -12,6 +12,11 @@ Consumer conformance and draft package distribution are available. Stable releas
 This repository must be usable without access to private Capture implementations
 or project operations. Only original synthetic assets may be used in its fixtures.
 
+## 검사 도구 사용법
+
+[규격 검사 시작하기](docs/usage/cli.md)에서 검사 대상별 명령, 버전 구분과
+선택형 `--help`/`--human` 안내를 읽습니다. 기본 JSON protocol은 유지합니다.
+
 ## Synthetic baseline
 
 Read [fixture scope, hashes and reproduction commands](fixtures/synthetic/README.md).
@@ -36,7 +41,7 @@ and [package/deployment ADR](docs/adr/0003-package-deployment-profile.md).
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.2` is an ESM Node package; wire contracts
+Package `@exhibitos/spec@0.1.0-draft.4` is an ESM Node package; wire contracts
 remain `1.0.0-draft.1` except the explicit OEX media profile `1.0.0-draft.2`. Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
 `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then
@@ -46,7 +51,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.2.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.4.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```
@@ -94,7 +99,7 @@ runtime publication, perform archive extraction or provision infrastructure.
 - `fixtures/synthetic/{sculpture.glb,painting.png,audio.wav,manifest.json,reference-scene.json}`
 
 Braces above describe choices, not literal API inputs. Other paths are rejected.
-The same 15 conformance cases check original GLB/PNG bytes, Exhibition,
+The same 18 conformance cases check original GLB/PNG bytes, Exhibition,
 publication/freeze, OEX and OED plus invalid version, scale, rights, dangling room,
 leap second, corrupted archive and raw credential fields. This is Node consumer
 conformance, not native iOS, image decoding, accessibility or browser evaluation.
@@ -107,3 +112,23 @@ extract files. See [media profile and caller safety budgets](oex/v1/media.md).
 `schemas/oex-media.json` is a separate export; original schema aliases and draft.1
 fixtures retain exact bytes. `OEX_VERSION` still means draft.1; use
 `OEX_MEDIA_VERSION` for draft.2. Both profiles are accepted without migration.
+
+## Optional Spatial Scripting v1
+
+Package draft.3 adopts the optional `org.exhibitos.runtime/spatial-scripting`
+namespace. Existing OES wire versions, reserved disabled `scripts`, original
+fixtures and OEX media draft.2 retain their previous semantics and bytes.
+Read [the public profile](oes/v1/spatial-scripting.md). The public Node validator
+checks a closed program, exact current Exhibition UUID targets and bounded JSON.
+A valid declaration does not grant publication rights, sound permission or host
+capabilities, and this package executes no actions. Browser hosts require their
+own independently verified runtime and explicit sound consent.
+`validateSpatialProgram`, `validateSpatialEvent`, `validateSpatialProfile`,
+`parseSpatialProgram`, `spatialScopeFor`, `SpatialProgram`, `SpatialEvent`,
+`SpatialAction` and `SpatialScope` are public exports. The schema alias is
+`schemas/spatial-scripting.json`; fixture locators additionally accept
+`oes/v1/examples/spatial-program.json` and `spatial-exhibition.json`.
+
+## Optional provider contracts
+
+[Auth session observation and Capture producer extension contracts](providers/v1/README.md) are additive opt-in `@exhibitos/spec/providers` interfaces. Two public synthetic OES producers use the existing artifact validator. These contracts neither grant resource authorization nor prove an alternate deployed authentication provider or physical Capture compatibility.
