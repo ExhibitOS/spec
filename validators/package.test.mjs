@@ -134,3 +134,16 @@ test('ZIP deflate payload cannot hide unused trailing compressed bytes',()=>{
   changed.writeUInt32LE(central+1,changed.length-6);
   assert.throws(()=>readBoundedZip(changed),/ZIP_DEFLATE_TRAILING_DATA/);
 });
+
+test('OED local and generic SSH accept exact nonzero packed content IDs while cloud targets and malformed IDs refuse',()=>{
+ for(const source of [local,ssh]){
+  const document=structuredClone(source);document.runtime.image='sha256:'+'a'.repeat(64);
+  assert.deepEqual(validateOed(document),{valid:true,errors:[]});
+  for(const image of ['sha256:'+'0'.repeat(64),'sha256:'+'A'.repeat(64),'sha256:'+'a'.repeat(63),'sha256:'+'a'.repeat(65),'SHA256:'+'a'.repeat(64),'sha256:'+'a'.repeat(64)+'\n','platform:latest']){
+   const changed=structuredClone(document);changed.runtime.image=image;has(validateOed(changed),'SCHEMA_INVALID');
+  }
+  for(const type of ['aws','azure','gcp','cloud']){
+   const changed=structuredClone(document);changed.target={type};has(validateOed(changed),'SCHEMA_INVALID');
+  }
+ }
+});

@@ -17,7 +17,13 @@ inline environment values, passwords, tokens and secret-value fields are rejecte
 
 Target is `local-compose` or a typed `generic-ssh` host/port/user with a key reference.
 Runtime records a digest-pinned OCI image, HTTP port and bounded replicas, optionally
-a registry secret reference. Storage is PostgreSQL host/port/database/user with a
+a registry secret reference. For these existing local-compose/generic-ssh targets,
+the normal local packager's exact nonzero lowercase `sha256:<64 hex>` content ID
+is also accepted; other targets do not acquire this local representation. Existing
+repository@sha256 documents and the exact draft version remain compatible. Producers
+can retain the approved content ID unchanged rather than inventing a registry digest.
+Consumers must adopt this additive draft-schema revision before accepting that input;
+no stable-version migration, remote image authenticity or deployment is implied. Storage is PostgreSQL host/port/database/user with a
 password reference, plus relative filesystem assets or HTTPS S3-compatible endpoint/
 bucket with access-key and secret-key references. Provider adapters later validate
 reachability, compatibility, filesystem permissions and supported backend behavior.
