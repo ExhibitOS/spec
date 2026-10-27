@@ -13,3 +13,6 @@ export function validateOex(bytes) {
 
 export { SPATIAL_SCRIPTING_NAMESPACE, SPATIAL_SCRIPTING_VERSION, validateSpatialProgram, validateSpatialEvent, validateSpatialProfile, parseSpatialProgram, spatialScopeFor } from './validators/spatial-scripting.mjs';
 export {SPACE_STILL_NAMESPACE,MAX_SPACE_STILL_BYTES,MAX_SPACE_STILL_PIXELS,MAX_SPACE_STILL_DIMENSION,validateSpaceStillInventory,spaceStillFor} from './validators/space-still.mjs';
+
+export {FURNISHING_NAMESPACE,OEX_FURNISHING_VERSION,validateFurnishingInventory,packageFurnishingAssetManifest,packageFurnishingNoticeManifest} from './validators/furnishings.mjs';
+export {packageCompleteAssetManifest} from './validators/package.mjs';

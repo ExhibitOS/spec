@@ -136,3 +136,5 @@ own independently verified runtime and explicit sound consent.
 ## Optional entrance space still
 
 [Space-still version1](oes/extensions/space-still.md) adds one separately inventoried, rights-bound PNG through an opt-in extension. OES/Draft1 schemas and audio meanings are unchanged. An archive containing the extension uses explicit OEX `1.0.0-draft.4`; ordinary profile1/2 fixtures remain unchanged. This source line does not include the separately frozen experimental furnishing profile3. An unsupported consumer rejects the new profile rather than dropping its asset.
+
+The opt-in OEX `1.0.0-draft.6` carries used furnishing models in the existing furnishing-visuals namespace, with typed existing bench, pedestal, light or opening hosts and exact selected UTF-8 CC0 notice resources. It composes with the existing space-still and floor resource inventories. Catalogue eligibility, functional placement, rendering and mobile budgets remain consumer responsibilities; a catalogue record alone does not qualify those behaviors. Older profile schemas, fixtures and default exports retain their original versions and bytes.

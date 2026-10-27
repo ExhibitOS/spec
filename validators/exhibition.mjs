@@ -1,3 +1,4 @@
+import {validateFurnishingInventory} from './furnishings.mjs';
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 ExhibitOS contributors
 import { validateSpatialProfile } from './spatial-scripting.mjs';
@@ -59,7 +60,7 @@ function registry(items,path,errors){const map=new Map();items.forEach((item,ind
 export function assetInventory(revision) {
   const map=new Map();
   const still=spaceStillFor(revision);
-  for(const asset of [...revision.artworks.flatMap(artwork=>artwork.assets),...revision.mediaAssets,...(still?[still]:[])])map.set(key(asset.id),{id:asset.id,path:asset.path,bytes:asset.bytes,sha256:asset.sha256});
+  for(const asset of [...revision.artworks.flatMap(artwork=>artwork.assets),...revision.mediaAssets,...(still?[still]:[]),...validateFurnishingInventory(revision).assets])map.set(key(asset.id),{id:asset.id,path:asset.path,bytes:asset.bytes,sha256:asset.sha256});
   return [...map.values()].sort((a,b)=>key(a.id)<key(b.id)?-1:key(a.id)>key(b.id)?1:0);
 }
 export function validateExhibition(revision,{publicationTime}={}) {
@@ -68,7 +69,7 @@ export function validateExhibition(revision,{publicationTime}={}) {
   if(!revisionSchema(revision))return result(schemaErrors(revisionSchema));
   const still=validateSpaceStillInventory(revision,{publicationTime});if(!still.valid)return result(still.errors);
   if(Buffer.byteLength(sortedJson(revision))>1048576)return result([issue('DOCUMENT_LIMIT','','Revision exceeds 1MiB')]);
-  const errors=[];if(publicationTime!==undefined&&(!utcSchema(publicationTime)||!Number.isFinite(Date.parse(publicationTime))))errors.push(issue('INVALID_PUBLICATION_TIME','/publicationTime','Publication time must match the restricted UTC profile'));
+  const errors=[...validateFurnishingInventory(revision).errors];if(publicationTime!==undefined&&(!utcSchema(publicationTime)||!Number.isFinite(Date.parse(publicationTime))))errors.push(issue('INVALID_PUBLICATION_TIME','/publicationTime','Publication time must match the restricted UTC profile'));
   checkTemporal(revision.createdAt,'/createdAt',errors);
   const maps={};for(const name of ['rooms','surfaces','openings','placements','lights','navigation','mediaAssets','audioZones','annotations','scripts'])maps[name]=registry(revision[name],'/'+name,errors);
   const artworks=new Map(),allAssets=new Map(),paths=new Map();
@@ -193,6 +194,7 @@ export function sealDraft(draft) {
 export async function validateExhibitionFiles(revision,root,options={}) {
   const checked=validateExhibition(revision,options);if(!checked.valid)return checked;
   const errors=[],seen=new Set();
+  if(validateFurnishingInventory(revision).assets.length)errors.push(issue('FURNISHING_BINARY_VALIDATION_UNSUPPORTED','/extensions/org.exhibitos.studio~1furnishing-visuals','Use complete OEX verification for furnishing GLB and notice integrity'));
   for(const [index,artwork]of revision.artworks.entries()) {
     const fingerprint=sortedJson(artwork.assets);if(seen.has(fingerprint))continue;seen.add(fingerprint);
     const files=await validateArtworkFiles(artwork,root,options);errors.push(...files.errors.map(error=>({...error,path:`/artworks/${index}`+error.path})));
