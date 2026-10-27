@@ -1,0 +1,78 @@
+{
+  "formatVersion": "1.0.0-draft.4",
+  "kind": "oex-manifest",
+  "oesArtworkVersion": "1.0.0-draft.1",
+  "oesExhibitionVersion": "1.0.0-draft.1",
+  "createdAt": "2026-10-03T09:00:00Z",
+  "generator": {
+    "name": "ExhibitOS original synthetic space-still fixture",
+    "version": "4"
+  },
+  "exhibition": {
+    "path": "exhibition.json",
+    "id": "50000000-0000-4000-8000-000000000001",
+    "revisionId": "50000000-0000-4000-8000-000000000141",
+    "bytes": 27162,
+    "sha256": "0a8cf96981b6c7689becb782dc82704abdfd79a10c4c142952ad45440b765ed1",
+    "revisionSha256": "f2cb2ec992f201e55c79c426d72181d9dbe950128051be00cffbc88b903e2fe0",
+    "hashProfile": "oes-sorted-json-v1"
+  },
+  "assets": [
+    {
+      "id": "20000000-0000-4000-8000-000000000001",
+      "path": "assets/sculpture.glb",
+      "artifactPath": "sculpture.glb",
+      "mime": "model/gltf-binary",
+      "bytes": 1516,
+      "sha256": "1e4e53565fdbc5a71b1aaa83d6b25df6e8025add2f08b35fdca20475fbbca460",
+      "rightsReferences": [
+        "exhibition.json#/artworks/0/rights"
+      ],
+      "provenanceReferences": [
+        "exhibition.json#/artworks/0/provenance"
+      ],
+      "kind": "artwork"
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000002",
+      "path": "assets/painting.png",
+      "artifactPath": "painting.png",
+      "mime": "image/png",
+      "bytes": 196960,
+      "sha256": "33035fadc694f8a64d89d07425a2ed0babb9352208cf34aab657ed5922a55fe9",
+      "rightsReferences": [
+        "exhibition.json#/artworks/1/rights"
+      ],
+      "provenanceReferences": [
+        "exhibition.json#/artworks/1/provenance"
+      ],
+      "kind": "artwork"
+    },
+    {
+      "id": "50000000-0000-4000-8000-000000000122",
+      "kind": "media",
+      "path": "assets/media/synthetic/audio.wav",
+      "artifactPath": "media/synthetic/audio.wav",
+      "mime": "audio/wav",
+      "bytes": 1644,
+      "sha256": "c726d333dd159a31423f3480dbb1c5c4a9dfcd30efe1f7e12ade390dc92e8908",
+      "rightsReferences": [
+        "exhibition.json#/mediaAssets/0/rights"
+      ],
+      "provenanceReferences": []
+    },
+    {
+      "id": "50000000-0000-4000-8000-000000000142",
+      "kind": "space-still",
+      "path": "assets/space-still/synthetic/room.png",
+      "artifactPath": "space-still/synthetic/room.png",
+      "mime": "image/png",
+      "bytes": 2396,
+      "sha256": "5d513e6f98c2a16e8e10d0022403a3c1f85cab0a89e5d955e21c0ae72644698c",
+      "rightsReferences": [
+        "exhibition.json#/extensions/org.exhibitos.viewer~1space-still/asset/rights"
+      ],
+      "provenanceReferences": []
+    }
+  ]
+}

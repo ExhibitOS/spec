@@ -10,11 +10,15 @@ import gltfValidator from 'gltf-validator';
 import { readBoundedZip, safeArchivePath, ZIP_LIMITS } from './zip.mjs';
 import { validateExhibition,revisionHash } from './exhibition.mjs';
 import { validateRights } from './artwork.mjs';
+import {SPACE_STILL_NAMESPACE,spaceStillFor} from './space-still.mjs';
+import {validSpaceStillPng} from './space-still-png.mjs';
 export const OEX_MEDIA_VERSION='1.0.0-draft.2';
+export const OEX_SPACE_STILL_VERSION='1.0.0-draft.4';
 export const OEX_VERSION='1.0.0-draft.1',OED_VERSION='1.0.0-draft.1';
 const [manifestSchema,deploymentSchema,mediaManifestSchema]=await Promise.all(['../oex/v1/manifest.schema.json','../oed/v1/deployment.schema.json','../oex/v1/media-manifest.schema.json'].map(async name=>JSON.parse(await readFile(new URL(name,import.meta.url),'utf8'))));
 const ajv=new Ajv2020({strict:true,allErrors:true,validateFormats:true,coerceTypes:false,useDefaults:false,removeAdditional:false});addFormats(ajv,['uuid','date-time']);
 const validateMediaManifest=ajv.compile(mediaManifestSchema);
+const validateSpaceStillManifest=ajv.compile(JSON.parse(await readFile(new URL('../oex/v1/space-still-manifest.schema.json',import.meta.url),'utf8')));
 const validateManifest=ajv.compile(manifestSchema),validateDeployment=ajv.compile(deploymentSchema),validateUtc=ajv.compile(manifestSchema.properties.createdAt);
 const issue=(code,path,message)=>({code,path,message});
 const result=errors=>({valid:errors.length===0,errors:errors.slice(0,100)});
@@ -22,14 +26,15 @@ const schemaErrors=validate=>validate.errors.slice(0,100).map(error=>issue('SCHE
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function parseJson(bytes) {if(!bytes||bytes.length>1048576)throw new Error('JSON_DOCUMENT_LIMIT');return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
 export function validateOexManifest(document) {
-  if(![OEX_VERSION,OEX_MEDIA_VERSION].includes(document?.formatVersion))return result([issue('UNSUPPORTED_VERSION','/formatVersion','Expected '+OEX_VERSION)]);
+  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION].includes(document?.formatVersion))return result([issue('UNSUPPORTED_VERSION','/formatVersion','Expected supported exact OEX version')]);
   try{revisionHash(document);}catch(error){return result([issue(['NON_JSON_VALUE','JSON_LIMIT','DOCUMENT_LIMIT'].includes(error.message)?error.message:'INVALID_INPUT','','Expected bounded plain JSON')]);}
-  const validator=document.formatVersion===OEX_MEDIA_VERSION?validateMediaManifest:validateManifest;
+  const validator=document.formatVersion===OEX_SPACE_STILL_VERSION?validateSpaceStillManifest:document.formatVersion===OEX_MEDIA_VERSION?validateMediaManifest:validateManifest;
   if(!validator(document))return result(schemaErrors(validator));
   const errors=[];
   if(!Number.isFinite(Date.parse(document.createdAt)))errors.push(issue('INVALID_UTC_TIME','/createdAt','Expected a finite UTC instant'));
   const paths=new Set(),ids=new Set();
   document.assets.forEach((asset,i)=>{
+    if(asset.kind==='space-still'&&asset.mime!=='image/png')errors.push(issue('SPACE_STILL_MIME',`/assets/${i}/mime`,'Space still must be PNG'));
     if(paths.has(asset.path.toLowerCase()))errors.push(issue('DUPLICATE_ASSET_PATH',`/assets/${i}/path`,'Package paths must be unique'));paths.add(asset.path.toLowerCase());
     if(ids.has(asset.id.toLowerCase()))errors.push(issue('DUPLICATE_ASSET_ID',`/assets/${i}/id`,'Package asset IDs must be unique'));ids.add(asset.id.toLowerCase());
     if(asset.path!=='assets/'+asset.artifactPath)errors.push(issue('ASSET_LAYOUT_MISMATCH',`/assets/${i}/path`,'Asset path must be assets/ plus artifact-relative path'));
@@ -74,13 +79,17 @@ async function decodeOex(bytes) {
     revision.artworks.forEach((artwork,index)=>{if(exportTime<Date.parse(artwork.createdAt))errors.push(issue('EXPORT_BEFORE_ARTWORK_REVISION',`/artworks/${index}/createdAt`,'Export cannot precede an embedded artwork snapshot'));});
     if(revision.id!==manifest.exhibition.id||revision.revisionId!==manifest.exhibition.revisionId||revisionHash(revision)!==manifest.exhibition.revisionSha256)errors.push(issue('EXHIBITION_REVISION_MISMATCH','/exhibition','Manifest must bind the exact declared revision'));
     if(manifest.formatVersion===OEX_VERSION&&revision.mediaAssets.length)errors.push(issue('MEDIA_PACKAGE_UNSUPPORTED','/mediaAssets','This draft packages Artwork GLB/images; audio package verification is pending'));
-    if(revisionHash(manifest.formatVersion===OEX_MEDIA_VERSION?packageMediaAssetManifest(revision):packageAssetManifest(revision))!==revisionHash(manifest.assets))errors.push(issue('ASSET_MANIFEST_MISMATCH','/assets','Manifest inventory/rights/provenance pointers must match embedded snapshots exactly'));
+    const still=spaceStillFor(revision);
+    if(!!still!==(manifest.formatVersion===OEX_SPACE_STILL_VERSION))errors.push(issue('SPACE_STILL_PROFILE_UNSUPPORTED','/formatVersion','Explicit space-still profile4 is required only when still inventory is present'));
+    if(revisionHash(manifest.formatVersion===OEX_SPACE_STILL_VERSION?packageSpaceStillAssetManifest(revision):manifest.formatVersion===OEX_MEDIA_VERSION?packageMediaAssetManifest(revision):packageAssetManifest(revision))!==revisionHash(manifest.assets))errors.push(issue('ASSET_MANIFEST_MISMATCH','/assets','Manifest inventory/rights/provenance pointers must match embedded snapshots exactly'));
     revision.artworks.forEach((artwork,index)=>errors.push(...validateExportRights(artwork.rights,manifest.createdAt).errors.map(error=>({...error,path:`/artworks/${index}`+error.path}))));
-    if(manifest.formatVersion===OEX_MEDIA_VERSION)revision.mediaAssets.forEach((asset,index)=>errors.push(...validateExportRights(asset.rights,manifest.createdAt).errors.map(error=>({...error,path:`/mediaAssets/${index}`+error.path}))));
+    if(manifest.formatVersion!==OEX_VERSION)revision.mediaAssets.forEach((asset,index)=>errors.push(...validateExportRights(asset.rights,manifest.createdAt).errors.map(error=>({...error,path:`/mediaAssets/${index}`+error.path}))));
+    if(still)errors.push(...validateExportRights(still.rights,manifest.createdAt).errors.map(error=>({...error,path:'/extensions/org.exhibitos.viewer~1space-still/asset'+error.path})));
     for(const [index,asset]of manifest.assets.entries()) {
       const data=files.get(asset.path),path=`/assets/${index}`;
       if(data.length!==asset.bytes){errors.push(issue('ASSET_SIZE_MISMATCH',path,'Asset byte count differs'));continue;}
       if(hash(data)!==asset.sha256){errors.push(issue('ASSET_HASH_MISMATCH',path,'Asset exact SHA-256 differs'));continue;}
+      if(asset.kind==='space-still'){if(!validSpaceStillPng(data))errors.push(issue('SPACE_STILL_PNG_INVALID',path,'Expected bounded standalone PNG without ancillary metadata'));continue;}
       const signature={'model/gltf-binary':()=>data.toString('ascii',0,4)==='glTF','image/png':()=>data.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),'image/jpeg':()=>data[0]===255&&data[1]===216&&data[2]===255,'image/webp':()=>data.toString('ascii',0,4)==='RIFF'&&data.toString('ascii',8,12)==='WEBP'}[asset.mime];
       if(asset.mime==='audio/wav'){if(!validPcmWav(data))errors.push(issue('AUDIO_INVALID',path,'Expected bounded mono/stereo PCM16 WAV'));continue;}
       if(!signature||!signature()){errors.push(issue('MIME_SIGNATURE_MISMATCH',path,'Asset signature differs from MIME'));continue;}
@@ -105,7 +114,7 @@ export function validateOed(document) {
   return result(errors);
 }
 export function adaptOexManifest(document,targetVersion) {
-  if(![OEX_VERSION,OEX_MEDIA_VERSION].includes(targetVersion))return result([issue('UNSUPPORTED_TARGET_VERSION','','No adapter is registered for that target')]);
+  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION].includes(targetVersion))return result([issue('UNSUPPORTED_TARGET_VERSION','','No adapter is registered for that target')]);
   const checked=validateOexManifest(document);if(!checked.valid)return checked;
   if(document.formatVersion!==targetVersion)return result([issue('UNSUPPORTED_TARGET_VERSION','','No cross-profile migration adapter is registered')]);
   return {...checked,adapter:'identity-only-no-migration',document:structuredClone(document)};
@@ -116,6 +125,10 @@ export function packageMediaAssetManifest(revision) {
   const inventory=packageAssetManifest(revision).map(asset=>({...asset,kind:'artwork'}));
   revision.mediaAssets.forEach((asset,index)=>inventory.push({id:asset.id,kind:'media',path:'assets/'+asset.path,artifactPath:asset.path,mime:asset.mime,bytes:asset.bytes,sha256:asset.sha256,rightsReferences:[`exhibition.json#/mediaAssets/${index}/rights`],provenanceReferences:[]}));
   return inventory.sort((a,b)=>a.id.toLowerCase()<b.id.toLowerCase()?-1:a.id.toLowerCase()>b.id.toLowerCase()?1:0);
+}
+export function packageSpaceStillAssetManifest(revision){
+ const asset=spaceStillFor(revision);if(!asset)throw new OexError('SPACE_STILL_PROFILE_REQUIRED');
+ return [...packageMediaAssetManifest(revision),{id:asset.id,kind:'space-still',path:'assets/'+asset.path,artifactPath:asset.path,mime:asset.mime,bytes:asset.bytes,sha256:asset.sha256,rightsReferences:['exhibition.json#/extensions/org.exhibitos.viewer~1space-still/asset/rights'],provenanceReferences:[]}].sort((a,b)=>a.id.toLowerCase().localeCompare(b.id.toLowerCase()));
 }
 function validPcmWav(data) {
   // Independently implemented public profile, without codecs or metadata decoding.
@@ -150,10 +163,10 @@ export async function writeOex(exhibition,assets,options) {
     if(!(assets instanceof Map)||!options||typeof options!=='object')throw new OexError('INVALID_INPUT');
     // Validate before cloning/serializing and before allocating asset copies.
     const checked=validateExhibition(exhibition);if(!checked.valid)throw new OexError(checked.errors[0].code,checked.errors);
-    const revision=structuredClone(exhibition),inventory=packageMediaAssetManifest(revision);
+    const revision=structuredClone(exhibition),still=spaceStillFor(revision),inventory=still?packageSpaceStillAssetManifest(revision):packageMediaAssetManifest(revision);
     if(inventory.length>ZIP_LIMITS.files-2||assets.size!==inventory.length)throw new OexError('ARCHIVE_LAYOUT_MISMATCH');
     const revisionBytes=Buffer.from(JSON.stringify(revision)+'\n');if(revisionBytes.length>1048576)throw new OexError('JSON_DOCUMENT_LIMIT');
-    const manifest={formatVersion:OEX_MEDIA_VERSION,kind:'oex-manifest',oesArtworkVersion:'1.0.0-draft.1',oesExhibitionVersion:'1.0.0-draft.1',createdAt:options.createdAt,generator:structuredClone(options.generator),exhibition:{path:'exhibition.json',id:revision.id,revisionId:revision.revisionId,bytes:revisionBytes.length,sha256:hash(revisionBytes),revisionSha256:revisionHash(revision),hashProfile:'oes-sorted-json-v1'},assets:inventory};
+    const manifest={formatVersion:still?OEX_SPACE_STILL_VERSION:OEX_MEDIA_VERSION,kind:'oex-manifest',oesArtworkVersion:'1.0.0-draft.1',oesExhibitionVersion:'1.0.0-draft.1',createdAt:options.createdAt,generator:structuredClone(options.generator),exhibition:{path:'exhibition.json',id:revision.id,revisionId:revision.revisionId,bytes:revisionBytes.length,sha256:hash(revisionBytes),revisionSha256:revisionHash(revision),hashProfile:'oes-sorted-json-v1'},assets:inventory};
     const valid=validateOexManifest(manifest);if(!valid.valid)throw new OexError(valid.errors[0].code,valid.errors);
     const manifestBytes=Buffer.from(JSON.stringify(manifest)+'\n');if(manifestBytes.length>1048576)throw new OexError('JSON_DOCUMENT_LIMIT');
     const entries=[{name:'manifest.json',data:manifestBytes},{name:'exhibition.json',data:revisionBytes}];
