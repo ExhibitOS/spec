@@ -54,4 +54,4 @@ export function packageFurnishingNoticeManifest(revision: Exhibition): Furnishin
 export function packageFurnishingAssetManifest(revision: Exhibition): Array<OexFurnishingManifest['assets'][number]>;
 export function packageCompleteAssetManifest(revision: Exhibition): Array<OexFurnishingManifest['assets'][number]>;
 export const FURNISHING_NAMESPACE: 'org.exhibitos.studio/furnishing-visuals';
-export function validateFurnishingInventory(revision: unknown): ValidationResult & {assets: Array<{id:string;catalogId:string;catalogVersion:number;mime:'model/gltf-binary';path:string;bytes:number;sha256:string;rights:Record<string,JsonValue>;provenance:{sourceSha256:string;recipe:'original-v1'}}>};
+export function validateFurnishingInventory(revision: unknown): ValidationResult & {assets: Array<{id:string;catalogId:string;catalogVersion:number;mime:'model/gltf-binary';path:string;bytes:number;sha256:string;rights:Record<string,JsonValue>;provenance:{sourceSha256:string;recipe:'original-v1'|'omit-unused-tangent-v1'}}>};

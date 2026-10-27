@@ -47,3 +47,16 @@ test('ordinary output retains original profile and exact frozen bytes',async()=>
  const e=original.exhibition,assets=new Map(original.manifest.assets.map(a=>[a.artifactPath,original.files.get(a.path)]));
  const bytes=await writeOex(e,assets,options);assert.equal(bytes.equals(await readFile(new URL('../oex/v1/examples/synthetic-media.oex',import.meta.url))),true);
 });
+
+test('furnishing identity cannot shadow a composed E still in document or inventory admission',async()=>{
+ const still=await readOex(await readFile(new URL('../oex/v1/examples/synthetic-space-still.oex',import.meta.url)));
+ const e=revision(),value=e.extensions[NS],same=still.exhibition.extensions['org.exhibitos.viewer/space-still'].asset.id;
+ e.extensions['org.exhibitos.viewer/space-still']=structuredClone(still.exhibition.extensions['org.exhibitos.viewer/space-still']);
+ value.assets[0].id=same;value.assets[0].path=`furnishings/${same}/model.glb`;value.assets[0].rights.notice.path=`furnishings/${same}/LICENSE-NOTICE.txt`;value.bindings[0].assetId=same;
+ assert.equal(validateFurnishingInventory(e).valid,false);assert.equal(validateExhibition(e).valid,false);
+});
+
+test('the reviewed optional unused-tangent recipe retains a distinct original identity without relaxing original-v1',()=>{
+ const e=revision(),p=e.extensions[NS].assets[0].provenance;p.sourceSha256='1'.repeat(64);assert.equal(validateFurnishingInventory(e).valid,false);
+ p.recipe='omit-unused-tangent-v1';assert.equal(validateFurnishingInventory(e).valid,true);p.recipe='generic-repair';assert.equal(validateFurnishingInventory(e).valid,false);
+});
