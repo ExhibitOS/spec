@@ -33,7 +33,7 @@ export {SPACE_STILL_NAMESPACE,MAX_SPACE_STILL_BYTES,MAX_SPACE_STILL_PIXELS,MAX_S
 export type {SpaceStillAsset} from './space-still.js';
 export declare function packageSpaceStillAssetManifest(exhibition:Exhibition):OexSpaceStillManifest['assets'];
 export declare class OexError extends Error { readonly code: string; readonly errors: ValidationError[]; }
-export declare function readOex(bytes: Uint8Array): Promise<{manifest: OexManifest | OexMediaManifest | OexSpaceStillManifest | OexFloorResourceManifest; exhibition: Exhibition; files: Map<string, Uint8Array>}>;
+export declare function readOex(bytes: Uint8Array): Promise<{manifest: OexManifest | OexMediaManifest | OexSpaceStillManifest | OexFloorResourceManifest | OexFurnishingManifest; exhibition: Exhibition; files: Map<string, Uint8Array>}>;
 export declare function writeOex(exhibition: Exhibition, assets: Map<string, Uint8Array>, options: {createdAt: string; generator: {name: string; version: string}}): Promise<Uint8Array>;
 export declare function packageMediaAssetManifest(exhibition: Exhibition): OexMediaManifest['assets'];
 
