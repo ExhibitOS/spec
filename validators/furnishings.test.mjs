@@ -51,8 +51,8 @@ test('ordinary output retains original profile and exact frozen bytes',async()=>
 
 test('furnishing identity cannot shadow a composed E still in document or inventory admission',async()=>{
  const still=await readOex(await readFile(new URL('../oex/v1/examples/synthetic-space-still.oex',import.meta.url)));
- const e=revision(),value=e.extensions[NS],same=still.exhibition.extensions['org.exhibitos.viewer/space-still'].asset.id;
- e.extensions['org.exhibitos.viewer/space-still']=structuredClone(still.exhibition.extensions['org.exhibitos.viewer/space-still']);
+ const e=structuredClone(still.exhibition),value=revision().extensions[NS],same=still.exhibition.extensions['org.exhibitos.viewer/space-still'].asset.id;
+ value.bindings[0].hostId=e.placements[0].id;e.extensions[NS]=value;assert.equal(validateExhibition(e).valid,true);
  value.assets[0].id=same;value.assets[0].path=`furnishings/${same}/model.glb`;value.assets[0].rights.notice.path=`furnishings/${same}/LICENSE-NOTICE.txt`;value.bindings[0].assetId=same;
  assert.equal(validateFurnishingInventory(e).valid,false);assert.equal(validateExhibition(e).valid,false);
 });
@@ -69,4 +69,8 @@ test('profile6 composes with an existing still and admits the exact selected flo
  const parsed=await readOex(await writeOex(e,assets,options));assert.equal(parsed.manifest.formatVersion,'1.0.0-draft.6');assert.equal(parsed.manifest.assets.filter(a=>a.kind==='space-still').length,1);
  const floors=structuredClone(e);floors.surfaces=floors.surfaces.filter(s=>s.type!=='floor');floors.extensions['org.exhibitos.studio/floors']={version:1,bindings:[{target:{kind:'room-base',roomId:floors.rooms[0].id},preset:'wood',repeatMeters:[1.8,1.8],rotation:0}]};
  const m=structuredClone(parsed.manifest);m.floorResources=packageFloorResourceManifest(floors);assert.equal(m.floorResources.length,4);assert.equal(validateOexManifest(m).valid,true);
+});
+
+test('opaque unrelated bench extension data cannot throw during furnishing identity checks',()=>{
+ for(const benches of [{},null,[null,2,{}]]){const e=revision();e.extensions['org.exhibitos.studio/benches']={benches};assert.equal(validateFurnishingInventory(e).valid,true);assert.equal(validateExhibition(e).valid,true);}
 });
