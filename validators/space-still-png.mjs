@@ -4,8 +4,15 @@ import {crc32} from '../scripts/generate-fixtures.mjs';
 import {MAX_SPACE_STILL_BYTES,MAX_SPACE_STILL_PIXELS,MAX_SPACE_STILL_DIMENSION} from './space-still.mjs';
 /** Independent bounded PNG profile check; Platform still isolates actual decoding. */
 export function validSpaceStillPng(bytes){
+ return validStandalonePng(bytes,{bytes:MAX_SPACE_STILL_BYTES,pixels:MAX_SPACE_STILL_PIXELS,dimension:MAX_SPACE_STILL_DIMENSION,rgbOnly:false,srgb:true});
+}
+/** Exact registered RGB8 material maps, independent of cover still limits. */
+export function validSurfaceMaterialPng(bytes){
+ return validStandalonePng(bytes,{bytes:8*1024*1024,pixels:4194304,dimension:2048,rgbOnly:true,srgb:false});
+}
+function validStandalonePng(bytes,limits){
  try{
-  if(bytes.length<57||bytes.length>MAX_SPACE_STILL_BYTES||!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return false;
+  if(bytes.length<57||bytes.length>limits.bytes||!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return false;
   let cursor=8,width=0,height=0,channels=0,srgb=false,idat=false,ended=false,count=0;const compressed=[];
   while(cursor<bytes.length){
    if(++count>256||cursor+12>bytes.length||ended)return false;
@@ -15,9 +22,9 @@ export function validSpaceStillPng(bytes){
    if(cursor===8){
     if(name!=='IHDR'||length!==13)return false;
     width=body.readUInt32BE(0);height=body.readUInt32BE(4);channels=body[9]===2?3:body[9]===6?4:0;
-    if(!width||!height||width>MAX_SPACE_STILL_DIMENSION||height>MAX_SPACE_STILL_DIMENSION||width*height>MAX_SPACE_STILL_PIXELS||!channels||body[8]!==8||body[10]||body[11]||body[12])return false;
+    if(!width||!height||width>limits.dimension||height>limits.dimension||width*height>limits.pixels||!channels||limits.rgbOnly&&channels!==3||body[8]!==8||body[10]||body[11]||body[12])return false;
    }else if(name==='sRGB'){
-    if(srgb||idat||length!==1||body[0]>3)return false;srgb=true;
+    if(!limits.srgb||srgb||idat||length!==1||body[0]>3)return false;srgb=true;
    }else if(name==='IDAT'){idat=true;compressed.push(body);}
    else if(name==='IEND'){if(length||!idat||next!==bytes.length)return false;ended=true;}
    else return false;

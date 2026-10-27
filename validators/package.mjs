@@ -15,6 +15,8 @@ import { validateRights } from './artwork.mjs';
 import {SPACE_STILL_NAMESPACE,spaceStillFor} from './space-still.mjs';
 import {validSpaceStillPng} from './space-still-png.mjs';
 import {OEX_FLOOR_RESOURCE_VERSION,packageFloorResourceManifest,FLOOR_RESOURCE_FILES} from './floor-resources.mjs';
+import {OEX_SURFACE_MATERIAL_VERSION,packageSurfaceMaterialManifest,SURFACE_MATERIAL_FILES} from './surface-material-resources.mjs';
+import {validSurfaceMaterialPng} from './space-still-png.mjs';
 export {OEX_FLOOR_RESOURCE_VERSION,packageFloorResourceManifest} from './floor-resources.mjs';
 export const OEX_MEDIA_VERSION='1.0.0-draft.2';
 export const OEX_SPACE_STILL_VERSION='1.0.0-draft.4';
@@ -24,6 +26,7 @@ const ajv=new Ajv2020({strict:true,allErrors:true,validateFormats:true,coerceTyp
 const validateMediaManifest=ajv.compile(mediaManifestSchema);
 const validateSpaceStillManifest=ajv.compile(JSON.parse(await readFile(new URL('../oex/v1/space-still-manifest.schema.json',import.meta.url),'utf8')));
 const validateFurnishingManifest=ajv.compile(JSON.parse(await readFile(new URL('../oex/v1/furnishing-manifest.schema.json',import.meta.url),'utf8')));
+const validateSurfaceMaterialManifest=ajv.compile(JSON.parse(await readFile(new URL('../oex/v1/surface-material-manifest.schema.json',import.meta.url),'utf8')));
 const validateFloorResourceManifest=ajv.compile(JSON.parse(await readFile(new URL('../oex/v1/floor-resource-manifest.schema.json',import.meta.url),'utf8')));
 const validateManifest=ajv.compile(manifestSchema),validateDeployment=ajv.compile(deploymentSchema),validateUtc=ajv.compile(manifestSchema.properties.createdAt);
 const issue=(code,path,message)=>({code,path,message});
@@ -32,9 +35,9 @@ const schemaErrors=validate=>validate.errors.slice(0,100).map(error=>issue('SCHE
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function parseJson(bytes) {if(!bytes||bytes.length>1048576)throw new Error('JSON_DOCUMENT_LIMIT');return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
 export function validateOexManifest(document) {
-  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION].includes(document?.formatVersion))return result([issue('UNSUPPORTED_VERSION','/formatVersion','Expected supported exact OEX version')]);
+  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION].includes(document?.formatVersion))return result([issue('UNSUPPORTED_VERSION','/formatVersion','Expected supported exact OEX version')]);
   try{revisionHash(document);}catch(error){return result([issue(['NON_JSON_VALUE','JSON_LIMIT','DOCUMENT_LIMIT'].includes(error.message)?error.message:'INVALID_INPUT','','Expected bounded plain JSON')]);}
-  const validator=document.formatVersion===OEX_FURNISHING_VERSION?validateFurnishingManifest:document.formatVersion===OEX_FLOOR_RESOURCE_VERSION?validateFloorResourceManifest:document.formatVersion===OEX_SPACE_STILL_VERSION?validateSpaceStillManifest:document.formatVersion===OEX_MEDIA_VERSION?validateMediaManifest:validateManifest;
+  const validator=document.formatVersion===OEX_SURFACE_MATERIAL_VERSION?validateSurfaceMaterialManifest:document.formatVersion===OEX_FURNISHING_VERSION?validateFurnishingManifest:document.formatVersion===OEX_FLOOR_RESOURCE_VERSION?validateFloorResourceManifest:document.formatVersion===OEX_SPACE_STILL_VERSION?validateSpaceStillManifest:document.formatVersion===OEX_MEDIA_VERSION?validateMediaManifest:validateManifest;
   if(!validator(document))return result(schemaErrors(validator));
   const errors=[];
   if(!Number.isFinite(Date.parse(document.createdAt)))errors.push(issue('INVALID_UTC_TIME','/createdAt','Expected a finite UTC instant'));
@@ -54,6 +57,13 @@ export function validateOexManifest(document) {
     if(floorRoles.has(role))errors.push(issue('FLOOR_RESOURCE_DUPLICATE',`/floorResources/${i}`,'Duplicate pack role'));floorRoles.add(role);
     if(!safeArchivePath(resource.path)||!safeArchivePath(resource.artifactPath)||resource.path!=='resources/'+resource.artifactPath)errors.push(issue('FLOOR_RESOURCE_PATH',`/floorResources/${i}/path`,'Expected a safe declared resource path'));
     if(paths.has(resource.path.toLowerCase()))errors.push(issue('DUPLICATE_ASSET_PATH',`/floorResources/${i}/path`,'Package paths must be unique'));paths.add(resource.path.toLowerCase());
+  }
+  const materialRoles=new Set();
+  for(const [i,resource]of (document.materialResources??[]).entries()){
+    const known=SURFACE_MATERIAL_FILES.find(f=>f.packId===resource.packId&&f.packVersion===resource.packVersion&&f.role===resource.role),role=resource.packId+':'+resource.role;
+    if(!known||revisionHash(known)!==revisionHash(resource))errors.push(issue('SURFACE_MATERIAL_DESCRIPTOR',`/materialResources/${i}`,'Expected an exact registered map or notice descriptor'));
+    if(materialRoles.has(role))errors.push(issue('SURFACE_MATERIAL_DUPLICATE',`/materialResources/${i}`,'Duplicate material pack role'));materialRoles.add(role);
+    if(!safeArchivePath(resource.path)||!safeArchivePath(resource.artifactPath)||resource.path!=='resources/'+resource.artifactPath||paths.has(resource.path.toLowerCase()))errors.push(issue('SURFACE_MATERIAL_PATH',`/materialResources/${i}/path`,'Expected unique safe registered paths'));paths.add(resource.path.toLowerCase());
   }
   const noticeIds=new Set();
   for(const [i,notice]of (document.furnishingNotices??[]).entries()){
@@ -90,7 +100,7 @@ async function decodeOex(bytes) {
     const files=readBoundedZip(bytes);
     const manifest=parseJson(files.get('manifest.json')),checked=validateOexManifest(manifest);if(!checked.valid)return {checked};
     if([...files.keys()][0]!=='manifest.json')return {checked:result([issue('MANIFEST_ORDER','','manifest.json must be the first ZIP file')])};
-    const expectedNames=['manifest.json','exhibition.json',...manifest.assets.map(asset=>asset.path),...(manifest.floorResources??[]).map(resource=>resource.path),...(manifest.furnishingNotices??[]).map(resource=>resource.path)];
+    const expectedNames=['manifest.json','exhibition.json',...manifest.assets.map(asset=>asset.path),...(manifest.floorResources??[]).map(resource=>resource.path),...(manifest.furnishingNotices??[]).map(resource=>resource.path),...(manifest.materialResources??[]).map(resource=>resource.path)];
     if(files.size!==expectedNames.length||expectedNames.some(name=>!files.has(name)))return {checked:result([issue('ARCHIVE_LAYOUT_MISMATCH','','Only manifest, exhibition and declared asset files are permitted')])};
     const exhibitionBytes=files.get('exhibition.json');
     if(exhibitionBytes.length!==manifest.exhibition.bytes||hash(exhibitionBytes)!==manifest.exhibition.sha256)return {checked:result([issue('EXHIBITION_FILE_MISMATCH','/exhibition','Exhibition exact bytes/hash must match manifest')])};
@@ -101,11 +111,11 @@ async function decodeOex(bytes) {
     if(revision.id!==manifest.exhibition.id||revision.revisionId!==manifest.exhibition.revisionId||revisionHash(revision)!==manifest.exhibition.revisionSha256)errors.push(issue('EXHIBITION_REVISION_MISMATCH','/exhibition','Manifest must bind the exact declared revision'));
     if(manifest.formatVersion===OEX_VERSION&&revision.mediaAssets.length)errors.push(issue('MEDIA_PACKAGE_UNSUPPORTED','/mediaAssets','This draft packages Artwork GLB/images; audio package verification is pending'));
     const still=spaceStillFor(revision);
-    if(still&&![OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION].includes(manifest.formatVersion)||!still&&manifest.formatVersion===OEX_SPACE_STILL_VERSION)errors.push(issue('SPACE_STILL_PROFILE_UNSUPPORTED','/formatVersion','Explicit space-still profile4 is required only when still inventory is present'));
-    if(Object.hasOwn(revision.extensions??{},FURNISHING_NAMESPACE)&&manifest.formatVersion!==OEX_FURNISHING_VERSION)errors.push(issue('FURNISHING_PACKAGE_UNSUPPORTED','/formatVersion','Furnishings require exact opt-in profile6'));
+    if(still&&![OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION].includes(manifest.formatVersion)||!still&&manifest.formatVersion===OEX_SPACE_STILL_VERSION)errors.push(issue('SPACE_STILL_PROFILE_UNSUPPORTED','/formatVersion','Explicit space-still profile4 is required only when still inventory is present'));
+    if(Object.hasOwn(revision.extensions??{},FURNISHING_NAMESPACE)&&![OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION].includes(manifest.formatVersion))errors.push(issue('FURNISHING_PACKAGE_UNSUPPORTED','/formatVersion','Furnishings require exact opt-in profile6'));
     if(manifest.formatVersion===OEX_FURNISHING_VERSION&&!validateFurnishingInventory(revision).assets.length)errors.push(issue('FURNISHING_PROFILE_REQUIRED','/formatVersion','Profile6 requires placed furnishings'));
-    if(revisionHash(manifest.formatVersion===OEX_FURNISHING_VERSION?packageCompleteAssetManifest(revision):still?packageSpaceStillAssetManifest(revision):manifest.formatVersion!==OEX_VERSION?packageMediaAssetManifest(revision):packageAssetManifest(revision))!==revisionHash(manifest.assets))errors.push(issue('ASSET_MANIFEST_MISMATCH','/assets','Manifest inventory/rights/provenance pointers must match embedded snapshots exactly'));
-    if([OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION].includes(manifest.formatVersion)){
+    if(revisionHash([OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION].includes(manifest.formatVersion)?packageCompleteAssetManifest(revision):still?packageSpaceStillAssetManifest(revision):manifest.formatVersion!==OEX_VERSION?packageMediaAssetManifest(revision):packageAssetManifest(revision))!==revisionHash(manifest.assets))errors.push(issue('ASSET_MANIFEST_MISMATCH','/assets','Manifest inventory/rights/provenance pointers must match embedded snapshots exactly'));
+    if([OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION].includes(manifest.formatVersion)){
       const expected=packageFloorResourceManifest(revision);
       if(manifest.formatVersion===OEX_FLOOR_RESOURCE_VERSION&&!expected.length||revisionHash(expected)!==revisionHash(manifest.floorResources??[]))errors.push(issue('FLOOR_RESOURCE_MANIFEST_MISMATCH','/floorResources','Selected known pack versions, roles, notice and exact bytes must match'));
       for(const [i,resource]of (manifest.floorResources??[]).entries()){
@@ -115,11 +125,22 @@ async function decodeOex(bytes) {
         else if(!validSpaceStillPng(data)||data.readUInt32BE(16)!==1024||data.readUInt32BE(20)!==1024||data[25]!==2)errors.push(issue('FLOOR_RESOURCE_PNG',path,'Expected admitted bounded RGB8 floor map'));
       }
     }
+    const materialResources=packageSurfaceMaterialManifest(revision);
+    if(materialResources.length&&manifest.formatVersion!==OEX_SURFACE_MATERIAL_VERSION)errors.push(issue('SURFACE_MATERIAL_PROFILE_UNSUPPORTED','/formatVersion','Selected material maps require opt-in profile7'));
+    if(manifest.formatVersion===OEX_SURFACE_MATERIAL_VERSION){
+      if(!materialResources.length||revisionHash(materialResources)!==revisionHash(manifest.materialResources))errors.push(issue('SURFACE_MATERIAL_MANIFEST_MISMATCH','/materialResources','All and only selected exact map and notice bytes are required'));
+      for(const [i,resource]of manifest.materialResources.entries()){
+        const data=files.get(resource.path),path=`/materialResources/${i}`;
+        if(!data||data.length!==resource.bytes||hash(data)!==resource.sha256){errors.push(issue('SURFACE_MATERIAL_INTEGRITY',path,'Material exact bytes/hash differ'));continue;}
+        if(resource.role==='notice'){try{const text=new TextDecoder('utf-8',{fatal:true}).decode(data);if(data.length>8192||!text.trim()||text.includes('\0'))throw Error();}catch{errors.push(issue('SURFACE_MATERIAL_NOTICE',path,'Expected bounded nonempty UTF8 notice'));}}
+        else if(!validSurfaceMaterialPng(data)||data.readUInt32BE(16)!==2048||data.readUInt32BE(20)!==2048)errors.push(issue('SURFACE_MATERIAL_PNG',path,'Expected registered metadata-free RGB8 2K map'));
+      }
+    }
     revision.artworks.forEach((artwork,index)=>errors.push(...validateExportRights(artwork.rights,manifest.createdAt).errors.map(error=>({...error,path:`/artworks/${index}`+error.path}))));
-    if(manifest.formatVersion===OEX_FURNISHING_VERSION){
+    if([OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION].includes(manifest.formatVersion)){
       const expected=packageFurnishingNoticeManifest(revision);
-      if(revisionHash(expected)!==revisionHash(manifest.furnishingNotices))errors.push(issue('FURNISHING_NOTICE_MANIFEST_MISMATCH','/furnishingNotices','Exact selected notice inventory required'));
-      for(const [i,notice]of manifest.furnishingNotices.entries()){
+      if(revisionHash(expected)!==revisionHash(manifest.furnishingNotices??[]))errors.push(issue('FURNISHING_NOTICE_MANIFEST_MISMATCH','/furnishingNotices','Exact selected notice inventory required'));
+      for(const [i,notice]of (manifest.furnishingNotices??[]).entries()){
         const data=files.get(notice.path),path=`/furnishingNotices/${i}`;
         if(!data||data.length!==notice.bytes||hash(data)!==notice.sha256)errors.push(issue('FURNISHING_NOTICE_INTEGRITY',path,'Notice bytes or SHA differs'));
         else {try{const text=new TextDecoder('utf-8',{fatal:true}).decode(data);if(!text.trim()||text.includes('\0'))throw Error('INVALID_NOTICE');}catch{errors.push(issue('FURNISHING_NOTICE_UTF8',path,'Expected bounded nonempty UTF8 text'));}}
@@ -157,7 +178,7 @@ export function validateOed(document) {
   return result(errors);
 }
 export function adaptOexManifest(document,targetVersion) {
-  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION].includes(targetVersion))return result([issue('UNSUPPORTED_TARGET_VERSION','','No adapter is registered for that target')]);
+  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION].includes(targetVersion))return result([issue('UNSUPPORTED_TARGET_VERSION','','No adapter is registered for that target')]);
   const checked=validateOexManifest(document);if(!checked.valid)return checked;
   if(document.formatVersion!==targetVersion)return result([issue('UNSUPPORTED_TARGET_VERSION','','No cross-profile migration adapter is registered')]);
   return {...checked,adapter:'identity-only-no-migration',document:structuredClone(document)};
@@ -207,10 +228,10 @@ export async function writeOex(exhibition,assets,options) {
     if(!(assets instanceof Map)||!options||typeof options!=='object')throw new OexError('INVALID_INPUT');
     // Validate before cloning/serializing and before allocating asset copies.
     const checked=validateExhibition(exhibition);if(!checked.valid)throw new OexError(checked.errors[0].code,checked.errors);
-    const revision=structuredClone(exhibition),still=spaceStillFor(revision),furnishings=validateFurnishingInventory(revision).assets,inventory=furnishings.length?packageCompleteAssetManifest(revision):still?packageSpaceStillAssetManifest(revision):packageMediaAssetManifest(revision),floorResources=packageFloorResourceManifest(revision),furnishingNotices=packageFurnishingNoticeManifest(revision),allInventory=[...inventory,...floorResources,...furnishingNotices];
+    const revision=structuredClone(exhibition),still=spaceStillFor(revision),furnishings=validateFurnishingInventory(revision).assets,inventory=furnishings.length?packageCompleteAssetManifest(revision):still?packageSpaceStillAssetManifest(revision):packageMediaAssetManifest(revision),floorResources=packageFloorResourceManifest(revision),furnishingNotices=packageFurnishingNoticeManifest(revision),materialResources=packageSurfaceMaterialManifest(revision),allInventory=[...inventory,...floorResources,...furnishingNotices,...materialResources];
     if(allInventory.length>ZIP_LIMITS.files-2||assets.size!==allInventory.length)throw new OexError('ARCHIVE_LAYOUT_MISMATCH');
     const revisionBytes=Buffer.from(JSON.stringify(revision)+'\n');if(revisionBytes.length>1048576)throw new OexError('JSON_DOCUMENT_LIMIT');
-    const manifest={formatVersion:furnishings.length?OEX_FURNISHING_VERSION:floorResources.length?OEX_FLOOR_RESOURCE_VERSION:still?OEX_SPACE_STILL_VERSION:OEX_MEDIA_VERSION,kind:'oex-manifest',oesArtworkVersion:'1.0.0-draft.1',oesExhibitionVersion:'1.0.0-draft.1',createdAt:options.createdAt,generator:structuredClone(options.generator),exhibition:{path:'exhibition.json',id:revision.id,revisionId:revision.revisionId,bytes:revisionBytes.length,sha256:hash(revisionBytes),revisionSha256:revisionHash(revision),hashProfile:'oes-sorted-json-v1'},assets:inventory,...(floorResources.length?{floorResources}:{}),...(furnishings.length?{furnishingNotices}:{})};
+    const manifest={formatVersion:materialResources.length?OEX_SURFACE_MATERIAL_VERSION:furnishings.length?OEX_FURNISHING_VERSION:floorResources.length?OEX_FLOOR_RESOURCE_VERSION:still?OEX_SPACE_STILL_VERSION:OEX_MEDIA_VERSION,kind:'oex-manifest',oesArtworkVersion:'1.0.0-draft.1',oesExhibitionVersion:'1.0.0-draft.1',createdAt:options.createdAt,generator:structuredClone(options.generator),exhibition:{path:'exhibition.json',id:revision.id,revisionId:revision.revisionId,bytes:revisionBytes.length,sha256:hash(revisionBytes),revisionSha256:revisionHash(revision),hashProfile:'oes-sorted-json-v1'},assets:inventory,...(floorResources.length?{floorResources}:{}),...(furnishings.length?{furnishingNotices}:{}),...(materialResources.length?{materialResources}:{})};
     const valid=validateOexManifest(manifest);if(!valid.valid)throw new OexError(valid.errors[0].code,valid.errors);
     const manifestBytes=Buffer.from(JSON.stringify(manifest)+'\n');if(manifestBytes.length>1048576)throw new OexError('JSON_DOCUMENT_LIMIT');
     const entries=[{name:'manifest.json',data:manifestBytes},{name:'exhibition.json',data:revisionBytes}];

@@ -41,3 +41,28 @@ const captureDescriptor:ProviderDescriptor={schemaVersion:'1.0.0-draft.1',kind:'
 const wrongProvider:ProviderDescriptor={...captureDescriptor,contract:'session-observation-v1'};
 const providerConsumer=async(auth:AuthProvider,capture:CaptureProducer,tenantId:string)=>{const session:Readonly<SessionObservation>|null=await observeAuthSession(auth,{}, {tenantId});const output=await inspectCaptureProducer(capture,{});return [session,output.valid];};
 void providerConsumer;void validateProviderDescriptor;void wrongProvider;void fileArtworkProducer;void memoryArtworkProducer;void localSessionAdapter;
+
+import type {OexFurnishingManifest} from '@exhibitos/spec';
+async function readFurnishingProfile(bytes:Uint8Array){
+ const decoded=await readOex(bytes);
+ if(decoded.manifest.formatVersion==='1.0.0-draft.6'){
+  const manifest:OexFurnishingManifest=decoded.manifest;
+  const notices:OexFurnishingManifest['furnishingNotices']=manifest.furnishingNotices;
+  const hashes:string[]=notices.map(item=>item.sha256);return hashes;
+ }
+ return [] as string[];
+}
+void readFurnishingProfile;
+
+import type {OexSurfaceMaterialManifest} from '@exhibitos/spec';
+import {packageSurfaceMaterialManifest} from '@exhibitos/spec/surface-material-resources';
+async function readSurfaceMaterials(bytes:Uint8Array){
+ const decoded=await readOex(bytes);
+ if(decoded.manifest.formatVersion==='1.0.0-draft.7'){
+  const manifest:OexSurfaceMaterialManifest=decoded.manifest;
+  const hashes:string[]=manifest.materialResources.map(item=>item.sha256);
+  packageSurfaceMaterialManifest(decoded.exhibition);return hashes;
+ }
+ return [] as string[];
+}
+void readSurfaceMaterials;
