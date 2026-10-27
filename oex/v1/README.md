@@ -133,3 +133,22 @@ Apache/CC0 legal-text extensions; the previously published OES examples/schemas
 are unchanged. Original GLB/PNG bytes remain exactly the baseline CC0 assets.
 Generated metadata/docs/code use Apache-2.0. The ZIP contains those legal terms
 for standalone distribution and no real artwork, private Capture or credential.
+
+## Optional selected surface materials
+
+Profile `1.0.0-draft.7` adds `materialResources` for the two version1 user-authored
+CC0 packs `museum-matte-paint` and `fine-lime-plaster`. Only packs selected on an
+existing wall or ceiling through `org.exhibitos.studio/materials.surfaceTextures`
+are included. Their exact RGB8 color, roughness and NormalGL files and distribution
+notices use compiled descriptors; no caller URL, original authoring file, preview,
+height or invented AO map is packaged. Base color is sRGB; roughness and normals
+are noncolor. Each map is exactly 2048² and at most8MiB. This separate map profile
+does not raise the cover-still pixel limit or claim GPU/mobile fitness.
+
+The existing materials namespace keeps version1, its scalar `surfaces` map and
+the combined16KiB/64-surface limit. Texture entries contain only a known `pack`
+(`id`, `version`), `repeatMeters` (two0.05..20m values), `rotation` (±π), and
+`normalScale` (0..2). Archive identity and exact bytes bind all selected resources;
+floor maps, furnishings, media and space stills remain composable. Existing
+profiles1/2/4/5/6 and ordinary exports are unchanged. No cross-profile downgrade
+adapter or automatic migration is provided.

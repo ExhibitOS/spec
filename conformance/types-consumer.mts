@@ -53,3 +53,16 @@ async function readFurnishingProfile(bytes:Uint8Array){
  return [] as string[];
 }
 void readFurnishingProfile;
+
+import type {OexSurfaceMaterialManifest} from '@exhibitos/spec';
+import {packageSurfaceMaterialManifest} from '@exhibitos/spec/surface-material-resources';
+async function readSurfaceMaterials(bytes:Uint8Array){
+ const decoded=await readOex(bytes);
+ if(decoded.manifest.formatVersion==='1.0.0-draft.7'){
+  const manifest:OexSurfaceMaterialManifest=decoded.manifest;
+  const hashes:string[]=manifest.materialResources.map(item=>item.sha256);
+  packageSurfaceMaterialManifest(decoded.exhibition);return hashes;
+ }
+ return [] as string[];
+}
+void readSurfaceMaterials;

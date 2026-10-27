@@ -16,3 +16,5 @@ export {SPACE_STILL_NAMESPACE,MAX_SPACE_STILL_BYTES,MAX_SPACE_STILL_PIXELS,MAX_S
 
 export {FURNISHING_NAMESPACE,OEX_FURNISHING_VERSION,validateFurnishingInventory,packageFurnishingAssetManifest,packageFurnishingNoticeManifest} from './validators/furnishings.mjs';
 export {packageCompleteAssetManifest} from './validators/package.mjs';
+
+export {OEX_SURFACE_MATERIAL_VERSION,MATERIAL_NAMESPACE,SURFACE_MATERIAL_PACKS,SURFACE_MATERIAL_FILES,selectedSurfaceMaterialPacks,packageSurfaceMaterialManifest,surfaceMaterialNotice} from './validators/surface-material-resources.mjs';
