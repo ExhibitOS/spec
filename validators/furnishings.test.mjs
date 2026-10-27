@@ -66,7 +66,7 @@ test('profile6 composes with an existing still and admits the exact selected flo
  const still=await readOex(await readFile(new URL('../oex/v1/examples/synthetic-space-still.oex',import.meta.url)));
  const e=structuredClone(still.exhibition),furnishings=revision().extensions[NS];furnishings.bindings[0].hostId=e.placements[0].id;e.extensions[NS]=furnishings;
  const assets=new Map(still.manifest.assets.map(a=>[a.artifactPath,still.files.get(a.path)]));assets.set(furnishings.assets[0].path,original.files.get(model.path));assets.set(furnishings.assets[0].rights.notice.path,notice);
- const parsed=await readOex(await writeOex(e,assets,options));assert.equal(parsed.manifest.formatVersion,'1.0.0-draft.6');assert.equal(parsed.manifest.assets.filter(a=>a.kind==='space-still').length,1);
+ const parsed=await readOex(await writeOex(e,assets,{...options,createdAt:still.manifest.createdAt}));assert.equal(parsed.manifest.formatVersion,'1.0.0-draft.6');assert.equal(parsed.manifest.assets.filter(a=>a.kind==='space-still').length,1);
  const floors=structuredClone(e);floors.surfaces=floors.surfaces.filter(s=>s.type!=='floor');floors.extensions['org.exhibitos.studio/floors']={version:1,bindings:[{target:{kind:'room-base',roomId:floors.rooms[0].id},preset:'wood',repeatMeters:[1.8,1.8],rotation:0}]};
  const m=structuredClone(parsed.manifest);m.floorResources=packageFloorResourceManifest(floors);assert.equal(m.floorResources.length,4);assert.equal(validateOexManifest(m).valid,true);
 });
