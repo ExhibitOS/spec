@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 ExhibitOS contributors
 import { validateSpatialProfile } from './spatial-scripting.mjs';
+import {validateSpaceStillInventory,spaceStillFor} from './space-still.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { readFile } from 'node:fs/promises';
@@ -57,13 +58,15 @@ function inside(room,position){return Math.abs(position[0])<=room.dimensions.wid
 function registry(items,path,errors){const map=new Map();items.forEach((item,index)=>{if(map.has(key(item.id)))errors.push(issue('DUPLICATE_ID',path+'/'+index+'/id','IDs must be unique in this collection'));map.set(key(item.id),item);});return map;}
 export function assetInventory(revision) {
   const map=new Map();
-  for(const asset of [...revision.artworks.flatMap(artwork=>artwork.assets),...revision.mediaAssets])map.set(key(asset.id),{id:asset.id,path:asset.path,bytes:asset.bytes,sha256:asset.sha256});
+  const still=spaceStillFor(revision);
+  for(const asset of [...revision.artworks.flatMap(artwork=>artwork.assets),...revision.mediaAssets,...(still?[still]:[])])map.set(key(asset.id),{id:asset.id,path:asset.path,bytes:asset.bytes,sha256:asset.sha256});
   return [...map.values()].sort((a,b)=>key(a.id)<key(b.id)?-1:key(a.id)>key(b.id)?1:0);
 }
 export function validateExhibition(revision,{publicationTime}={}) {
   const safety=jsonErrors(revision);if(safety.length)return result(safety);
   if(revision?.schemaVersion!==EXHIBITION_VERSION)return result([issue('UNSUPPORTED_VERSION','/schemaVersion','Expected '+EXHIBITION_VERSION)]);
   if(!revisionSchema(revision))return result(schemaErrors(revisionSchema));
+  const still=validateSpaceStillInventory(revision,{publicationTime});if(!still.valid)return result(still.errors);
   if(Buffer.byteLength(sortedJson(revision))>1048576)return result([issue('DOCUMENT_LIMIT','','Revision exceeds 1MiB')]);
   const errors=[];if(publicationTime!==undefined&&(!utcSchema(publicationTime)||!Number.isFinite(Date.parse(publicationTime))))errors.push(issue('INVALID_PUBLICATION_TIME','/publicationTime','Publication time must match the restricted UTC profile'));
   checkTemporal(revision.createdAt,'/createdAt',errors);
@@ -195,6 +198,7 @@ export async function validateExhibitionFiles(revision,root,options={}) {
     const files=await validateArtworkFiles(artwork,root,options);errors.push(...files.errors.map(error=>({...error,path:`/artworks/${index}`+error.path})));
   }
   if(revision.mediaAssets.length)errors.push(issue('MEDIA_BINARY_VALIDATION_UNSUPPORTED','/mediaAssets','Audio document contracts exist; audio binary validation is a later ingestion task'));
+  if(spaceStillFor(revision))errors.push(issue('SPACE_STILL_BINARY_VALIDATION_UNSUPPORTED','/extensions/org.exhibitos.viewer~1space-still','Use complete OEX profile4 validation for the independent still bytes'));
   return result(errors);
 }
 

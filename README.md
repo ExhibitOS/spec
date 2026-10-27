@@ -41,8 +41,8 @@ and [package/deployment ADR](docs/adr/0003-package-deployment-profile.md).
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.4` is an ESM Node package; wire contracts
-remain `1.0.0-draft.1` except the explicit OEX media profile `1.0.0-draft.2`. Use Node 24.21.0/npm 11.19.0. No stable release or
+Package `@exhibitos/spec@0.1.0-draft.6` is an ESM Node package; wire contracts
+remain `1.0.0-draft.1` except the explicit OEX media profile `1.0.0-draft.2` and optional space-still profile `1.0.0-draft.4`. Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
 `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then
 `npm run artifact:check`. The versioned tarball and SHA-256 are written to `dist/`.
@@ -51,7 +51,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.4.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.6.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```
@@ -132,3 +132,7 @@ own independently verified runtime and explicit sound consent.
 ## Optional provider contracts
 
 [Auth session observation and Capture producer extension contracts](providers/v1/README.md) are additive opt-in `@exhibitos/spec/providers` interfaces. Two public synthetic OES producers use the existing artifact validator. These contracts neither grant resource authorization nor prove an alternate deployed authentication provider or physical Capture compatibility.
+
+## Optional entrance space still
+
+[Space-still version1](oes/extensions/space-still.md) adds one separately inventoried, rights-bound PNG through an opt-in extension. OES/Draft1 schemas and audio meanings are unchanged. An archive containing the extension uses explicit OEX `1.0.0-draft.4`; ordinary profile1/2 fixtures remain unchanged. This source line does not include the separately frozen experimental furnishing profile3. An unsupported consumer rejects the new profile rather than dropping its asset.

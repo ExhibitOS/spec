@@ -1,6 +1,6 @@
 {
   "name": "@exhibitos/spec",
-  "version": "0.1.0-draft.4",
+  "version": "0.1.0-draft.6",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,14 +11,14 @@
   "scripts": {
     "fixtures:generate": "node scripts/generate-fixtures.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs validators/oex-media.test.mjs validators/spatial-scripting.test.mjs validators/cli-ux.test.mjs providers/providers.test.mjs",
+    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs validators/oex-media.test.mjs validators/spatial-scripting.test.mjs validators/cli-ux.test.mjs providers/providers.test.mjs validators/space-still.test.mjs",
     "check": "npm run types:check && npm run fixtures:check && npm test && npm run conformance && npm run conformance:providers",
     "validate:artwork": "node validators/artwork-cli.mjs",
     "validate:exhibition": "node validators/exhibition-cli.mjs",
     "validate:package": "node validators/package-cli.mjs",
     "fixtures:package": "node scripts/generate-oex-example.mjs",
-    "build": "node scripts/generate-types.mjs",
-    "types:check": "node scripts/generate-types.mjs --check && tsc -p conformance/tsconfig.json",
+    "build": "node scripts/generate-types.mjs && node scripts/generate-space-still-validator.mjs",
+    "types:check": "node scripts/generate-types.mjs --check && node scripts/generate-space-still-validator.mjs --check && tsc -p conformance/tsconfig.json",
     "artifact:build": "npm run build && node scripts/build-artifact.mjs",
     "conformance": "node conformance/cli.mjs",
     "artifact:check": "npm run artifact:build && node scripts/check-artifact.mjs",
@@ -53,7 +53,13 @@
     "./providers/examples": {
       "types": "./types/provider-examples.d.ts",
       "import": "./providers/examples.mjs"
-    }
+    },
+    "./space-still": {
+      "types": "./types/space-still.d.ts",
+      "import": "./validators/space-still.mjs"
+    },
+    "./schemas/space-still.json": "./schemas/space-still.json",
+    "./schemas/oex-space-still.json": "./schemas/oex-space-still.json"
   },
   "types": "./types/index.d.ts",
   "bin": {
