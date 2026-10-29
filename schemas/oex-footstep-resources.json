@@ -1,0 +1,417 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exhibitos.github.io/spec/oex/v1/1.0.0-draft.8/manifest.schema.json",
+  "title": "OEX selected footstep resources manifest 1.0.0-draft.8",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "formatVersion": {
+      "const": "1.0.0-draft.8"
+    },
+    "kind": {
+      "const": "oex-manifest"
+    },
+    "oesArtworkVersion": {
+      "const": "1.0.0-draft.1"
+    },
+    "oesExhibitionVersion": {
+      "const": "1.0.0-draft.1"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:[0-5]\\d(?:\\.\\d{1,3})?Z$"
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "exhibition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "const": "exhibition.json"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "revisionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "revisionSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "hashProfile": {
+          "const": "oes-sorted-json-v1"
+        }
+      },
+      "required": [
+        "path",
+        "id",
+        "revisionId",
+        "bytes",
+        "sha256",
+        "revisionSha256",
+        "hashProfile"
+      ]
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*$"
+          },
+          "artifactPath": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^(?:[A-Za-z0-9_-][A-Za-z0-9_.-]*/)*[A-Za-z0-9_-][A-Za-z0-9_.-]*$"
+          },
+          "mime": {
+            "enum": [
+              "model/gltf-binary",
+              "image/png",
+              "image/jpeg",
+              "image/webp",
+              "audio/wav"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 104857600
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "rightsReferences": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "(?:^exhibition\\.json#/(artworks/[0-9]+/rights|mediaAssets/[0-9]+/rights|extensions/org\\.exhibitos\\.viewer~1space-still/asset/rights)$)|^exhibition\\.json#/extensions/org\\.exhibitos\\.studio~1furnishing-visuals/assets/[0-9]+/rights$"
+            },
+            "minItems": 1,
+            "maxItems": 1024
+          },
+          "provenanceReferences": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "(?:^exhibition\\.json#/artworks/[0-9]+/provenance$)|^exhibition\\.json#/extensions/org\\.exhibitos\\.studio~1furnishing-visuals/assets/[0-9]+/provenance$"
+            },
+            "minItems": 0,
+            "maxItems": 1024
+          },
+          "kind": {
+            "enum": [
+              "artwork",
+              "media",
+              "space-still",
+              "furnishing"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "artifactPath",
+          "mime",
+          "bytes",
+          "sha256",
+          "rightsReferences",
+          "provenanceReferences",
+          "kind"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 254
+    },
+    "floorResources": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 17,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "packId": {
+            "enum": [
+              "WoodFloor051",
+              "Marble006",
+              "Tiles074",
+              "Carpet004"
+            ]
+          },
+          "packVersion": {
+            "const": 1
+          },
+          "role": {
+            "enum": [
+              "color",
+              "roughness",
+              "normal",
+              "ao",
+              "notice"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^resources/(floor-textures|floor-texture-notices)/[A-Za-z0-9_./-]+$"
+          },
+          "artifactPath": {
+            "type": "string",
+            "maxLength": 230,
+            "pattern": "^(floor-textures|floor-texture-notices)/[A-Za-z0-9_./-]+$"
+          },
+          "mime": {
+            "enum": [
+              "image/png",
+              "text/plain; charset=utf-8"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8388608
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "packId",
+          "packVersion",
+          "role",
+          "path",
+          "artifactPath",
+          "mime",
+          "bytes",
+          "sha256"
+        ]
+      }
+    },
+    "furnishingNotices": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "assetId",
+          "mime",
+          "path",
+          "artifactPath",
+          "bytes",
+          "sha256"
+        ],
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mime": {
+            "const": "text/plain; charset=utf-8"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^resources/furnishings/[0-9a-fA-F-]{36}/LICENSE-NOTICE\\.txt$"
+          },
+          "artifactPath": {
+            "type": "string",
+            "pattern": "^furnishings/[0-9a-fA-F-]{36}/LICENSE-NOTICE\\.txt$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32768
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "materialResources": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "packId": {
+            "enum": [
+              "museum-matte-paint",
+              "fine-lime-plaster"
+            ]
+          },
+          "packVersion": {
+            "const": 1
+          },
+          "role": {
+            "enum": [
+              "color",
+              "roughness",
+              "normal",
+              "notice"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^resources/(surface-material-textures|surface-material-notices)/[A-Za-z0-9_./-]+$"
+          },
+          "artifactPath": {
+            "type": "string",
+            "maxLength": 230,
+            "pattern": "^(surface-material-textures|surface-material-notices)/[A-Za-z0-9_./-]+$"
+          },
+          "mime": {
+            "enum": [
+              "image/png",
+              "text/plain; charset=utf-8"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8388608
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "packId",
+          "packVersion",
+          "role",
+          "path",
+          "artifactPath",
+          "mime",
+          "bytes",
+          "sha256"
+        ]
+      }
+    },
+    "footstepResources": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "family": {
+            "enum": [
+              "carpet",
+              "concrete",
+              "marble",
+              "tile",
+              "wood",
+              "shared"
+            ]
+          },
+          "version": {
+            "const": 1
+          },
+          "role": {
+            "enum": [
+              "sample",
+              "notice"
+            ]
+          },
+          "mime": {
+            "enum": [
+              "audio/wav",
+              "text/plain; charset=utf-8",
+              "application/json"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^resources/footstep-samples/v1/[A-Za-z0-9_.-]+$"
+          },
+          "artifactPath": {
+            "type": "string",
+            "maxLength": 230,
+            "pattern": "^footstep-samples/v1/[A-Za-z0-9_.-]+$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 131072
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "family",
+          "version",
+          "role",
+          "mime",
+          "path",
+          "artifactPath",
+          "bytes",
+          "sha256"
+        ]
+      }
+    }
+  },
+  "required": [
+    "formatVersion",
+    "kind",
+    "oesArtworkVersion",
+    "oesExhibitionVersion",
+    "createdAt",
+    "generator",
+    "exhibition",
+    "assets",
+    "footstepResources"
+  ]
+}

@@ -38,11 +38,13 @@ and [lifecycle ADR](docs/adr/0002-exhibition-lifecycle.md).
 
 Read [OEX layout, bounds and rights](oex/v1/README.md), [OED secret references](oed/v1/README.md)
 and [package/deployment ADR](docs/adr/0003-package-deployment-profile.md).
+The optional draft.8 resource profile is described in [recorded footsteps](oex/v1/footstep-resources.md).
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.6` is an ESM Node package; wire contracts
-remain `1.0.0-draft.1` except the explicit OEX media profile `1.0.0-draft.2` and optional space-still profile `1.0.0-draft.4`. Use Node 24.21.0/npm 11.19.0. No stable release or
+Package `@exhibitos/spec@0.1.0-draft.10` is an ESM Node package; OES wire contracts
+remain `1.0.0-draft.1` and OEX has explicit optional profiles through draft.8.
+Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
 `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then
 `npm run artifact:check`. The versioned tarball and SHA-256 are written to `dist/`.
@@ -51,7 +53,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.6.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.10.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```

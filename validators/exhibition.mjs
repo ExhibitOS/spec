@@ -3,6 +3,7 @@ import {validateFurnishingInventory} from './furnishings.mjs';
 // Copyright 2026 ExhibitOS contributors
 import { validateSpatialProfile } from './spatial-scripting.mjs';
 import {validateSpaceStillInventory,spaceStillFor} from './space-still.mjs';
+import {footstepResourcesFor} from './footstep-resources.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { readFile } from 'node:fs/promises';
@@ -70,6 +71,7 @@ export function validateExhibition(revision,{publicationTime}={}) {
   const still=validateSpaceStillInventory(revision,{publicationTime});if(!still.valid)return result(still.errors);
   if(Buffer.byteLength(sortedJson(revision))>1048576)return result([issue('DOCUMENT_LIMIT','','Revision exceeds 1MiB')]);
   const errors=[...validateFurnishingInventory(revision).errors];if(publicationTime!==undefined&&(!utcSchema(publicationTime)||!Number.isFinite(Date.parse(publicationTime))))errors.push(issue('INVALID_PUBLICATION_TIME','/publicationTime','Publication time must match the restricted UTC profile'));
+  try{footstepResourcesFor(revision);}catch{errors.push(issue('FOOTSTEP_RESOURCE_SELECTION','/extensions/org.exhibitos.viewer~1footstep-resources','Expected a canonical registered footstep selection'));}
   checkTemporal(revision.createdAt,'/createdAt',errors);
   const maps={};for(const name of ['rooms','surfaces','openings','placements','lights','navigation','mediaAssets','audioZones','annotations','scripts'])maps[name]=registry(revision[name],'/'+name,errors);
   const artworks=new Map(),allAssets=new Map(),paths=new Map();

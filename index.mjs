@@ -18,3 +18,4 @@ export {FURNISHING_NAMESPACE,OEX_FURNISHING_VERSION,validateFurnishingInventory,
 export {packageCompleteAssetManifest} from './validators/package.mjs';
 
 export {OEX_SURFACE_MATERIAL_VERSION,MATERIAL_NAMESPACE,SURFACE_MATERIAL_PACKS,SURFACE_MATERIAL_FILES,selectedSurfaceMaterialPacks,packageSurfaceMaterialManifest,surfaceMaterialNotice} from './validators/surface-material-resources.mjs';
+export {OEX_FOOTSTEP_RESOURCE_VERSION,FOOTSTEP_RESOURCE_NAMESPACE,FOOTSTEP_FAMILIES,FOOTSTEP_SAMPLES,FOOTSTEP_NOTICES,footstepResourcesFor} from './validators/footstep-resources.mjs';
