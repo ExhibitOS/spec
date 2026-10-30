@@ -42,8 +42,8 @@ The optional draft.8 resource profile is described in [recorded footsteps](oex/v
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.10` is an ESM Node package; OES wire contracts
-remain `1.0.0-draft.1` and OEX has explicit optional profiles through draft.8.
+Package `@exhibitos/spec@0.1.0-draft.11` is an ESM Node package; OES wire contracts
+remain `1.0.0-draft.1` and OEX has explicit optional profiles through draft.9.
 Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
 `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then
@@ -53,7 +53,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.10.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.11.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```
@@ -140,3 +140,5 @@ own independently verified runtime and explicit sound consent.
 [Space-still version1](oes/extensions/space-still.md) adds one separately inventoried, rights-bound PNG through an opt-in extension. OES/Draft1 schemas and audio meanings are unchanged. An archive containing the extension uses explicit OEX `1.0.0-draft.4`; ordinary profile1/2 fixtures remain unchanged. This source line does not include the separately frozen experimental furnishing profile3. An unsupported consumer rejects the new profile rather than dropping its asset.
 
 The opt-in OEX `1.0.0-draft.6` carries used furnishing models in the existing furnishing-visuals namespace, with typed existing bench, pedestal, light or opening hosts and exact selected UTF-8 CC0 notice resources. It composes with the existing space-still and floor resource inventories. Catalogue eligibility, functional placement, rendering and mobile budgets remain consumer responsibilities; a catalogue record alone does not qualify those behaviors. Older profile schemas, fixtures and default exports retain their original versions and bytes.
+
+The opt-in [file-backed OEX consumer profile](oex/v1/README.md#explicit-file-backed-consumer-profile) retains existing in-memory and offline limits; consumers must independently implement and verify staging, authorization, resource budgets, and compatibility.

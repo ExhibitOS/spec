@@ -1,6 +1,6 @@
 {
   "name": "@exhibitos/spec",
-  "version": "0.1.0-draft.10",
+  "version": "0.1.0-draft.11",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,7 +11,7 @@
   "scripts": {
     "fixtures:generate": "node scripts/generate-fixtures.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "test": "node --test scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs validators/oex-media.test.mjs validators/spatial-scripting.test.mjs validators/cli-ux.test.mjs providers/providers.test.mjs validators/space-still.test.mjs validators/floor-resources.test.mjs validators/furnishings.test.mjs validators/surface-material-resources.test.mjs validators/footstep-resources.test.mjs",
+    "test": "node --test --test-concurrency=1 scripts/fixtures.test.mjs validators/artwork.test.mjs validators/exhibition.test.mjs validators/package.test.mjs conformance/distribution.test.mjs validators/oex-media.test.mjs validators/spatial-scripting.test.mjs validators/cli-ux.test.mjs providers/providers.test.mjs validators/space-still.test.mjs validators/floor-resources.test.mjs validators/furnishings.test.mjs validators/surface-material-resources.test.mjs validators/footstep-resources.test.mjs validators/zip-file.test.mjs",
     "check": "npm run types:check && npm run fixtures:check && npm test && npm run conformance && npm run conformance:providers",
     "validate:artwork": "node validators/artwork-cli.mjs",
     "validate:exhibition": "node validators/exhibition-cli.mjs",
@@ -75,7 +75,8 @@
       "types": "./types/footstep-resources.d.ts",
       "import": "./validators/footstep-resources.mjs"
     },
-    "./schemas/oex-footstep-resources.json": "./schemas/oex-footstep-resources.json"
+    "./schemas/oex-footstep-resources.json": "./schemas/oex-footstep-resources.json",
+    "./schemas/oex-bounded-file.json": "./schemas/oex-bounded-file.json"
   },
   "types": "./types/index.d.ts",
   "bin": {

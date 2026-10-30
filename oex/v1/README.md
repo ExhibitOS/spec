@@ -152,3 +152,37 @@ the combined16KiB/64-surface limit. Texture entries contain only a known `pack`
 floor maps, furnishings, media and space stills remain composable. Existing
 profiles1/2/4/5/6 and ordinary exports are unchanged. No cross-profile downgrade
 adapter or automatic migration is provided.
+
+## Explicit file-backed consumer profile
+
+`bounded-file-v1` is an opt-in Node consumer validation profile; it uses the distinct OEX `1.0.0-draft.9` manifest identity and does not
+change earlier identities or the deterministic STORE ZIP layout. `withOexFile` validates a caller-owned private, stable snapshot and
+then invokes a preparation callback. A callback may stage data privately, but
+must not publish or commit it before the function returns successfully. The
+caller must discard staging on failure, and keep the snapshot and its parent
+private for the entire operation. The file descriptor is checked for change;
+this is not a substitute for isolation from a writer with access to the file.
+Entry reads must be sequential, and callers must not retain every returned entry.
+
+This profile caps archive and expanded totals at 512MiB, individual entries at
+32MiB, entry count at 256 and expanded/compressed ratio at 100. The Exhibition
+semantic validator admits an explicitly requested profile with at most 512MiB
+of unique assets, retaining each Artwork's existing total limit. Default OES
+validation and old in-memory OEX APIs keep their original limits. Existing
+readers reject archives above their own size limits; implementations must not
+silently truncate, reinterpret or upgrade an old offline freeze. A compliant
+file can still be rejected by an older consumer and requires explicit negotiated
+consumer support. This profile is not a resource guarantee for arbitrary hosts;
+workers and consumers must bound concurrency, memory, disk and execution time.
+
+`writeOexFile` creates a new file in a private caller-owned directory, never
+replaces an existing destination, and validates the exact created file before
+returning. Its source callback supplies one exact asset at a time; callers retain
+authorization, current rights, source integrity, staging cleanup and transactional
+commit responsibilities. This profile does not enable larger Platform, Manager,
+static-host, or signed-freeze workflows by itself.
+
+The file profile's 32MiB entry limit is intentionally stricter than the legacy
+ZIP reader's 100MiB expanded-entry limit. Continue using the legacy reader for
+legacy non-opt-in packages; switching all old imports to the new reader would
+reject some archives previously accepted by the contract.
