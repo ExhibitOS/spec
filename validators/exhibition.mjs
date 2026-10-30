@@ -64,7 +64,8 @@ export function assetInventory(revision) {
   for(const asset of [...revision.artworks.flatMap(artwork=>artwork.assets),...revision.mediaAssets,...(still?[still]:[]),...validateFurnishingInventory(revision).assets])map.set(key(asset.id),{id:asset.id,path:asset.path,bytes:asset.bytes,sha256:asset.sha256});
   return [...map.values()].sort((a,b)=>key(a.id)<key(b.id)?-1:key(a.id)>key(b.id)?1:0);
 }
-export function validateExhibition(revision,{publicationTime}={}) {
+export function validateExhibition(revision,{publicationTime,archiveProfile}={}) {
+  if(archiveProfile!==undefined&&archiveProfile!=='bounded-file-v1')return result([issue('UNSUPPORTED_ARCHIVE_PROFILE','/archiveProfile','Unsupported archive validation profile')]);
   const safety=jsonErrors(revision);if(safety.length)return result(safety);
   if(revision?.schemaVersion!==EXHIBITION_VERSION)return result([issue('UNSUPPORTED_VERSION','/schemaVersion','Expected '+EXHIBITION_VERSION)]);
   if(!revisionSchema(revision))return result(schemaErrors(revisionSchema));
@@ -86,7 +87,10 @@ export function validateExhibition(revision,{publicationTime}={}) {
     if(paths.has(asset.path)&&paths.get(asset.path)!==signature)errors.push(issue('ASSET_PATH_CONFLICT','/artworks','One path must retain one exact file descriptor'));
     allAssets.set(key(asset.id),{signature,asset});paths.set(asset.path,signature);
   }
-  if(assetInventory(revision).reduce((sum,asset)=>sum+asset.bytes,0)>MAX_ASSET_TOTAL_BYTES)errors.push(issue('ASSET_TOTAL_LIMIT','/artworks','Unique assets exceed 256MiB'));
+  const assets=assetInventory(revision);
+  if(archiveProfile==='bounded-file-v1'&&assets.some(asset=>asset.bytes>32*1024*1024))errors.push(issue('ASSET_FILE_LIMIT','/artworks','Profile asset exceeds 32MiB'));
+  const assetTotalLimit=archiveProfile==='bounded-file-v1'?512*1024*1024:MAX_ASSET_TOTAL_BYTES;
+  if(assets.reduce((sum,asset)=>sum+asset.bytes,0)>assetTotalLimit)errors.push(issue('ASSET_TOTAL_LIMIT','/artworks',`Unique assets exceed ${assetTotalLimit} bytes`));
   revision.rooms.forEach((room,i)=>checkTransform(room.transform,`/rooms/${i}/transform`,errors,true));
   revision.surfaces.forEach((surface,i)=>{
     const room=maps.rooms.get(key(surface.roomId));if(!room)errors.push(issue('MISSING_ROOM',`/surfaces/${i}/roomId`,'Surface room must resolve'));
@@ -156,7 +160,7 @@ export function validateExhibition(revision,{publicationTime}={}) {
   errors.push(...validateSpatialProfile(revision).errors);
   return result(errors);
 }
-export function validateLifecycle(document,revision,{publication}={}) {
+export function validateLifecycle(document,revision,{publication,archiveProfile}={}) {
   const safety=jsonErrors(document);if(safety.length)return result(safety);
   if(document?.schemaVersion!==EXHIBITION_VERSION)return result([issue('UNSUPPORTED_VERSION','/schemaVersion','Expected '+EXHIBITION_VERSION)]);
   if(!lifecycleSchema(document))return result(schemaErrors(lifecycleSchema));
@@ -164,13 +168,13 @@ export function validateLifecycle(document,revision,{publication}={}) {
   const errors=[];
   for(const field of ['createdAt','updatedAt','publishedAt','unpublishedAt','frozenAt'])if(document[field]!==undefined)checkTemporal(document[field],'/'+field,errors);
   if(document.kind==='exhibition-draft') {
-    const checked=validateExhibition(document.candidate);errors.push(...checked.errors.map(error=>({...error,path:'/candidate'+error.path})));
+    const checked=validateExhibition(document.candidate,{archiveProfile});errors.push(...checked.errors.map(error=>({...error,path:'/candidate'+error.path})));
     if(key(document.exhibitionId)!==key(document.candidate.id))errors.push(issue('EXHIBITION_ID_MISMATCH','/exhibitionId','Candidate must belong to draft exhibition'));
     if(Date.parse(document.updatedAt)<Date.parse(document.createdAt))errors.push(issue('DRAFT_TIME_RANGE','/updatedAt','updatedAt must follow createdAt'));
     return result(errors);
   }
   const time=document.kind==='publication'?document.publishedAt:document.frozenAt;
-  const checked=validateExhibition(revision,{publicationTime:time});errors.push(...checked.errors.map(error=>({...error,path:'/revision'+error.path})));
+  const checked=validateExhibition(revision,{publicationTime:time,archiveProfile});errors.push(...checked.errors.map(error=>({...error,path:'/revision'+error.path})));
   if(!checked.valid)return result(errors);
   if(key(document.exhibitionId)!==key(revision.id)||key(document.revisionId)!==key(revision.revisionId))errors.push(issue('REVISION_REFERENCE_MISMATCH','/revisionId','Lifecycle pointer must reference this exact revision'));
   if(document.revisionSha256!==revisionHash(revision))errors.push(issue('REVISION_HASH_MISMATCH','/revisionSha256','Sorted JSON hash must match the validated revision'));
@@ -179,16 +183,16 @@ export function validateLifecycle(document,revision,{publication}={}) {
     if(document.status==='published'&&document.unpublishedAt!==undefined)errors.push(issue('PUBLICATION_STATUS','/unpublishedAt','Published pointer cannot have unpublish time'));
     if(document.status==='unpublished'&&(!document.unpublishedAt||Date.parse(document.unpublishedAt)<Date.parse(document.publishedAt)))errors.push(issue('PUBLICATION_STATUS','/unpublishedAt','Unpublished pointer needs time after publication'));
   } else {
-    const checkedPublication=publication?.kind==='publication'?validateLifecycle(publication,revision):result([issue('PUBLICATION_REQUIRED','','Freeze needs a publication document')]);errors.push(...checkedPublication.errors.map(error=>({...error,path:'/publication'+error.path})));
+    const checkedPublication=publication?.kind==='publication'?validateLifecycle(publication,revision,{archiveProfile}):result([issue('PUBLICATION_REQUIRED','','Freeze needs a publication document')]);errors.push(...checkedPublication.errors.map(error=>({...error,path:'/publication'+error.path})));
     if(checkedPublication.valid&&(publication.kind!=='publication'||publication.status!=='published'||key(publication.id)!==key(document.publicationId)||Date.parse(document.frozenAt)<Date.parse(publication.publishedAt)))errors.push(issue('FREEZE_PUBLICATION_MISMATCH','/publicationId','Freeze needs this active publication and a non-earlier time'));
     if(sortedJson(document.assets)!==sortedJson(assetInventory(revision)))errors.push(issue('FREEZE_ASSET_MISMATCH','/assets','Freeze must contain the exact sorted unique asset inventory'));
   }
   return result(errors);
 }
 function deepFreeze(value){if(value&&typeof value==='object'){Object.values(value).forEach(deepFreeze);Object.freeze(value);}return value;}
-export function sealDraft(draft) {
+export function sealDraft(draft,options={}) {
   if(draft?.kind!=='exhibition-draft')return result([issue('DRAFT_REQUIRED','','Expected a mutable draft envelope')]);
-  const checked=validateLifecycle(draft);if(!checked.valid)return checked;
+  const checked=validateLifecycle(draft,undefined,options);if(!checked.valid)return checked;
   if(draft.kind!=='exhibition-draft')return result([issue('DRAFT_REQUIRED','','Expected a mutable draft envelope')]);
   const revision=deepFreeze(structuredClone(draft.candidate));
   return {...result([]),revision,sha256:revisionHash(revision),hashProfile:HASH_PROFILE,validationScope:'document-only'};
@@ -208,6 +212,6 @@ export async function validateExhibitionFiles(revision,root,options={}) {
 
 export async function validateLifecycleFiles(document,revision,root,options={}) {
   const checked=validateLifecycle(document,revision,options);if(!checked.valid)return checked;
-  if(document.kind==='exhibition-draft')return validateExhibitionFiles(document.candidate,root);
-  return validateExhibitionFiles(revision,root,{publicationTime:document.kind==='publication'?document.publishedAt:document.frozenAt});
+  if(document.kind==='exhibition-draft')return validateExhibitionFiles(document.candidate,root,options);
+  return validateExhibitionFiles(revision,root,{...options,publicationTime:document.kind==='publication'?document.publishedAt:document.frozenAt});
 }
