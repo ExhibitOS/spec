@@ -271,6 +271,14 @@ export async function withOexFile(path,callback) {
   try {return await validateOexFileEntries(files,callback);}
   finally {await files.close();}
 }
+/** Validate a caller-owned open snapshot without reopening its path. The caller
+ * retains ownership and must keep the handle open until this function returns. */
+export async function withOexFileHandle(handle,callback) {
+  if(!handle||typeof handle.stat!=='function'||typeof handle.read!=='function'||typeof callback!=='function')throw new OexError('INVALID_INPUT');
+  const files=await openBoundedZipFile(undefined,{fileHandle:handle});
+  try {return await validateOexFileEntries(files,callback);}
+  finally {await files.close();}
+}
 function prepareOex(exhibition,options,archiveProfile) {
     // Validate before cloning/serializing and before allocating asset copies.
     const checked=validateExhibition(exhibition,{archiveProfile});if(!checked.valid)throw new OexError(checked.errors[0].code,checked.errors);
