@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {buildZip} from '../scripts/zip-fixture-builder.mjs';
 import {readBoundedZip} from './zip.mjs';
 import {openBoundedZipFile,fileCrc32} from './zip-file.mjs';
-import {readOex,withOexFile,writeOex,writeOexFile} from './package.mjs';
+import {readOex,withOexFile,withOexFileHandle,writeOex,writeOexFile} from './package.mjs';
 
 async function fixture(bytes,run){const dir=await mkdtemp(join(tmpdir(),'exhibitos-zip-file-'));try{const path=join(dir,'input.oex');await writeFile(path,bytes);await run(path,dir);}finally{await rm(dir,{recursive:true,force:true});}}
 const original=await readFile(new URL('../oex/v1/examples/synthetic.oex',import.meta.url));
@@ -38,6 +38,7 @@ test('file writer preserves exact assets, advertises the new identity and cleans
  const expected=await writeOex(exhibition,assets,options),destination=join(dir,'output.oex');
  const result=await writeOexFile(exhibition,{paths:assetPaths,get:async name=>assets.get(name)},destination,options);
  const written=await readFile(destination);assert.equal(result.bytes,written.length);
+ const owned=await open(destination,'r');try{await withOexFileHandle(owned,async result=>assert.equal(result.manifest.formatVersion,'1.0.0-draft.9'));assert.ok((await owned.stat()).isFile());}finally{await owned.close();}
  const oldEntries=readBoundedZip(expected),newEntries=readBoundedZip(written);assert.equal(JSON.parse(newEntries.get('manifest.json')).formatVersion,'1.0.0-draft.9');
  for(const [name,bytes] of oldEntries)if(name!=='manifest.json')assert.deepEqual(newEntries.get(name),bytes);
  await assert.rejects(()=>readOex(written),/UNSUPPORTED_VERSION/);
@@ -138,3 +139,15 @@ test('file reader keeps the legacy expanded-size cap despite a large-profile-cap
  assert.ok(archive.length<64*1024*1024);
  await fixture(archive,async path=>assert.rejects(()=>withOexFile(path,async()=>{}),/ZIP_EXPANDED_LIMIT/));
 });
+
+test('open-handle reader stays on the owned inode if its pathname is replaced',async()=>fixture(original,async(path,dir)=>{
+ const handle=await open(path,'r');try{await rename(path,join(dir,'owned.oex'));await writeFile(path,Buffer.from('replacement'));await withOexFileHandle(handle,async result=>{assert.equal(result.exhibition.kind,'exhibition-revision');});assert.ok((await handle.stat()).isFile());}finally{await handle.close();}
+}));
+
+test('open-handle reader retains ownership on callback failure and rejects mutation during callback',async()=>fixture(original,async path=>{
+ const h=await open(path,'r+');try{await assert.rejects(()=>withOexFileHandle(h,async()=>{throw Error('CALLBACK');}),/CALLBACK/);assert.ok((await h.stat()).isFile());await assert.rejects(()=>withOexFileHandle(h,async()=>{await h.write(Buffer.from([0]),0,1,30);}),/ZIP_INPUT_CHANGED/);assert.ok((await h.stat()).isFile());}finally{await h.close();}
+}));
+
+test('open-handle reader does not close an invalid archive handle',async()=>fixture(Buffer.from('not a zip'),async path=>{const h=await open(path,'r');try{await assert.rejects(()=>withOexFileHandle(h,async()=>{}));assert.ok((await h.stat()).isFile());}finally{await h.close();}}));
+
+test('replacement during callback cannot redirect reads to a different archive',async()=>fixture(original,async(path,dir)=>{const h=await open(path,'r');try{await assert.rejects(()=>withOexFileHandle(h,async()=>{await rename(path,join(dir,'moved.oex'));await writeFile(path,Buffer.from('replacement'));}),/ZIP_INPUT_CHANGED/);assert.ok((await h.stat()).isFile());}finally{await h.close();}}));

@@ -164,6 +164,11 @@ private for the entire operation. The file descriptor is checked for change;
 this is not a substitute for isolation from a writer with access to the file.
 Entry reads must be sequential, and callers must not retain every returned entry.
 
+`withOexFileHandle` performs the same validation using an already-open caller-owned
+Node FileHandle, without reopening its path; it never closes that handle. The caller
+must open it safely, bind its identity and digest to the operation, and close it
+afterward. This does not establish worker drain or prevent writes to the inode.
+
 This profile caps archive and expanded totals at 512MiB, individual entries at
 32MiB, entry count at 256 and expanded/compressed ratio at 100. The Exhibition
 semantic validator admits an explicitly requested profile with at most 512MiB
