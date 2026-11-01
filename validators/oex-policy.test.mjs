@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {OEX_CAPACITY_POLICY,validateOexCapacityPolicy} from './oex-policy.mjs';
 import {FILE_ZIP_LIMITS} from './zip-file.mjs';
 
-test('bounded OEX policy matches the file reader and retains distinct limits',()=>{
+test('bounded OEX policy matches the file reader and retains distinct limits',async()=>{
  const p=OEX_CAPACITY_POLICY;
+ const text=await readFile(new URL('../policies/oex-capacity-v1.json',import.meta.url),'utf8');
+ assert.equal(text,JSON.stringify(p,null,2)+'\n','Canonical policy bytes reject duplicate keys and formatting drift');
  assert.deepEqual(FILE_ZIP_LIMITS,{archiveBytes:p.format.archiveBytesMax,files:p.format.entryCountMax,fileBytes:p.format.entryBytesMax,expandedBytes:p.format.expandedBytesMax,ratio:p.format.expansionRatioMax});
  assert.deepEqual([p.format.archiveBytesMax,p.format.expandedBytesMax,p.format.entryBytesMax,p.format.entryCountMax,p.format.expansionRatioMax,p.exhibition.uniqueAssetBytesMax,p.exhibition.assetBytesMax,p.nativeImport.chunkBytes,p.packed.resourceCountMax],[536870912,536870912,33554432,256,100,536870912,33554432,16777216,254]);
  assert.ok(Object.isFrozen(p)&&Object.isFrozen(p.format)&&Object.isFrozen(p.exhibition)&&Object.isFrozen(p.nativeImport)&&Object.isFrozen(p.packed));
