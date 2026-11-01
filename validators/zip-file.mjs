@@ -70,7 +70,7 @@ export async function openBoundedZipFile(path,{fileHandle}={}){
     const verifyStable=async()=>{if(closed||!sameStat(original,await file.stat({bigint:true})))fail('ZIP_INPUT_CHANGED');};
     await verifyStable();
     return {
-      size:entries.size,archiveBytes:archiveSize,expandedBytes:total,keys:()=>entries.keys(),has:name=>entries.has(name),
+      size:entries.size,archiveBytes:archiveSize,expandedBytes:total,keys:()=>entries.keys(),has:name=>entries.has(name),entryBytes:name=>entries.get(name)?.size,
       async get(name){
         if(busy)fail('ZIP_CONCURRENT_READ');busy=true;
         try{
