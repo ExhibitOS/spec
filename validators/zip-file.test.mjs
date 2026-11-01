@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {buildZip} from '../scripts/zip-fixture-builder.mjs';
 import {readBoundedZip} from './zip.mjs';
 import {openBoundedZipFile,fileCrc32} from './zip-file.mjs';
-import {readOex,withOexFile,withOexFileHandle,writeOex,writeOexFile} from './package.mjs';
+import {readOex,withOexFile,withOexFileHandle,withOexSizeIndex,writeOex,writeOexFile} from './package.mjs';
 
 async function fixture(bytes,run){const dir=await mkdtemp(join(tmpdir(),'exhibitos-zip-file-'));try{const path=join(dir,'input.oex');await writeFile(path,bytes);await run(path,dir);}finally{await rm(dir,{recursive:true,force:true});}}
 const original=await readFile(new URL('../oex/v1/examples/synthetic.oex',import.meta.url));
@@ -151,3 +151,25 @@ test('open-handle reader retains ownership on callback failure and rejects mutat
 test('open-handle reader does not close an invalid archive handle',async()=>fixture(Buffer.from('not a zip'),async path=>{const h=await open(path,'r');try{await assert.rejects(()=>withOexFileHandle(h,async()=>{}));assert.ok((await h.stat()).isFile());}finally{await h.close();}}));
 
 test('replacement during callback cannot redirect reads to a different archive',async()=>fixture(original,async(path,dir)=>{const h=await open(path,'r');try{await assert.rejects(()=>withOexFileHandle(h,async()=>{await rename(path,join(dir,'moved.oex'));await writeFile(path,Buffer.from('replacement'));}),/ZIP_INPUT_CHANGED/);assert.ok((await h.stat()).isFile());}finally{await h.close();}}));
+
+
+test('size-only index reads bounded documents and never claims OEX validity',async()=>{
+ const archive=buildZip([{name:'manifest.json',data:'{}'},{name:'exhibition.json',data:'{}'},{name:'assets/example.glb',data:'not a GLB'}]);
+ await fixture(archive,async path=>{const handle=await open(path,'r');try{
+  const index=await withOexSizeIndex(handle,async value=>value);
+  assert.equal(index.archiveBytes,archive.length);assert.equal(index.expandedBytes,2+2+9);assert.deepEqual(index.names,['manifest.json','exhibition.json','assets/example.glb']);
+  assert.equal(Buffer.from(index.manifestBytes).toString(),'{}');assert.ok((await handle.stat()).isFile());
+  await assert.rejects(()=>withOexFileHandle(handle,async()=>{}));
+ }finally{await handle.close();}});
+ const oversized=buildZip([{name:'manifest.json',data:Buffer.alloc(1048577,65)},{name:'exhibition.json',data:'{}'}]);
+ await fixture(oversized,async path=>{const handle=await open(path,'r');try{await assert.rejects(()=>withOexSizeIndex(handle,async()=>{}),/JSON_DOCUMENT_LIMIT/);}finally{await handle.close();}});
+ const missing=buildZip([{name:'exhibition.json',data:'{}'}]);
+ await fixture(missing,async path=>{const handle=await open(path,'r');try{await assert.rejects(()=>withOexSizeIndex(handle,async()=>{}),/ARCHIVE_LAYOUT_MISMATCH/);assert.ok((await handle.stat()).isFile());}finally{await handle.close();}});
+ const bigExhibition=buildZip([{name:'manifest.json',data:'{}'},{name:'exhibition.json',data:Buffer.alloc(1048577,65)}]);
+ await fixture(bigExhibition,async path=>{const handle=await open(path,'r');try{await assert.rejects(()=>withOexSizeIndex(handle,async()=>{}),/JSON_DOCUMENT_LIMIT/);}finally{await handle.close();}});
+ const changed=Buffer.from(archive),position=changed.indexOf(Buffer.from('{}'));assert.ok(position>0);changed[position]^=1;
+ await fixture(changed,async path=>{const handle=await open(path,'r');try{await assert.rejects(()=>withOexSizeIndex(handle,async()=>{}),/ZIP_CRC_MISMATCH/);}finally{await handle.close();}});
+ await fixture(archive,async path=>{const handle=await open(path,'r');try{await assert.rejects(()=>withOexSizeIndex(handle,async()=>{const writer=await open(path,'r+');try{await writer.write(Buffer.from([0]),0,1,0);}finally{await writer.close();}}),/ZIP_INPUT_CHANGED/);assert.ok((await handle.stat()).isFile());}finally{await handle.close();}});
+ const duplicate=buildZip([{name:'manifest.json',data:'{}'},{name:'MANIFEST.JSON',data:'{}'},{name:'exhibition.json',data:'{}'}]);
+ await fixture(duplicate,async path=>{const handle=await open(path,'r');try{await assert.rejects(()=>withOexSizeIndex(handle,async()=>{}),/ZIP_DUPLICATE_PATH/);}finally{await handle.close();}});
+});

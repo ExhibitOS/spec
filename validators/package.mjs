@@ -273,6 +273,24 @@ export async function withOexFile(path,callback) {
 }
 /** Validate a caller-owned open snapshot without reopening its path. The caller
  * retains ownership and must keep the handle open until this function returns. */
+/** Provisional size index only: ZIP structure/limits and document CRCs, not
+ * OEX content, rights, asset hashes or publication authority. The caller owns
+ * the input handle and must separately bind identity/digest and fully validate
+ * the archive before any asset is written or committed. The callback must
+ * have no side effects until the final stability check has succeeded. */
+export async function withOexSizeIndex(handle,callback) {
+  if(!handle||typeof handle.stat!=='function'||typeof handle.read!=='function'||typeof callback!=='function')throw new OexError('INVALID_INPUT');
+  const files=await openBoundedZipFile(undefined,{fileHandle:handle});
+  try {
+    const names=Object.freeze([...files.keys()]);
+    for(const name of ['manifest.json','exhibition.json']){const size=files.entryBytes(name);if(size===undefined)throw new OexError('ARCHIVE_LAYOUT_MISMATCH');if(!Number.isSafeInteger(size)||size>1048576)throw new OexError('JSON_DOCUMENT_LIMIT');}
+    const manifestBytes=await files.get('manifest.json'),exhibitionBytes=await files.get('exhibition.json');
+    if(!manifestBytes||!exhibitionBytes)throw new OexError('ARCHIVE_LAYOUT_MISMATCH');
+    await files.verifyStable();
+    const result=await callback(Object.freeze({archiveBytes:files.archiveBytes,expandedBytes:files.expandedBytes,names,manifestBytes,exhibitionBytes}));
+    await files.verifyStable();return result;
+  } finally {await files.close();}
+}
 export async function withOexFileHandle(handle,callback) {
   if(!handle||typeof handle.stat!=='function'||typeof handle.read!=='function'||typeof callback!=='function')throw new OexError('INVALID_INPUT');
   const files=await openBoundedZipFile(undefined,{fileHandle:handle});
