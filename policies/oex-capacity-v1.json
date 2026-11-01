@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "format": {
+    "archiveBytesMax": 536870912,
+    "expandedBytesMax": 536870912,
+    "entryBytesMax": 33554432,
+    "entryCountMax": 256,
+    "expansionRatioMax": 100
+  },
+  "exhibition": {
+    "uniqueAssetBytesMax": 536870912,
+    "assetBytesMax": 33554432
+  },
+  "nativeImport": {
+    "chunkBytes": 16777216
+  },
+  "packed": {
+    "resourceCountMax": 254
+  }
+}

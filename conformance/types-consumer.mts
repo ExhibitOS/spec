@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { validateArtwork, validateExhibition, validateLifecycle, validateOed, validateOexManifest, runConformance, schemaURL } from '@exhibitos/spec';
 import type { Artwork, Exhibition, Lifecycle, OedDeployment, OexManifest } from '@exhibitos/spec';
+import {OEX_CAPACITY_POLICY,validateOexCapacityPolicy} from '@exhibitos/spec/oex-capacity-policy';
+import type {OexCapacityPolicy} from '@exhibitos/spec/oex-capacity-policy';
+const capacity:OexCapacityPolicy=validateOexCapacityPolicy(OEX_CAPACITY_POLICY);const chunkBytes:number=capacity.nativeImport.chunkBytes;void chunkBytes;
+// @ts-expect-error Policy values are immutable.
+capacity.nativeImport.chunkBytes=1;
 const check=(art: Artwork,exhibition: Exhibition,lifecycle: Lifecycle,oed: OedDeployment,oex: OexManifest)=>{
  const result=validateArtwork(art);const boolean: boolean=result.valid;
  validateExhibition(exhibition);validateLifecycle(lifecycle,exhibition);validateOed(oed);validateOexManifest(oex);return boolean;

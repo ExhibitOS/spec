@@ -7,8 +7,10 @@ import {constants} from 'node:fs';
 import {open} from 'node:fs/promises';
 import {inflateRawSync} from 'node:zlib';
 import {safeArchivePath} from './zip.mjs';
+import {OEX_CAPACITY_POLICY} from './oex-policy.mjs';
 
-export const FILE_ZIP_LIMITS=Object.freeze({archiveBytes:512*1024*1024,files:256,fileBytes:32*1024*1024,expandedBytes:512*1024*1024,ratio:100});
+const format=OEX_CAPACITY_POLICY.format;
+export const FILE_ZIP_LIMITS=Object.freeze({archiveBytes:format.archiveBytesMax,files:format.entryCountMax,fileBytes:format.entryBytesMax,expandedBytes:format.expandedBytesMax,ratio:format.expansionRatioMax});
 const fail=code=>{throw new Error(code);};
 const crcTable=Uint32Array.from({length:256},(_,value)=>{let n=value;for(let bit=0;bit<8;bit++)n=(n>>>1)^((n&1)?0xedb88320:0);return n>>>0;});
 export function fileCrc32(bytes){let crc=0xffffffff;for(const byte of bytes)crc=(crc>>>8)^crcTable[(crc^byte)&255];return (crc^0xffffffff)>>>0;}
