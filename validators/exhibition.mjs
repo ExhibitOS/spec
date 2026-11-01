@@ -9,6 +9,7 @@ import addFormats from 'ajv-formats';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { validateArtwork,validateArtworkFiles,validateRights,MAX_ASSET_TOTAL_BYTES } from './artwork.mjs';
+import {OEX_CAPACITY_POLICY} from './oex-policy.mjs';
 export const EXHIBITION_VERSION='1.0.0-draft.1';
 export const HASH_PROFILE='oes-sorted-json-v1';
 const schemas=await Promise.all(['artwork','exhibition','lifecycle'].map(async name=>JSON.parse(await readFile(new URL(`../oes/v1/${name}.schema.json`,import.meta.url),'utf8'))));
@@ -88,8 +89,8 @@ export function validateExhibition(revision,{publicationTime,archiveProfile}={})
     allAssets.set(key(asset.id),{signature,asset});paths.set(asset.path,signature);
   }
   const assets=assetInventory(revision);
-  if(archiveProfile==='bounded-file-v1'&&assets.some(asset=>asset.bytes>32*1024*1024))errors.push(issue('ASSET_FILE_LIMIT','/artworks','Profile asset exceeds 32MiB'));
-  const assetTotalLimit=archiveProfile==='bounded-file-v1'?512*1024*1024:MAX_ASSET_TOTAL_BYTES;
+  if(archiveProfile==='bounded-file-v1'&&assets.some(asset=>asset.bytes>OEX_CAPACITY_POLICY.exhibition.assetBytesMax))errors.push(issue('ASSET_FILE_LIMIT','/artworks',`Profile asset exceeds ${OEX_CAPACITY_POLICY.exhibition.assetBytesMax/1048576}MiB`));
+  const assetTotalLimit=archiveProfile==='bounded-file-v1'?OEX_CAPACITY_POLICY.exhibition.uniqueAssetBytesMax:MAX_ASSET_TOTAL_BYTES;
   if(assets.reduce((sum,asset)=>sum+asset.bytes,0)>assetTotalLimit)errors.push(issue('ASSET_TOTAL_LIMIT','/artworks',`Unique assets exceed ${assetTotalLimit} bytes`));
   revision.rooms.forEach((room,i)=>checkTransform(room.transform,`/rooms/${i}/transform`,errors,true));
   revision.surfaces.forEach((surface,i)=>{

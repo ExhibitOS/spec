@@ -42,7 +42,7 @@ The optional draft.8 resource profile is described in [recorded footsteps](oex/v
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.11` is an ESM Node package; OES wire contracts
+Package `@exhibitos/spec@0.1.0-draft.12` is an ESM Node package; OES wire contracts
 remain `1.0.0-draft.1` and OEX has explicit optional profiles through draft.9.
 Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
@@ -53,7 +53,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.11.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.12.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```

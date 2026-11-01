@@ -180,6 +180,16 @@ file can still be rejected by an older consumer and requires explicit negotiated
 consumer support. This profile is not a resource guarantee for arbitrary hosts;
 workers and consumers must bound concurrency, memory, disk and execution time.
 
+The offline package includes `policies/oex-capacity-v1.json` and exports the
+validated immutable policy as `@exhibitos/spec/oex-capacity-policy`. Its byte
+and count fields distinguish ZIP archive, expanded data, individual entry,
+exhibition asset total, native upload chunk and packed resource inventory;
+these limits do not authorize disk reservation or change hosting, rendering,
+timeout, existing in-memory or individual Artwork policies. Native consumers
+may pin the exact packaged JSON bytes and generate build-time constants. A
+missing, malformed, unknown-version or internally inconsistent policy must
+fail the build or validation; runtime client input must not override it.
+
 `writeOexFile` creates a new file in a private caller-owned directory, never
 replaces an existing destination, and validates the exact created file before
 returning. Its source callback supplies one exact asset at a time; callers retain
