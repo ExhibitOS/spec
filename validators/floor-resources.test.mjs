@@ -22,7 +22,7 @@ test('selected known version packs include every exact map and notice, and inact
 test('profile5 is explicit and typed; descriptor, path, role, duplicate and unsupported version denials are closed',()=>{
  const m=manifest();assert.equal(validateOexManifest(m).valid,true);assert.equal(adaptOexManifest(m,V).valid,true);assert.equal(adaptOexManifest(m,'1.0.0-draft.4').valid,false);
  for(const edit of [m=>m.formatVersion='1.0.0-draft.99',m=>m.floorResources[0].role='displacement',m=>m.floorResources[0].packVersion=2,m=>m.floorResources[0].path='resources/../secret',m=>m.floorResources[0].artifactPath='/private/source',m=>m.floorResources[0].sha256='0'.repeat(64),m=>m.floorResources.push(m.floorResources[0]),m=>m.floorResources[0].mime='audio/wav']){const changed=structuredClone(m);edit(changed);assert.equal(validateOexManifest(changed).valid,false);}
- assert.equal(FLOOR_RESOURCE_FILES.length,17);assert.equal(FLOOR_RESOURCE_FILES.filter(f=>f.role==='ao').length,1);assert.equal(FLOOR_RESOURCE_FILES.find(f=>f.role==='ao').packId,'Carpet004');
+ assert.equal(FLOOR_RESOURCE_FILES.filter(f=>['WoodFloor051','Marble006','Tiles074','Carpet004'].includes(f.packId)).length,17);assert.equal(FLOOR_RESOURCE_FILES.filter(f=>f.role==='ao').length,1);assert.equal(FLOOR_RESOURCE_FILES.find(f=>f.role==='ao').packId,'Carpet004');
 });
 test('new writes require the selected exact bytes; ordinary exports retain profile2 and frozen fixtures',async()=>{
  const e=revision(),assets=new Map(original.manifest.assets.map(a=>[a.artifactPath,original.files.get(a.path)]));
@@ -42,4 +42,21 @@ test('new catalogue carrier cannot relabel an old archive or admit an unregister
  assert.equal(validateOexManifest(forged).errors[0].code,'FLOOR_RESOURCE_DESCRIPTOR');
  assert.equal(validateOexManifest({...old,archiveProfile:'bounded-file-v1'}).valid,false);
  assert.equal(validateOexManifest({...forged,archiveProfile:'arbitrary-zip'}).valid,false);
+});
+
+test('quiet oak is an exact three-map draft.10 floor with an independent notice',()=>{
+ const e=revision(),binding=e.extensions['org.exhibitos.studio/floors'].bindings[0];
+ binding.texturePack={id:'quiet-oak-herringbone',version:1};
+ binding.repeatMeters=[0.9,0.9];
+ const [pack]=selectedFloorResourcePacks(e);
+ assert.deepEqual(pack.catalogue.defaultRepeatMeters,binding.repeatMeters);
+ const m=manifest(e);
+ assert.deepEqual(m.floorResources.map(entry=>entry.role).sort(),['color','normal','notice','roughness']);
+ assert.equal(validateOexManifest(m).valid,false);
+ m.formatVersion=OEX_MATERIAL_CATALOGUE_VERSION;
+ assert.equal(validateOexManifest(m).valid,true);
+ m.floorResources[0].sha256='0'.repeat(64);
+ assert.equal(validateOexManifest(m).valid,false);
+ binding.texturePack.version=2;
+ assert.throws(()=>packageFloorResourceManifest(e),/FLOOR_RESOURCE_VERSION/);
 });

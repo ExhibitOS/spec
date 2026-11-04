@@ -219,3 +219,8 @@ In-memory archives retain the ordinary ZIP limits. The existing bounded-file
 writer marks this profile with `archiveProfile: "bounded-file-v1"`; that form
 requires the bounded file consumer and uses the existing capacity policy.
 Prior schemas and default archive versions stay unchanged for legacy packs.
+
+Quiet Oak Herringbone version 1 registers user-authored CC0 color, OpenGL +Y
+normal and roughness maps with an exact portable notice. The catalogue presents
+a 0.9 m repeat. These descriptors establish byte identity and portability.
+Visual selection and device qualification remain consumer evidence.
