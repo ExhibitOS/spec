@@ -128,16 +128,16 @@ export function selectedSurfaceMaterialPacks(revision){
    const surface=surfaces.find(s=>typeof s?.id==='string'&&s.id.toLowerCase()===id.toLowerCase());
    if(!uuid(id)||seen.has(id.toLowerCase())||!surface)fail();seen.add(id.toLowerCase());ids.add(id.toLowerCase());
    if(map===value.surfaces){if(!scalar(entry))fail();}
-   else{if((surface.type!=='wall'&&surface.type!=='ceiling')||!binding(entry))fail();used.add(entry.pack.id);}
+   else{if((surface.type!=='wall'&&surface.type!=='ceiling')||!binding(entry))fail();used.add(entry.pack.id+':'+entry.pack.version);}
   }
  }
  if(ids.size>64)fail();
- return SURFACE_MATERIAL_PACKS.filter(p=>used.has(p.id));
+ return SURFACE_MATERIAL_PACKS.filter(p=>used.has(p.id+':'+p.version));
 }
 export const SURFACE_MATERIAL_FILES=freeze(SURFACE_MATERIAL_PACKS.flatMap(pack=>[...Object.entries(pack.maps),['notice',pack.notice]].map(([role,file])=>({packId:pack.id,packVersion:pack.version,role,path:'resources/'+file.path,artifactPath:file.path,mime:file.mime,bytes:file.bytes,sha256:file.sha256}))).sort((a,b)=>a.path.localeCompare(b.path)));
 export function packageSurfaceMaterialManifest(revision){
- const selected=new Set(selectedSurfaceMaterialPacks(revision).map(p=>p.id));
- return SURFACE_MATERIAL_FILES.filter(file=>selected.has(file.packId)).map(file=>({...file}));
+ const selected=new Set(selectedSurfaceMaterialPacks(revision).map(p=>p.id+':'+p.version));
+ return SURFACE_MATERIAL_FILES.filter(file=>selected.has(file.packId+':'+file.packVersion)).map(file=>({...file}));
 }
 export const surfaceMaterialNotice=pack=>{
  if(!SURFACE_MATERIAL_PACKS.includes(pack))throw Error('SURFACE_MATERIAL_DESCRIPTOR');

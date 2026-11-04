@@ -241,10 +241,10 @@ export function selectedFloorResourcePacks(document){
   if(Object.hasOwn(b,'normalScale')&&!number(b.normalScale,0,2)||Object.hasOwn(b,'aoStrength')&&!number(b.aoStrength,0,1))fail();
   if(Object.hasOwn(b,'sound')){const s=b.sound;if(!obj(s)||!number(s.gain,0,1))fail();if(s.mode==='explicit'){if(!closed(s,['mode','gain','assetIds'])||!Array.isArray(s.assetIds)||s.assetIds.length<1||s.assetIds.length>16||s.assetIds.some(id=>!uuid(id)||!wav.has(id.toLowerCase()))||new Set(s.assetIds.map(id=>id.toLowerCase())).size!==s.assetIds.length)fail();}else if(!['none','material-default'].includes(s.mode)||!closed(s,['mode','gain']))fail();}
   const p=Object.hasOwn(b,'texturePack')?b.texturePack:{id:defaults[b.preset],version:1};
-  if(!closed(p,['id','version'])||p.version!==1||!FLOOR_RESOURCE_PACKS.some(pack=>pack.id===p.id))throw Error('FLOOR_RESOURCE_VERSION');
-  if(active)selected.add(p.id);
+  if(!closed(p,['id','version'])||!FLOOR_RESOURCE_PACKS.some(pack=>pack.id===p.id&&pack.version===p.version))throw Error('FLOOR_RESOURCE_VERSION');
+  if(active)selected.add(p.id+':'+p.version);
  }
- return FLOOR_RESOURCE_PACKS.filter(p=>selected.has(p.id));
+ return FLOOR_RESOURCE_PACKS.filter(p=>selected.has(p.id+':'+p.version));
 }
 export function floorResourceNotice(pack){
  if(!FLOOR_RESOURCE_PACKS.includes(pack))throw Error('FLOOR_RESOURCE_VERSION');
@@ -252,5 +252,5 @@ export function floorResourceNotice(pack){
 }
 export const FLOOR_RESOURCE_FILES=freeze(FLOOR_RESOURCE_PACKS.flatMap(pack=>[...Object.entries(pack.maps),['notice',pack.notice]].map(([role,file])=>({packId:pack.id,packVersion:pack.version,role,path:'resources/'+file.path,artifactPath:file.path,mime:file.mime,bytes:file.bytes,sha256:file.sha256}))).sort((a,b)=>a.path.localeCompare(b.path)));
 export function packageFloorResourceManifest(document){
- const ids=new Set(selectedFloorResourcePacks(document).map(p=>p.id));return FLOOR_RESOURCE_FILES.filter(f=>ids.has(f.packId)).map(f=>({...f}));
+ const ids=new Set(selectedFloorResourcePacks(document).map(p=>p.id+':'+p.version));return FLOOR_RESOURCE_FILES.filter(f=>ids.has(f.packId+':'+f.packVersion)).map(f=>({...f}));
 }

@@ -3,7 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {readOex,writeOex,revisionHash,validateOexManifest,adaptOexManifest} from '../index.mjs';
+import {buildZip} from '../scripts/zip-fixture-builder.mjs';
+import {readOex,writeOex,revisionHash,validateOexManifest,adaptOexManifest,OEX_MATERIAL_CATALOGUE_VERSION} from '../index.mjs';
 import {OEX_FLOOR_RESOURCE_VERSION as V,FLOOR_RESOURCE_PACKS,FLOOR_RESOURCE_FILES,selectedFloorResourcePacks,packageFloorResourceManifest,floorResourceNotice} from './floor-resources.mjs';
 const original=await readOex(await readFile(new URL('../oex/v1/examples/synthetic-media.oex',import.meta.url)));
 function revision(){const e=structuredClone(original.exhibition);e.extensions={...e.extensions,'org.exhibitos.studio/floors':{version:1,bindings:[{target:{kind:'room-base',roomId:e.rooms[0].id},preset:'wood',repeatMeters:[1.8,1.8],rotation:0}]}};e.surfaces=e.surfaces.filter(s=>s.type!=='floor');return e;}
@@ -29,4 +30,16 @@ test('new writes require the selected exact bytes; ordinary exports retain profi
  for(const f of packageFloorResourceManifest(e))assets.set(f.artifactPath,new Uint8Array(f.bytes));
  await assert.rejects(writeOex(e,assets,{createdAt:original.manifest.createdAt,generator:original.manifest.generator}),error=>error.code==='FLOOR_RESOURCE_INTEGRITY');
  const plain=new Map(original.manifest.assets.map(a=>[a.artifactPath,original.files.get(a.path)]));const bytes=await writeOex(original.exhibition,plain,{createdAt:original.manifest.createdAt,generator:original.manifest.generator});assert.equal((await readOex(bytes)).manifest.formatVersion,'1.0.0-draft.2');assert.deepEqual(bytes,await readFile(new URL('../oex/v1/examples/synthetic-media.oex',import.meta.url)));
+});
+
+test('new catalogue carrier cannot relabel an old archive or admit an unregistered pack',async()=>{
+ const old=manifest();
+ const relabelled={...original.manifest,formatVersion:OEX_MATERIAL_CATALOGUE_VERSION};
+ const files=[...original.files].map(([name,data])=>({name,data:name==='manifest.json'?JSON.stringify(relabelled):data}));
+ await assert.rejects(readOex(buildZip(files)),error=>error.code==='MATERIAL_CATALOGUE_PROFILE_REQUIRED');
+ const forged=structuredClone({...old,formatVersion:OEX_MATERIAL_CATALOGUE_VERSION});
+ forged.floorResources[0].packId='unknown-tile';
+ assert.equal(validateOexManifest(forged).errors[0].code,'FLOOR_RESOURCE_DESCRIPTOR');
+ assert.equal(validateOexManifest({...old,archiveProfile:'bounded-file-v1'}).valid,false);
+ assert.equal(validateOexManifest({...forged,archiveProfile:'arbitrary-zip'}).valid,false);
 });

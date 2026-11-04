@@ -1,6 +1,6 @@
 {
   "name": "@exhibitos/spec",
-  "version": "0.1.0-draft.13",
+  "version": "0.1.0-draft.14",
   "private": true,
   "type": "module",
   "engines": {
@@ -76,6 +76,7 @@
       "import": "./validators/footstep-resources.mjs"
     },
     "./schemas/oex-footstep-resources.json": "./schemas/oex-footstep-resources.json",
+    "./schemas/oex-material-catalogue.json": "./schemas/oex-material-catalogue.json",
     "./schemas/oex-bounded-file.json": "./schemas/oex-bounded-file.json",
     "./oex-capacity-policy": {
       "types": "./types/oex-capacity-policy.d.ts",
