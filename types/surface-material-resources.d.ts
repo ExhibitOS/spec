@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { MaterialCataloguePresentation } from './material-catalogue.js';
-export type SurfaceMaterialPackId='museum-matte-paint'|'fine-lime-plaster';
+export type SurfaceMaterialPackId='museum-matte-paint'|'fine-lime-plaster'|'fine-gallery-concrete';
 export type SurfaceMaterialRole='color'|'roughness'|'normal';
 export interface SurfaceMaterialMapFile {readonly path:string;readonly mime:'image/png';readonly bytes:number;readonly sha256:string;readonly sourceSha256:string;readonly width:number;readonly height:number;readonly channels:3;readonly bitDepth:8;readonly colorSpace:'srgb'|'linear'}
 export interface SurfaceMaterialNoticeFile {readonly path:string;readonly mime:'text/plain; charset=utf-8';readonly bytes:number;readonly sha256:string}

@@ -107,6 +107,76 @@ export const SURFACE_MATERIAL_PACKS=freeze([
       "sha256": "36d175c95c1d07e4d306c64f87468a7d63f2199edcc472ac2837deebc0414b33"
     },
     "noticeText": "fine-lime-plaster — current distribution notice\nUser-authored ExhibitOS asset.\nCC0 1.0 Universal, pursuant to the user standing authorization dated 2026-10-27 for personally-created AND rights-owned models, textures, materials, previews, production originals, authoring scripts and asset derivatives, including future ExhibitOS deliveries unless separately instructed.\nhttps://creativecommons.org/publicdomain/zero/1.0/\nhttps://creativecommons.org/publicdomain/zero/1.0/legalcode\nCommercial use, modification, conversion, LOD, texture optimization and app/public repository/OEX/static redistribution are permitted; attribution is not mandatory. Original historical unselected license notes remain unchanged. No original asset bytes were modified during intake.\nThird-party components retain their own licenses; unknown-rights components require separate review. This notice does not relabel product code or grant trademark, patent or personality rights.\n"
+  },
+  {
+    "id": "fine-gallery-concrete",
+    "version": 1,
+    "license": "CC0-1.0",
+    "credit": "User-authored ExhibitOS asset",
+    "changes": "Base color and OpenGL +Y normal bytes unchanged. Roughness L8 replicated to equal RGB8 channels without resizing or numeric/color correction. Height is not consumed.",
+    "maps": {
+      "color": {
+        "mime": "image/png",
+        "bytes": 1280779,
+        "sha256": "634a67d2a076d763ef8f2291cce771046b2a03cc8ad2bc280e8a01166943baba",
+        "width": 2048,
+        "height": 2048,
+        "colorSpace": "srgb",
+        "path": "surface-material-textures/fine-gallery-concrete/1/color-634a67d2a076.png",
+        "channels": 3,
+        "bitDepth": 8,
+        "sourceSha256": "634a67d2a076d763ef8f2291cce771046b2a03cc8ad2bc280e8a01166943baba"
+      },
+      "normal": {
+        "mime": "image/png",
+        "bytes": 2397481,
+        "sha256": "124a39f69958bee2bd9d08dc135c916677891d1ce9cfea22394d2dbf1d68a775",
+        "width": 2048,
+        "height": 2048,
+        "colorSpace": "linear",
+        "path": "surface-material-textures/fine-gallery-concrete/1/normal-124a39f69958.png",
+        "channels": 3,
+        "bitDepth": 8,
+        "sourceSha256": "124a39f69958bee2bd9d08dc135c916677891d1ce9cfea22394d2dbf1d68a775"
+      },
+      "roughness": {
+        "mime": "image/png",
+        "bytes": 841285,
+        "sha256": "d773c26d56f0b59da02bce22392201d629e59cc72b37aa08137e69f9a60017ba",
+        "width": 2048,
+        "height": 2048,
+        "colorSpace": "linear",
+        "path": "surface-material-textures/fine-gallery-concrete/1/roughness-d773c26d56f0.png",
+        "channels": 3,
+        "bitDepth": 8,
+        "sourceSha256": "b723099b4b8517f11822dd4bc1d62be3e7d15084513c9e0e8f87809ab1cd937a"
+      }
+    },
+    "notice": {
+      "path": "surface-material-notices/fine-gallery-concrete-1.txt",
+      "mime": "text/plain; charset=utf-8",
+      "bytes": 815,
+      "sha256": "5953f6ffbb434db184d6e5af933a7600ce564b85df1173ed87ba041a9ced6288"
+    },
+    "noticeText": "Fine Gallery Concrete — material asset notice\n\nCreator and source: user-authored ExhibitOS material generated without external photographs, models or textures, according to its preserved source record.\nLicense: CC0 1.0 Universal under the rights holder's standing authorization for personally created and owned ExhibitOS assets. Legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode\n\nChanges: RGB color and OpenGL +Y normal maps are byte-identical copies of the preserved source. L8 roughness was losslessly expanded to three equal RGB channels. The thumbnail was resized from the color map using Lanczos. Source notes describe a 2 × 2 m repeat.\n\nCC0 does not itself grant trademark, patent, personality or other third-party rights. This notice covers the material asset, not application code.\n",
+    "catalogue": {
+      "displayName": {
+        "en": "Fine Gallery Concrete",
+        "ko": "고운 콘크리트"
+      },
+      "defaultRepeatMeters": [
+        2,
+        2
+      ],
+      "thumbnail": {
+        "path": "material-catalogue-thumbnails/fine-gallery-concrete/1/preview-82b907f0df15.png",
+        "mime": "image/png",
+        "bytes": 27612,
+        "sha256": "82b907f0df15c881ce06d76c04f73f285edd555d23c56524f67242b754dacf8e",
+        "width": 256,
+        "height": 256
+      }
+    }
   }
 ]);
 const object=v=>!!v&&typeof v==='object'&&!Array.isArray(v);

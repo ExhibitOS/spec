@@ -224,3 +224,11 @@ Quiet Oak Herringbone version 1 registers user-authored CC0 color, OpenGL +Y
 normal and roughness maps with an exact portable notice. The catalogue presents
 a 0.9 m repeat. These descriptors establish byte identity and portability.
 Visual selection and device qualification remain consumer evidence.
+
+Fine Gallery Concrete version 1 adds a user-authored CC0 wall material with
+three exact 2048 RGB8 maps, OpenGL +Y normal, a portable notice, a 256px
+thumbnail and a 2 m catalogue repeat. Selected concrete uses draft.10; its
+material inventory admits all three wall packs (12 map/notice resources).
+Legacy draft.7–9 schemas and their two-pack limits are unchanged. The thumbnail
+is catalogue metadata and is not required to import or display an OEX. No
+separate concrete floor, height, AO or room/device qualification is implied.
