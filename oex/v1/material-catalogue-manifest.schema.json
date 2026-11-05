@@ -167,7 +167,7 @@
     "floorResources": {
       "type": "array",
       "minItems": 0,
-      "maxItems": 17,
+      "maxItems": 21,
       "items": {
         "type": "object",
         "additionalProperties": false,

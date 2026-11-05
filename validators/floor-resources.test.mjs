@@ -60,3 +60,23 @@ test('quiet oak is an exact three-map draft.10 floor with an independent notice'
  binding.texturePack.version=2;
  assert.throws(()=>packageFloorResourceManifest(e),/FLOOR_RESOURCE_VERSION/);
 });
+
+test('draft10 carries all legacy floor packs together with the registered oak floor',()=>{
+ const e=revision();
+ const rooms=FLOOR_RESOURCE_PACKS.map((_,index)=>({
+  ...structuredClone(e.rooms[0]),
+  id:'77777777-7777-4777-8777-'+String(index+1).padStart(12,'0'),
+  transform:{...structuredClone(e.rooms[0].transform),position:[30*(index+1),0,0]},
+ }));
+ e.rooms.push(...rooms);
+ e.extensions['org.exhibitos.studio/floors'].bindings=FLOOR_RESOURCE_PACKS.map((pack,index)=>({
+  target:{kind:'room-base',roomId:rooms[index].id},preset:'wood',
+  repeatMeters:[0.9,0.9],rotation:0,texturePack:{id:pack.id,version:pack.version},
+ }));
+ const m=manifest(e);
+ assert.equal(m.floorResources.length,21);
+ m.formatVersion=OEX_MATERIAL_CATALOGUE_VERSION;
+ assert.equal(validateOexManifest(m).valid,true);
+ m.formatVersion=V;
+ assert.equal(validateOexManifest(m).valid,false);
+});
