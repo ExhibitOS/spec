@@ -6,6 +6,12 @@ import {MAX_SPACE_STILL_BYTES,MAX_SPACE_STILL_PIXELS,MAX_SPACE_STILL_DIMENSION} 
 export function validSpaceStillPng(bytes){
  return validStandalonePng(bytes,{bytes:MAX_SPACE_STILL_BYTES,pixels:MAX_SPACE_STILL_PIXELS,dimension:MAX_SPACE_STILL_DIMENSION,rgbOnly:false,srgb:true});
 }
+/** Workspace maps accept bounded RGB/RGBA8 with explicit role color space.
+ * The caller still compares actual dimensions and digest against its descriptor. */
+export function validWorkspaceMaterialPng(bytes,role){
+ if(!['color','normal','roughness','ao'].includes(role))return false;
+ return validStandalonePng(bytes,{bytes:8*1024*1024,pixels:4194304,dimension:8192,rgbOnly:false,srgb:role==='color'});
+}
 /** Exact registered RGB8 material maps, independent of cover still limits. */
 export function validSurfaceMaterialPng(bytes){
  return validStandalonePng(bytes,{bytes:8*1024*1024,pixels:4194304,dimension:2048,rgbOnly:true,srgb:false});

@@ -8,3 +8,6 @@ export interface WorkspaceMaterialBindings {version:1;materials:WorkspaceMateria
 /** Structural/semantic checks only; bytes, ownership and grant at use time remain caller responsibilities. */
 export declare function validateWorkspaceMaterial(value:unknown):ValidationResult;
 export declare function validateWorkspaceMaterialBindings(value:unknown,surfaces:unknown):ValidationResult;
+export declare const WORKSPACE_MATERIAL_NAMESPACE:'org.exhibitos.studio/workspace-materials';
+export interface WorkspaceMaterialResource {materialId:string;materialVersion:number;role:WorkspaceMaterialRole;path:string;artifactPath:string;mime:'image/png';bytes:number;sha256:string}
+export declare function packageWorkspaceMaterialManifest(exhibition:unknown):WorkspaceMaterialResource[];

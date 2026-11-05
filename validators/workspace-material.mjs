@@ -31,3 +31,18 @@ export function validateWorkspaceMaterialBindings(value,surfaces){
  for(const [key,m] of known)if(!used.has(key))errors.push({code:'MATERIAL_UNUSED',path:'/materials',message:'Unreferenced material '+m.id});
  return {valid:errors.length===0,errors:errors.slice(0,100)};
 }
+
+export const WORKSPACE_MATERIAL_NAMESPACE='org.exhibitos.studio/workspace-materials';
+/** Inventory is derived from a validated snapshot, never caller paths. The
+ * returned descriptor is not authority to read or disclose the bytes. */
+export function packageWorkspaceMaterialManifest(exhibition){
+ const extension=exhibition?.extensions?.[WORKSPACE_MATERIAL_NAMESPACE];if(extension===undefined)return [];
+ const checked=validateWorkspaceMaterialBindings(extension,exhibition?.surfaces);if(!checked.valid)throw Error(checked.errors[0]?.code??'MATERIAL_BINDING_INVALID');
+ if(!extension.bindings.length)throw Error('MATERIAL_BINDING_EMPTY');
+ const entries=[];
+ for(const material of extension.materials)for(const [role,map] of Object.entries(material.maps)){
+  const artifactPath=`workspace-materials/${material.id.toLowerCase()}/${material.version}/${role}-${map.sha256}.png`;
+  entries.push({materialId:material.id.toLowerCase(),materialVersion:material.version,role,path:'resources/'+artifactPath,artifactPath,mime:map.mime,bytes:map.bytes,sha256:map.sha256});
+ }
+ return entries.sort((a,b)=>a.path.localeCompare(b.path));
+}

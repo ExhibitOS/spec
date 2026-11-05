@@ -42,9 +42,9 @@ The optional draft.8 resource profile is described in [recorded footsteps](oex/v
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.16` is an ESM Node package; OES wire contracts
+Package `@exhibitos/spec@0.1.0-draft.17` is an ESM Node package; OES wire contracts
 include the existing draft.1 and an explicit provisional display draft.2, and OEX
-has explicit optional profiles through draft.11. Earlier schema identities are unchanged.
+has explicit optional profiles through candidate draft.12. Earlier schema identities are unchanged.
 Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
 `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then
@@ -54,7 +54,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.12.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.17.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```
@@ -150,5 +150,5 @@ The opt-in [file-backed OEX consumer profile](oex/v1/README.md#explicit-file-bac
 are early structural candidates for personal workspace floor/wall materials.
 The validator checks bounded descriptors and typed references only; it does not
 check bytes, rights at use time, workspace ownership, Studio persistence, or
-rendering. They do not by themselves define an OEX profile or enable archive
-import/export. Existing OEX profiles and their byte identities remain unchanged.
+rendering. The candidate draft.12 OEX profile includes exact workspace map bytes and
+export-rights checks; deployed Platform and Manager runtimes do not yet support it. Existing OEX profiles and their byte identities remain unchanged.
