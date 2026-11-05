@@ -173,3 +173,20 @@ test('size-only index reads bounded documents and never claims OEX validity',asy
  const duplicate=buildZip([{name:'manifest.json',data:'{}'},{name:'MANIFEST.JSON',data:'{}'},{name:'exhibition.json',data:'{}'}]);
  await fixture(duplicate,async path=>{const handle=await open(path,'r');try{await assert.rejects(()=>withOexSizeIndex(handle,async()=>{}),/ZIP_DUPLICATE_PATH/);}finally{await handle.close();}});
 });
+
+
+test('draft.11 bounded file composes resources, preserves the reference, and rejects downgrade',async()=>{
+ const input=await readOex(await readFile(new URL('../oex/v1/examples/synthetic-space-still.oex',import.meta.url))),revision=structuredClone(input.exhibition);
+ revision.schemaVersion='1.0.0-draft.2';
+ const artwork=revision.artworks.find(a=>a.artworkType==='sculpture');artwork.schemaVersion='1.0.0-draft.2';artwork.units='unknown';artwork.dimensions={width:2,height:4,depth:6};artwork.transform={position:[0,0,0],rotation:[0,0,0,1],scale:[.1,.1,.1]};artwork.extensions={...artwork.extensions,'org.exhibitos.studio/display-reference':{version:1,status:'provisional-uncalibrated',assetSha256:artwork.assets.find(a=>a.id===artwork.primaryAssetId).sha256,rawBounds:{min:[-1,-2,-3],max:[1,2,3]},referenceHeightMeters:.4,catalogueDimensions:{width:.3,height:.4,depth:.5,unit:'m'},axisMapping:'unverified'}};
+ const id='a0000000-0000-4000-8000-000000000001',model=input.manifest.assets.find(a=>a.mime==='model/gltf-binary'),notice=Buffer.from('Synthetic CC0 fixture notice.\n'),digest=b=>createHash('sha256').update(b).digest('hex');
+ revision.extensions['org.exhibitos.studio/furnishing-visuals']={version:1,assets:[{id,catalogId:'synthetic-fixture',catalogVersion:1,mime:model.mime,path:`furnishings/${id}/model.glb`,bytes:model.bytes,sha256:model.sha256,rights:{licenseId:'CC0-1.0',notice:{path:`furnishings/${id}/LICENSE-NOTICE.txt`,bytes:notice.length,sha256:digest(notice)}},provenance:{sourceSha256:model.sha256,recipe:'original-v1'}}],bindings:[{hostKind:'pedestal',hostId:revision.placements[0].id,assetId:id,pose:{position:[0,0,0],yaw:0,scale:1}}]};
+ const assets=new Map(input.manifest.assets.map(asset=>[asset.artifactPath,input.files.get(asset.path)]));assets.set(`furnishings/${id}/model.glb`,input.files.get(model.path));assets.set(`furnishings/${id}/LICENSE-NOTICE.txt`,notice);
+ await fixture(original,async(_path,dir)=>{const output=join(dir,'composed.oex'),options={createdAt:input.manifest.createdAt,generator:input.manifest.generator};
+  await writeOexFile(revision,{paths:[...assets.keys()],get:async name=>assets.get(name)},output,options);
+  await withOexFile(output,async result=>{assert.equal(result.manifest.formatVersion,'1.0.0-draft.11');assert.equal(result.manifest.assets.filter(asset=>asset.kind==='space-still').length,1);assert.equal(result.manifest.assets.filter(asset=>asset.kind==='media').length,1);assert.equal(result.manifest.assets.filter(asset=>asset.kind==='furnishing').length,1);assert.deepEqual(await result.files.get(`resources/furnishings/${id}/LICENSE-NOTICE.txt`),notice);});
+  const entries=readBoundedZip(await readFile(output)),manifest=JSON.parse(entries.get('manifest.json'));manifest.formatVersion='1.0.0-draft.10';manifest.oesArtworkVersion='1.0.0-draft.1';manifest.oesExhibitionVersion='1.0.0-draft.1';const downgrade=join(dir,'downgrade.oex');await writeFile(downgrade,buildZip([...entries].map(([name,data])=>({name,data:name==='manifest.json'?Buffer.from(JSON.stringify(manifest)):data}))));await assert.rejects(()=>withOexFile(downgrade,async()=>{}));
+  const missing=new Map(assets);missing.delete(`furnishings/${id}/LICENSE-NOTICE.txt`);await assert.rejects(()=>writeOexFile(revision,{paths:[...missing.keys()],get:async name=>missing.get(name)},join(dir,'missing.oex'),options),/ARCHIVE_LAYOUT_MISMATCH/);
+  const denied=structuredClone(revision);denied.artworks[0].rights.permissions.export=false;await assert.rejects(()=>writeOexFile(denied,{paths:[...assets.keys()],get:async name=>assets.get(name)},join(dir,'denied.oex'),options),/EXPORT_PERMISSION_REQUIRED/);
+ });
+});

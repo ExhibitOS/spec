@@ -71,3 +71,21 @@ async function readSurfaceMaterials(bytes:Uint8Array){
  return [] as string[];
 }
 void readSurfaceMaterials;
+
+// New wire-version values are accepted by writers and exposed by all readers.
+import {withOexFile, withOexFileHandle, type ExhibitionV2, type OexProvisionalDisplayManifest} from '@exhibitos/spec';
+declare const v2: ExhibitionV2;
+declare const handle: Parameters<typeof withOexFileHandle>[0];
+void writeOex(v2,new Map(),{createdAt:'',generator:{name:'',version:''}});
+void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});
+void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});
+void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});
+
+// @ts-expect-error draft.1 cannot contain a provisional v2 artwork
+const invalidExhibition: import('@exhibitos/spec').Exhibition = {...v2,schemaVersion:'1.0.0-draft.1'};
+void invalidExhibition;
+
+declare const v2Draft: Extract<import('@exhibitos/spec').Lifecycle,{kind:'exhibition-draft';schemaVersion:'1.0.0-draft.2'}>;
+// @ts-expect-error a v1 draft envelope cannot contain a v2 candidate
+const invalidDraft: import('@exhibitos/spec').Lifecycle = {...v2Draft,schemaVersion:'1.0.0-draft.1'};
+void invalidDraft;

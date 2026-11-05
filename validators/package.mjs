@@ -23,6 +23,7 @@ export {OEX_FOOTSTEP_RESOURCE_VERSION,footstepResourcesFor} from './footstep-res
 export {OEX_FLOOR_RESOURCE_VERSION,packageFloorResourceManifest} from './floor-resources.mjs';
 export const OEX_BOUNDED_FILE_VERSION='1.0.0-draft.9';
 export const OEX_MATERIAL_CATALOGUE_VERSION='1.0.0-draft.10';
+export const OEX_PROVISIONAL_DISPLAY_VERSION='1.0.0-draft.11';
 export const OEX_MEDIA_VERSION='1.0.0-draft.2';
 export const OEX_SPACE_STILL_VERSION='1.0.0-draft.4';
 export const OEX_VERSION='1.0.0-draft.1',OED_VERSION='1.0.0-draft.1';
@@ -35,6 +36,7 @@ const validateSurfaceMaterialManifest=ajv.compile(JSON.parse(await readFile(new 
 const boundedFileSchema=JSON.parse(await readFile(new URL('../oex/v1/bounded-file-manifest.schema.json',import.meta.url),'utf8'));
 const validateBoundedFileManifest=ajv.compile(boundedFileSchema);
 const validateMaterialCatalogueManifest=ajv.compile(JSON.parse(await readFile(new URL('../oex/v1/material-catalogue-manifest.schema.json',import.meta.url),'utf8')));
+const validateProvisionalDisplayManifest=ajv.compile(JSON.parse(await readFile(new URL('../oex/v1/provisional-display-manifest.schema.json',import.meta.url),'utf8')));
 const legacyFloorPacks=new Set(boundedFileSchema.properties.floorResources.items.properties.packId.enum);
 const legacyWallPacks=new Set(boundedFileSchema.properties.materialResources.items.properties.packId.enum);
 function usesMaterialCatalogue(revision,materialResources){
@@ -45,7 +47,7 @@ function usesMaterialCatalogue(revision,materialResources){
     materialResources.some(r=>r.packVersion!==1||!legacyWallPacks.has(r.packId));
 }
 const isBoundedFileManifest=manifest=>manifest.formatVersion===OEX_BOUNDED_FILE_VERSION||
-  (manifest.formatVersion===OEX_MATERIAL_CATALOGUE_VERSION&&manifest.archiveProfile==='bounded-file-v1');
+  ([OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion)&&manifest.archiveProfile==='bounded-file-v1');
 function matchesMaterialDimensions(bytes,resource,packs){
   const map=packs.find(p=>p.id===resource.packId&&p.version===resource.packVersion)?.maps[resource.role];
   return !!map&&map.width===map.height&&bytes.readUInt32BE(16)===map.width&&bytes.readUInt32BE(20)===map.height;
@@ -59,9 +61,9 @@ const schemaErrors=validate=>validate.errors.slice(0,100).map(error=>issue('SCHE
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function parseJson(bytes) {if(!bytes||bytes.length>1048576)throw new Error('JSON_DOCUMENT_LIMIT');return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
 export function validateOexManifest(document) {
-  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(document?.formatVersion))return result([issue('UNSUPPORTED_VERSION','/formatVersion','Expected supported exact OEX version')]);
+  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(document?.formatVersion))return result([issue('UNSUPPORTED_VERSION','/formatVersion','Expected supported exact OEX version')]);
   try{revisionHash(document);}catch(error){return result([issue(['NON_JSON_VALUE','JSON_LIMIT','DOCUMENT_LIMIT'].includes(error.message)?error.message:'INVALID_INPUT','','Expected bounded plain JSON')]);}
-  const validator=document.formatVersion===OEX_MATERIAL_CATALOGUE_VERSION?validateMaterialCatalogueManifest:document.formatVersion===OEX_BOUNDED_FILE_VERSION?validateBoundedFileManifest:document.formatVersion===OEX_FOOTSTEP_RESOURCE_VERSION?validateFootstepResourceManifest:document.formatVersion===OEX_SURFACE_MATERIAL_VERSION?validateSurfaceMaterialManifest:document.formatVersion===OEX_FURNISHING_VERSION?validateFurnishingManifest:document.formatVersion===OEX_FLOOR_RESOURCE_VERSION?validateFloorResourceManifest:document.formatVersion===OEX_SPACE_STILL_VERSION?validateSpaceStillManifest:document.formatVersion===OEX_MEDIA_VERSION?validateMediaManifest:validateManifest;
+  const validator=document.formatVersion===OEX_PROVISIONAL_DISPLAY_VERSION?validateProvisionalDisplayManifest:document.formatVersion===OEX_MATERIAL_CATALOGUE_VERSION?validateMaterialCatalogueManifest:document.formatVersion===OEX_BOUNDED_FILE_VERSION?validateBoundedFileManifest:document.formatVersion===OEX_FOOTSTEP_RESOURCE_VERSION?validateFootstepResourceManifest:document.formatVersion===OEX_SURFACE_MATERIAL_VERSION?validateSurfaceMaterialManifest:document.formatVersion===OEX_FURNISHING_VERSION?validateFurnishingManifest:document.formatVersion===OEX_FLOOR_RESOURCE_VERSION?validateFloorResourceManifest:document.formatVersion===OEX_SPACE_STILL_VERSION?validateSpaceStillManifest:document.formatVersion===OEX_MEDIA_VERSION?validateMediaManifest:validateManifest;
   if(!validator(document))return result(schemaErrors(validator));
   const errors=[];
   if(!Number.isFinite(Date.parse(document.createdAt)))errors.push(issue('INVALID_UTC_TIME','/createdAt','Expected a finite UTC instant'));
@@ -144,18 +146,19 @@ async function decodeOexFiles(files,{archiveProfile}={}) {
     if(exhibitionBytes.length!==manifest.exhibition.bytes||hash(exhibitionBytes)!==manifest.exhibition.sha256)return {checked:result([issue('EXHIBITION_FILE_MISMATCH','/exhibition','Exhibition exact bytes/hash must match manifest')])};
     const revision=parseJson(exhibitionBytes),semantic=validateExhibition(revision,{archiveProfile:bounded?archiveProfile:undefined});if(!semantic.valid)return {checked:semantic};
     const floorResources=packageFloorResourceManifest(revision),materialResources=packageSurfaceMaterialManifest(revision);
-    if((manifest.formatVersion===OEX_MATERIAL_CATALOGUE_VERSION)!==usesMaterialCatalogue(revision,materialResources))return {checked:result([issue('MATERIAL_CATALOGUE_PROFILE_REQUIRED','/formatVersion','Material catalogue profile requires a newly registered material binding and vice versa')])};
+    if(manifest.formatVersion!==OEX_PROVISIONAL_DISPLAY_VERSION&&(manifest.formatVersion===OEX_MATERIAL_CATALOGUE_VERSION)!==usesMaterialCatalogue(revision,materialResources))return {checked:result([issue('MATERIAL_CATALOGUE_PROFILE_REQUIRED','/formatVersion','Material catalogue profile requires a newly registered material binding and vice versa')])};
     const errors=[],exportTime=Date.parse(manifest.createdAt);
+    if((manifest.formatVersion===OEX_PROVISIONAL_DISPLAY_VERSION)!==(revision.schemaVersion==='1.0.0-draft.2'))errors.push(issue('OES_VERSION_MISMATCH','/formatVersion','Package profile must match embedded exhibition version'));
     if(exportTime<Date.parse(revision.createdAt))errors.push(issue('EXPORT_BEFORE_REVISION','/createdAt','Export cannot precede the embedded exhibition snapshot'));
     revision.artworks.forEach((artwork,index)=>{if(exportTime<Date.parse(artwork.createdAt))errors.push(issue('EXPORT_BEFORE_ARTWORK_REVISION',`/artworks/${index}/createdAt`,'Export cannot precede an embedded artwork snapshot'));});
     if(revision.id!==manifest.exhibition.id||revision.revisionId!==manifest.exhibition.revisionId||revisionHash(revision)!==manifest.exhibition.revisionSha256)errors.push(issue('EXHIBITION_REVISION_MISMATCH','/exhibition','Manifest must bind the exact declared revision'));
     if(manifest.formatVersion===OEX_VERSION&&revision.mediaAssets.length)errors.push(issue('MEDIA_PACKAGE_UNSUPPORTED','/mediaAssets','This draft packages Artwork GLB/images; audio package verification is pending'));
     const still=spaceStillFor(revision);
-    if(still&&![OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion)||!still&&manifest.formatVersion===OEX_SPACE_STILL_VERSION)errors.push(issue('SPACE_STILL_PROFILE_UNSUPPORTED','/formatVersion','Explicit space-still profile4 is required only when still inventory is present'));
-    if(Object.hasOwn(revision.extensions??{},FURNISHING_NAMESPACE)&&![OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion))errors.push(issue('FURNISHING_PACKAGE_UNSUPPORTED','/formatVersion','Furnishings require exact opt-in profile6'));
+    if(still&&![OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion)||!still&&manifest.formatVersion===OEX_SPACE_STILL_VERSION)errors.push(issue('SPACE_STILL_PROFILE_UNSUPPORTED','/formatVersion','Explicit space-still profile4 is required only when still inventory is present'));
+    if(Object.hasOwn(revision.extensions??{},FURNISHING_NAMESPACE)&&![OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion))errors.push(issue('FURNISHING_PACKAGE_UNSUPPORTED','/formatVersion','Furnishings require exact opt-in profile6'));
     if(manifest.formatVersion===OEX_FURNISHING_VERSION&&!validateFurnishingInventory(revision).assets.length)errors.push(issue('FURNISHING_PROFILE_REQUIRED','/formatVersion','Profile6 requires placed furnishings'));
-    if(revisionHash([OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion)?packageCompleteAssetManifest(revision):still?packageSpaceStillAssetManifest(revision):manifest.formatVersion!==OEX_VERSION?packageMediaAssetManifest(revision):packageAssetManifest(revision))!==revisionHash(manifest.assets))errors.push(issue('ASSET_MANIFEST_MISMATCH','/assets','Manifest inventory/rights/provenance pointers must match embedded snapshots exactly'));
-    if([OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion)){
+    if(revisionHash([OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion)?packageCompleteAssetManifest(revision):still?packageSpaceStillAssetManifest(revision):manifest.formatVersion!==OEX_VERSION?packageMediaAssetManifest(revision):packageAssetManifest(revision))!==revisionHash(manifest.assets))errors.push(issue('ASSET_MANIFEST_MISMATCH','/assets','Manifest inventory/rights/provenance pointers must match embedded snapshots exactly'));
+    if([OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion)){
       if(manifest.formatVersion===OEX_FLOOR_RESOURCE_VERSION&&!floorResources.length||revisionHash(floorResources)!==revisionHash(manifest.floorResources??[]))errors.push(issue('FLOOR_RESOURCE_MANIFEST_MISMATCH','/floorResources','Selected known pack versions, roles, notice and exact bytes must match'));
       for(const [i,resource]of (manifest.floorResources??[]).entries()){
         const data=await files.get(resource.path),path='/floorResources/'+i;
@@ -164,8 +167,8 @@ async function decodeOexFiles(files,{archiveProfile}={}) {
         else if(!(resource.packVersion===1&&legacyFloorPacks.has(resource.packId)?validSpaceStillPng(data):validSurfaceMaterialPng(data))||!matchesMaterialDimensions(data,resource,FLOOR_RESOURCE_PACKS)||data[25]!==2)errors.push(issue('FLOOR_RESOURCE_PNG',path,'Expected admitted bounded RGB8 floor map'));
       }
     }
-    if(materialResources.length&&![OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion))errors.push(issue('SURFACE_MATERIAL_PROFILE_UNSUPPORTED','/formatVersion','Selected material maps require opt-in profile7'));
-    if([OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion)){
+    if(materialResources.length&&![OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion))errors.push(issue('SURFACE_MATERIAL_PROFILE_UNSUPPORTED','/formatVersion','Selected material maps require opt-in profile7'));
+    if([OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion)){
       if(manifest.formatVersion===OEX_SURFACE_MATERIAL_VERSION&&!materialResources.length||revisionHash(materialResources)!==revisionHash(manifest.materialResources??[]))errors.push(issue('SURFACE_MATERIAL_MANIFEST_MISMATCH','/materialResources','All and only selected exact map and notice bytes are required'));
       for(const [i,resource]of (manifest.materialResources??[]).entries()){
         const data=await files.get(resource.path),path=`/materialResources/${i}`;
@@ -175,8 +178,8 @@ async function decodeOexFiles(files,{archiveProfile}={}) {
       }
     }
     const stepResources=footstepResourcesFor(revision);
-    if(stepResources.length&&![OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion))errors.push(issue('FOOTSTEP_PROFILE_UNSUPPORTED','/formatVersion','Declared resources require profile8'));
-    if([OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion)){
+    if(stepResources.length&&![OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion))errors.push(issue('FOOTSTEP_PROFILE_UNSUPPORTED','/formatVersion','Declared resources require profile8'));
+    if([OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion)){
       if(manifest.formatVersion===OEX_FOOTSTEP_RESOURCE_VERSION&&!stepResources.length||revisionHash(stepResources)!==revisionHash(manifest.footstepResources??[]))errors.push(issue('FOOTSTEP_RESOURCE_MANIFEST_MISMATCH','/footstepResources','Exact selected resources required'));
       for(const [i,resource] of (manifest.footstepResources??[]).entries()){
         const data=await files.get(resource.path),path=`/footstepResources/${i}`;
@@ -186,7 +189,7 @@ async function decodeOexFiles(files,{archiveProfile}={}) {
       }
     }
     revision.artworks.forEach((artwork,index)=>errors.push(...validateExportRights(artwork.rights,manifest.createdAt).errors.map(error=>({...error,path:`/artworks/${index}`+error.path}))));
-    if([OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(manifest.formatVersion)){
+    if([OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(manifest.formatVersion)){
       const expected=packageFurnishingNoticeManifest(revision);
       if(revisionHash(expected)!==revisionHash(manifest.furnishingNotices??[]))errors.push(issue('FURNISHING_NOTICE_MANIFEST_MISMATCH','/furnishingNotices','Exact selected notice inventory required'));
       for(const [i,notice]of (manifest.furnishingNotices??[]).entries()){
@@ -227,7 +230,7 @@ export function validateOed(document) {
   return result(errors);
 }
 export function adaptOexManifest(document,targetVersion) {
-  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION].includes(targetVersion))return result([issue('UNSUPPORTED_TARGET_VERSION','','No adapter is registered for that target')]);
+  if(![OEX_VERSION,OEX_MEDIA_VERSION,OEX_SPACE_STILL_VERSION,OEX_FLOOR_RESOURCE_VERSION,OEX_FURNISHING_VERSION,OEX_SURFACE_MATERIAL_VERSION,OEX_FOOTSTEP_RESOURCE_VERSION,OEX_BOUNDED_FILE_VERSION,OEX_MATERIAL_CATALOGUE_VERSION,OEX_PROVISIONAL_DISPLAY_VERSION].includes(targetVersion))return result([issue('UNSUPPORTED_TARGET_VERSION','','No adapter is registered for that target')]);
   const checked=validateOexManifest(document);if(!checked.valid)return checked;
   if(document.formatVersion!==targetVersion)return result([issue('UNSUPPORTED_TARGET_VERSION','','No cross-profile migration adapter is registered')]);
   return {...checked,adapter:'identity-only-no-migration',document:structuredClone(document)};
@@ -323,7 +326,8 @@ function prepareOex(exhibition,options,archiveProfile) {
     if(allInventory.length>ZIP_LIMITS.files-2)throw new OexError('ARCHIVE_LAYOUT_MISMATCH');
     const revisionBytes=Buffer.from(JSON.stringify(revision)+'\n');if(revisionBytes.length>1048576)throw new OexError('JSON_DOCUMENT_LIMIT');
     const catalogue=usesMaterialCatalogue(revision,materialResources);
-    const manifest={formatVersion:catalogue?OEX_MATERIAL_CATALOGUE_VERSION:archiveProfile==='bounded-file-v1'?OEX_BOUNDED_FILE_VERSION:footstepResources.length?OEX_FOOTSTEP_RESOURCE_VERSION:materialResources.length?OEX_SURFACE_MATERIAL_VERSION:furnishings.length?OEX_FURNISHING_VERSION:floorResources.length?OEX_FLOOR_RESOURCE_VERSION:still?OEX_SPACE_STILL_VERSION:OEX_MEDIA_VERSION,...(catalogue&&archiveProfile?{archiveProfile}:{}),kind:'oex-manifest',oesArtworkVersion:'1.0.0-draft.1',oesExhibitionVersion:'1.0.0-draft.1',createdAt:options.createdAt,generator:structuredClone(options.generator),exhibition:{path:'exhibition.json',id:revision.id,revisionId:revision.revisionId,bytes:revisionBytes.length,sha256:hash(revisionBytes),revisionSha256:revisionHash(revision),hashProfile:'oes-sorted-json-v1'},assets:inventory,...(floorResources.length?{floorResources}:{}),...(furnishings.length?{furnishingNotices}:{}),...(materialResources.length?{materialResources}:{}),...(footstepResources.length?{footstepResources}:{})};
+    const provisional=revision.schemaVersion==='1.0.0-draft.2';
+    const manifest={formatVersion:provisional?OEX_PROVISIONAL_DISPLAY_VERSION:catalogue?OEX_MATERIAL_CATALOGUE_VERSION:archiveProfile==='bounded-file-v1'?OEX_BOUNDED_FILE_VERSION:footstepResources.length?OEX_FOOTSTEP_RESOURCE_VERSION:materialResources.length?OEX_SURFACE_MATERIAL_VERSION:furnishings.length?OEX_FURNISHING_VERSION:floorResources.length?OEX_FLOOR_RESOURCE_VERSION:still?OEX_SPACE_STILL_VERSION:OEX_MEDIA_VERSION,...((catalogue||provisional)&&archiveProfile?{archiveProfile}:{}),kind:'oex-manifest',oesArtworkVersion:provisional?'1.0.0-draft.2':'1.0.0-draft.1',oesExhibitionVersion:provisional?'1.0.0-draft.2':'1.0.0-draft.1',createdAt:options.createdAt,generator:structuredClone(options.generator),exhibition:{path:'exhibition.json',id:revision.id,revisionId:revision.revisionId,bytes:revisionBytes.length,sha256:hash(revisionBytes),revisionSha256:revisionHash(revision),hashProfile:'oes-sorted-json-v1'},assets:inventory,...(floorResources.length?{floorResources}:{}),...(furnishings.length?{furnishingNotices}:{}),...(materialResources.length?{materialResources}:{}),...(footstepResources.length?{footstepResources}:{})};
     const valid=validateOexManifest(manifest);if(!valid.valid)throw new OexError(valid.errors[0].code,valid.errors);
     const manifestBytes=Buffer.from(JSON.stringify(manifest)+'\n');if(manifestBytes.length>1048576)throw new OexError('JSON_DOCUMENT_LIMIT');
     return {allInventory,manifestBytes,revisionBytes};

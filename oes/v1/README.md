@@ -34,6 +34,10 @@ at 100 entries. Schema-only acceptance does not establish full conformance.
 
 ## Data rules
 
+The opt-in unknown-source-unit artwork and exhibition draft.2 profile is
+specified separately in [provisional display](provisional-display.md). The
+draft.1 rules below remain unchanged.
+
 Core objects reject unknown fields. `extensions` is optional; keys use a reverse
 DNS namespace and slash, such as `org.example/label`, and values are objects.
 Consumers must retain unknown extensions but cannot base core correctness or
