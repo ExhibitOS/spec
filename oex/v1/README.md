@@ -240,7 +240,8 @@ an explicit draft.12 manifest. Its workspace-material resource list is derived
 from referenced immutable material IDs, versions, roles, hashes and lengths;
 caller-supplied paths are not authority. Only exact referenced bounded PNG maps
 are included. The reader verifies map bytes, dimensions, role color-space rules,
-rights and provenance, and rejects absent or extraneous entries. Every material
+rights declarations and provenance shape, and rejects absent or extraneous entries.
+It does not independently verify the truth of the supplied provenance. Every material
 must have an export grant valid at the archive creation time. Built-in resources
 needed for a retained fallback stay in the existing resource lists.
 
