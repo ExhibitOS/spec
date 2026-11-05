@@ -80,3 +80,12 @@ void writeOex(v2,new Map(),{createdAt:'',generator:{name:'',version:''}});
 void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});
 void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});
 void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});
+
+// @ts-expect-error draft.1 cannot contain a provisional v2 artwork
+const invalidExhibition: import('../types/index.js').Exhibition = {...v2,schemaVersion:'1.0.0-draft.1'};
+void invalidExhibition;
+
+declare const v2Draft: Extract<import('../types/index.js').Lifecycle,{kind:'exhibition-draft';schemaVersion:'1.0.0-draft.2'}>;
+// @ts-expect-error a v1 draft envelope cannot contain a v2 candidate
+const invalidDraft: import('../types/index.js').Lifecycle = {...v2Draft,schemaVersion:'1.0.0-draft.1'};
+void invalidDraft;

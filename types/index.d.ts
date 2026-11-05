@@ -40,9 +40,8 @@ export type OexMediaManifest = { "formatVersion": "1.0.0-draft.2"; "kind": "oex-
 // https://exhibitos.github.io/spec/oed/v1/1.0.0-draft.1/deployment.schema.json SHA256 a3de81ed873d585b5526e1a61440e64147d734b9a3c048056eda05520f0cd7d4
 export type OedDeployment = { "schemaVersion": "1.0.0-draft.1"; "kind": "deployment"; "id": string; "createdAt": string; "target": ({ "type": "local-compose"; } | { "type": "generic-ssh"; "host": string; "port": number; "user": string; "sshKeySecretRef": string; }); "runtime": { "image": (string & (string | string)); "httpPort": number; "replicas": number; "registrySecretRef"?: string; }; "storage": { "metadata": { "type": "postgresql"; "host": string; "port": number; "database": string; "user": string; "passwordSecretRef": string; }; "assets": ({ "type": "filesystem"; "path": string; } | { "type": "s3-compatible"; "endpoint": string; "bucket": string; "accessKeySecretRef": string; "secretKeySecretRef": string; }); }; "secretRefs": Array<({ "id": string; "source": "environment"; "variable": string; } | { "id": string; "source": "os-keychain"; "service": string; "account": string; })>; };
 export type Artwork = ArtworkV1 | ArtworkV2;
-export type Exhibition = Omit<ExhibitionV1, "schemaVersion" | "artworks"> & { schemaVersion: ExhibitionV1["schemaVersion"] | ExhibitionV2["schemaVersion"]; artworks: Artwork[] };
-type WidenLifecycle<T> = T extends {kind: "exhibition-draft"} ? Omit<T, "schemaVersion" | "candidate"> & {schemaVersion: Exhibition["schemaVersion"]; candidate: Exhibition} : T extends {schemaVersion: unknown} ? Omit<T, "schemaVersion"> & {schemaVersion: Exhibition["schemaVersion"]} : never;
-export type Lifecycle = WidenLifecycle<LifecycleV1> | LifecycleV2;
+export type Exhibition = ExhibitionV1 | ExhibitionV2;
+export type Lifecycle = LifecycleV1 | LifecycleV2;
 export interface ValidationError { code: string; path: string; message: string }
 export interface ValidationResult { valid: boolean; errors: ValidationError[] }
 export interface PublicationOptions { publicationTime?: string }
