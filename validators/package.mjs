@@ -69,6 +69,7 @@ export function validateOexManifest(document) {
   const validator=document.formatVersion===OEX_WORKSPACE_MATERIAL_VERSION?validateWorkspaceMaterialManifest:document.formatVersion===OEX_PROVISIONAL_DISPLAY_VERSION?validateProvisionalDisplayManifest:document.formatVersion===OEX_MATERIAL_CATALOGUE_VERSION?validateMaterialCatalogueManifest:document.formatVersion===OEX_BOUNDED_FILE_VERSION?validateBoundedFileManifest:document.formatVersion===OEX_FOOTSTEP_RESOURCE_VERSION?validateFootstepResourceManifest:document.formatVersion===OEX_SURFACE_MATERIAL_VERSION?validateSurfaceMaterialManifest:document.formatVersion===OEX_FURNISHING_VERSION?validateFurnishingManifest:document.formatVersion===OEX_FLOOR_RESOURCE_VERSION?validateFloorResourceManifest:document.formatVersion===OEX_SPACE_STILL_VERSION?validateSpaceStillManifest:document.formatVersion===OEX_MEDIA_VERSION?validateMediaManifest:validateManifest;
   if(!validator(document))return result(schemaErrors(validator));
   const errors=[];
+  if(document.formatVersion===OEX_WORKSPACE_MATERIAL_VERSION&&document.oesArtworkVersion!==document.oesExhibitionVersion)errors.push(issue('OES_VERSION_MISMATCH','/oesArtworkVersion','Workspace material profile requires matching OES versions'));
   if(!Number.isFinite(Date.parse(document.createdAt)))errors.push(issue('INVALID_UTC_TIME','/createdAt','Expected a finite UTC instant'));
   const paths=new Set(),ids=new Set();
   document.assets.forEach((asset,i)=>{
