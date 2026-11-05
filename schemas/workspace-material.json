@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exhibitos.github.io/spec/workspace-material/v1/material.schema.json",
+  "title": "Workspace material descriptor candidate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "kind": {
+      "enum": [
+        "floor",
+        "wall"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "rights": {
+      "$ref": "https://exhibitos.github.io/spec/oes/v1/1.0.0-draft.1/artwork.schema.json#/$defs/rights"
+    },
+    "provenance": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "maps": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mime": {
+              "const": "image/png"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8388608
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "colorSpace": {
+              "const": "srgb"
+            }
+          },
+          "required": [
+            "mime",
+            "bytes",
+            "sha256",
+            "width",
+            "height",
+            "colorSpace"
+          ]
+        },
+        "normal": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mime": {
+              "const": "image/png"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8388608
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "colorSpace": {
+              "const": "linear"
+            },
+            "normalY": {
+              "const": "up"
+            }
+          },
+          "required": [
+            "mime",
+            "bytes",
+            "sha256",
+            "width",
+            "height",
+            "colorSpace",
+            "normalY"
+          ]
+        },
+        "roughness": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mime": {
+              "const": "image/png"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8388608
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "colorSpace": {
+              "const": "linear"
+            }
+          },
+          "required": [
+            "mime",
+            "bytes",
+            "sha256",
+            "width",
+            "height",
+            "colorSpace"
+          ]
+        },
+        "ao": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mime": {
+              "const": "image/png"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8388608
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8192
+            },
+            "colorSpace": {
+              "const": "linear"
+            }
+          },
+          "required": [
+            "mime",
+            "bytes",
+            "sha256",
+            "width",
+            "height",
+            "colorSpace"
+          ]
+        }
+      },
+      "required": [
+        "color"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "kind",
+    "name",
+    "rights",
+    "provenance",
+    "maps"
+  ]
+}

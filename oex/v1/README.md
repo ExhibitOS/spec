@@ -232,3 +232,24 @@ material inventory admits all three wall packs (12 map/notice resources).
 Legacy draft.7–9 schemas and their two-pack limits are unchanged. The thumbnail
 is catalogue metadata and is not required to import or display an OEX. No
 separate concrete floor, height, AO or room/device qualification is implied.
+
+### Workspace material profile candidate (draft.12)
+
+A snapshot with the `org.exhibitos.studio/workspace-materials` extension uses
+an explicit draft.12 manifest. Its workspace-material resource list is derived
+from referenced immutable material IDs, versions, roles, hashes and lengths;
+caller-supplied paths are not authority. Only exact referenced bounded PNG maps
+are included. The reader verifies map bytes, dimensions, role color-space rules,
+rights declarations and provenance shape, and rejects absent or extraneous entries.
+It does not independently verify the truth of the supplied provenance. Every material
+must have an export grant valid at the archive creation time. Built-in resources
+needed for a retained fallback stay in the existing resource lists.
+
+The profile is under implementation and is not admitted by earlier readers or
+current native runtime payloads. Newly written code refuses to label a snapshot
+with workspace materials as an older profile; already deployed older software
+cannot be retroactively changed and may not understand the extension. Importers
+must validate the complete archive and bind/remap material identities to the
+destination owner before exposing an editable workspace. This profile is not
+proof of service-side registration, a valid current display grant, or visual
+quality of the material.
