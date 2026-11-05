@@ -52,3 +52,16 @@ test('RGB material profile independently allows exact2K while cover limits, meta
  const map=png(2048,2048);assert.equal(validSurfaceMaterialPng(map),true);assert.equal(validSpaceStillPng(map),false);
  assert.equal(validSurfaceMaterialPng(png(4096,1)),false);assert.equal(validSurfaceMaterialPng(png(1,1,4)),false);assert.equal(validSurfaceMaterialPng(png(1,1,3,true)),false);assert.equal(validSpaceStillPng(png(1,1,3,true)),true);
 });
+
+test('concrete requires the catalogue carrier and coexists with both legacy wall packs',()=>{
+ const e=revision(),walls=e.surfaces.filter(s=>s.type==='wall');
+ while(walls.length<3){const wall={...structuredClone(walls[0]),id:'99999999-9999-4999-8999-'+String(walls.length).padStart(12,'0')};walls.push(wall);e.surfaces.push(wall);}
+ e.extensions[NS].surfaceTextures=Object.fromEntries(SURFACE_MATERIAL_PACKS.map((pack,i)=>[walls[i].id,binding(pack.id)]));
+ const resources=packageSurfaceMaterialManifest(e);assert.equal(resources.length,12);
+ const m={...manifest(e),formatVersion:'1.0.0-draft.10'};assert.equal(validateOexManifest(m).valid,true);
+ assert.equal(validateOexManifest({...m,formatVersion:V}).valid,false);
+ assert.equal(validateOexManifest({...m,formatVersion:'1.0.0-draft.9'}).valid,false);
+ const concrete=SURFACE_MATERIAL_PACKS.find(pack=>pack.id==='fine-gallery-concrete');
+ assert.deepEqual(concrete.catalogue.defaultRepeatMeters,[2,2]);assert.deepEqual(Object.keys(concrete.maps).sort(),['color','normal','roughness']);
+ const forged=structuredClone(m);forged.materialResources.find(resource=>resource.packId===concrete.id).sha256='0'.repeat(64);assert.equal(validateOexManifest(forged).valid,false);
+});
