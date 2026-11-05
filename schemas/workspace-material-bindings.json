@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exhibitos.github.io/spec/workspace-material/v1/bindings.schema.json",
+  "title": "Workspace material appearance binding candidate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "materials": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "https://exhibitos.github.io/spec/workspace-material/v1/material.schema.json"
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "surfaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "materialId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "materialVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "repeatMeters": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number",
+                "minimum": 0.05,
+                "maximum": 20
+              },
+              {
+                "type": "number",
+                "minimum": 0.05,
+                "maximum": 20
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "rotation": {
+            "type": "number",
+            "minimum": -3.141592653589793,
+            "maximum": 3.141592653589793
+          },
+          "normalScale": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "aoStrength": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "surfaceId",
+          "materialId",
+          "materialVersion",
+          "repeatMeters",
+          "rotation"
+        ]
+      }
+    }
+  },
+  "required": [
+    "version",
+    "materials",
+    "bindings"
+  ]
+}
