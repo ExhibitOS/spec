@@ -201,3 +201,26 @@ The file profile's 32MiB entry limit is intentionally stricter than the legacy
 ZIP reader's 100MiB expanded-entry limit. Continue using the legacy reader for
 legacy non-opt-in packages; switching all old imports to the new reader would
 reject some archives previously accepted by the contract.
+
+
+## Optional registered material catalogue
+
+Draft.10 is selected only when the exhibition uses a newly registered floor or
+wall material identity outside the legacy catalogue. An inactive room-base
+floor binding keeps its identity without carrying unused maps. The archive uses the same
+exact `floorResources` and `materialResources` roles and notice descriptors.
+Pack IDs and versions must resolve to exact immutable registry entries. New
+map files use the bounded metadata-free square RGB8 material profile. Their
+dimensions and hashes must match the registered bytes. Unknown packs fail
+explicit validation. Labels and preview thumbnails are catalogue display
+metadata outside the archive and its saved surface bindings.
+
+In-memory archives retain the ordinary ZIP limits. The existing bounded-file
+writer marks this profile with `archiveProfile: "bounded-file-v1"`; that form
+requires the bounded file consumer and uses the existing capacity policy.
+Prior schemas and default archive versions stay unchanged for legacy packs.
+
+Quiet Oak Herringbone version 1 registers user-authored CC0 color, OpenGL +Y
+normal and roughness maps with an exact portable notice. The catalogue presents
+a 0.9 m repeat. These descriptors establish byte identity and portability.
+Visual selection and device qualification remain consumer evidence.

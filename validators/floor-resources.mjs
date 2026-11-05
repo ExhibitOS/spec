@@ -214,7 +214,80 @@ export const FLOOR_RESOURCE_PACKS=freeze([
       "bytes": 444,
       "sha256": "b6885b09f4f3ce672ad769cb6cbc5f5a8d23dfd0ee13acd290f271c8b4e149c3"
     }
+  },
+{
+  "id": "quiet-oak-herringbone",
+  "version": 1,
+  "credit": "ExhibitOS user (user-authored asset)",
+  "source": "User-authored ExhibitOS Quiet Oak Herringbone material",
+  "license": "CC0-1.0",
+  "licenseSource": "https://creativecommons.org/publicdomain/zero/1.0/legalcode",
+  "changes": "Exact RGB8 color and OpenGL +Y normal from source; roughness expanded losslessly from L8 to RGB8. Thumbnail resized with Lanczos.",
+  "maps": {
+    "color": {
+      "mime": "image/png",
+      "bytes": 307623,
+      "sha256": "4e001eaaba464d2f742dd4480c4b523c6157bed48a1c6032c2ad5bbb60828b71",
+      "width": 2048,
+      "height": 2048,
+      "colorSpace": "srgb",
+      "path": "floor-textures/quiet-oak-herringbone/1/color-4e001eaaba46.png",
+      "channels": 3,
+      "bitDepth": 8,
+      "sourceSha256": "4e001eaaba464d2f742dd4480c4b523c6157bed48a1c6032c2ad5bbb60828b71"
+    },
+    "normal": {
+      "mime": "image/png",
+      "bytes": 33799,
+      "sha256": "21bddb22f10bb8ccb76d2ffd4fcb2ca5a5f5255b8e719c265bc0f0d0e08bb3c9",
+      "width": 2048,
+      "height": 2048,
+      "colorSpace": "linear",
+      "path": "floor-textures/quiet-oak-herringbone/1/normal-21bddb22f10b.png",
+      "channels": 3,
+      "bitDepth": 8,
+      "sourceSha256": "21bddb22f10bb8ccb76d2ffd4fcb2ca5a5f5255b8e719c265bc0f0d0e08bb3c9"
+    },
+    "roughness": {
+      "mime": "image/png",
+      "bytes": 294475,
+      "sha256": "f889803f9d84abb882bbe2405603a5443389187a7152061f7c043631ce85b717",
+      "width": 2048,
+      "height": 2048,
+      "colorSpace": "linear",
+      "path": "floor-textures/quiet-oak-herringbone/1/roughness-f889803f9d84.png",
+      "channels": 3,
+      "bitDepth": 8,
+      "sourceSha256": "051b28ea1d5ca0a3d78ac91cd886066242997e409b7be2e9705891c79dbb99d3"
+    }
+  },
+  "notice": {
+    "path": "floor-texture-notices/quiet-oak-herringbone-1.txt",
+    "mime": "text/plain; charset=utf-8",
+    "bytes": 860,
+    "sha256": "71cefc3ded800cc1451dbd84088916626b22d837b5f0f4177e76be2e4814d859"
+  },
+  "noticeText": "Quiet Oak Herringbone — material asset notice\n\nCreator and source: user-authored ExhibitOS material generated without external photographs, models or textures, according to its preserved source record.\nLicense: CC0 1.0 Universal under the rights holder's standing authorization for personally created and owned ExhibitOS assets. Legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode\n\nChanges: RGB color and OpenGL +Y normal maps are byte-identical copies of the preserved source. L8 roughness was losslessly expanded to three equal RGB channels. The thumbnail was resized from the source color map using Lanczos. The physical repeat is 0.9 × 0.9 m as recorded in the source delivery notes.\n\nCC0 does not itself grant trademark, patent, personality or other third-party rights. This notice covers this material asset, not application code.\n",
+  "catalogue": {
+    "preset": "wood",
+    "displayName": {
+      "en": "Quiet Oak Herringbone",
+      "ko": "차분한 오크 헤링본"
+    },
+    "defaultRepeatMeters": [
+      0.9,
+      0.9
+    ],
+    "thumbnail": {
+      "path": "material-catalogue-thumbnails/quiet-oak-herringbone/1/preview-4423a1fc11dc.png",
+      "mime": "image/png",
+      "bytes": 27373,
+      "sha256": "4423a1fc11dc52075ae1882d6971c656819630098696b77608b7309d0e53c9a9",
+      "width": 256,
+      "height": 256
+    }
   }
+}
 ]);
 const obj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const closed=(v,required,optional=[])=>obj(v)&&required.every(k=>Object.hasOwn(v,k))&&Object.keys(v).every(k=>required.includes(k)||optional.includes(k));
@@ -241,16 +314,16 @@ export function selectedFloorResourcePacks(document){
   if(Object.hasOwn(b,'normalScale')&&!number(b.normalScale,0,2)||Object.hasOwn(b,'aoStrength')&&!number(b.aoStrength,0,1))fail();
   if(Object.hasOwn(b,'sound')){const s=b.sound;if(!obj(s)||!number(s.gain,0,1))fail();if(s.mode==='explicit'){if(!closed(s,['mode','gain','assetIds'])||!Array.isArray(s.assetIds)||s.assetIds.length<1||s.assetIds.length>16||s.assetIds.some(id=>!uuid(id)||!wav.has(id.toLowerCase()))||new Set(s.assetIds.map(id=>id.toLowerCase())).size!==s.assetIds.length)fail();}else if(!['none','material-default'].includes(s.mode)||!closed(s,['mode','gain']))fail();}
   const p=Object.hasOwn(b,'texturePack')?b.texturePack:{id:defaults[b.preset],version:1};
-  if(!closed(p,['id','version'])||p.version!==1||!FLOOR_RESOURCE_PACKS.some(pack=>pack.id===p.id))throw Error('FLOOR_RESOURCE_VERSION');
-  if(active)selected.add(p.id);
+  if(!closed(p,['id','version'])||!FLOOR_RESOURCE_PACKS.some(pack=>pack.id===p.id&&pack.version===p.version))throw Error('FLOOR_RESOURCE_VERSION');
+  if(active)selected.add(p.id+':'+p.version);
  }
- return FLOOR_RESOURCE_PACKS.filter(p=>selected.has(p.id));
+ return FLOOR_RESOURCE_PACKS.filter(p=>selected.has(p.id+':'+p.version));
 }
 export function floorResourceNotice(pack){
  if(!FLOOR_RESOURCE_PACKS.includes(pack))throw Error('FLOOR_RESOURCE_VERSION');
- return `${pack.credit}\nSource: ${pack.source}\nLicense: ${pack.license} (${pack.licenseSource})\nChanges: ${pack.changes}\n`;
+ return pack.noticeText??`${pack.credit}\nSource: ${pack.source}\nLicense: ${pack.license} (${pack.licenseSource})\nChanges: ${pack.changes}\n`;
 }
 export const FLOOR_RESOURCE_FILES=freeze(FLOOR_RESOURCE_PACKS.flatMap(pack=>[...Object.entries(pack.maps),['notice',pack.notice]].map(([role,file])=>({packId:pack.id,packVersion:pack.version,role,path:'resources/'+file.path,artifactPath:file.path,mime:file.mime,bytes:file.bytes,sha256:file.sha256}))).sort((a,b)=>a.path.localeCompare(b.path)));
 export function packageFloorResourceManifest(document){
- const ids=new Set(selectedFloorResourcePacks(document).map(p=>p.id));return FLOOR_RESOURCE_FILES.filter(f=>ids.has(f.packId)).map(f=>({...f}));
+ const ids=new Set(selectedFloorResourcePacks(document).map(p=>p.id+':'+p.version));return FLOOR_RESOURCE_FILES.filter(f=>ids.has(f.packId+':'+f.packVersion)).map(f=>({...f}));
 }

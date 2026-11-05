@@ -15,7 +15,7 @@ test('public OEX API accepts Buffer and offset Uint8Array views consistently',as
 
 test('generator preflights unsupported nested schema keywords and unused refs in an isolated clone',async()=>{
  const root=await mkdtemp(join(tmpdir(),'exhibitos-generator-mutation-'));
- const paths=['oes/v1/spatial-scripting.schema.json','scripts/generate-types.mjs','conformance/api-types.txt','oes/v1/artwork.schema.json','oes/v1/exhibition.schema.json','oes/v1/lifecycle.schema.json','oex/v1/manifest.schema.json','oex/v1/media-manifest.schema.json','oed/v1/deployment.schema.json','oes/extensions/space-still.schema.json','oex/v1/space-still-manifest.schema.json','oex/v1/floor-resource-manifest.schema.json','oex/v1/furnishing-manifest.schema.json','oex/v1/surface-material-manifest.schema.json','oex/v1/footstep-resource-manifest.schema.json','oex/v1/bounded-file-manifest.schema.json'];
+ const paths=['oes/v1/spatial-scripting.schema.json','scripts/generate-types.mjs','conformance/api-types.txt','oes/v1/artwork.schema.json','oes/v1/exhibition.schema.json','oes/v1/lifecycle.schema.json','oex/v1/manifest.schema.json','oex/v1/media-manifest.schema.json','oed/v1/deployment.schema.json','oes/extensions/space-still.schema.json','oex/v1/space-still-manifest.schema.json','oex/v1/floor-resource-manifest.schema.json','oex/v1/furnishing-manifest.schema.json','oex/v1/surface-material-manifest.schema.json','oex/v1/footstep-resource-manifest.schema.json','oex/v1/bounded-file-manifest.schema.json','oex/v1/material-catalogue-manifest.schema.json'];
  try{
   for(const path of paths){await mkdir(dirname(join(root,path)),{recursive:true});await writeFile(join(root,path),await readFile(new URL('../'+path,import.meta.url)));}
   const generate=()=>spawnSync(process.execPath,[join(root,'scripts/generate-types.mjs')],{cwd:root,encoding:'utf8'});
@@ -34,9 +34,9 @@ test('generator preflights unsupported nested schema keywords and unused refs in
 });
 
 test('all documented JSON schema export aliases resolve with JSON import attributes',async()=>{
- for(const name of ['artwork','exhibition','lifecycle','oex','oed']){
+ for(const name of ['artwork','exhibition','lifecycle','oex','oed','oex-material-catalogue']){
   const {default:schema}=await import('@exhibitos/spec/schemas/'+name+'.json',{with:{type:'json'}});
-  assert.ok(schema.$id.includes('/1.0.0-draft.1/'));
+  assert.ok(schema.$id.includes(name==='oex-material-catalogue'?'/1.0.0-draft.10/':'/1.0.0-draft.1/'));
   assert.deepEqual(schema,JSON.parse(await readFile(schemaURL(name),'utf8')));
  }
 });
