@@ -9,19 +9,23 @@ import { createHash } from 'node:crypto';
 import validator from 'gltf-validator';
 
 export const ARTWORK_VERSION='1.0.0-draft.1';
+export const PROVISIONAL_ARTWORK_VERSION='1.0.0-draft.2';
 export const MAX_DOCUMENT_BYTES=1048576;
 export const MAX_ASSET_TOTAL_BYTES=268435456;
 const schema=JSON.parse(await readFile(new URL('../oes/v1/artwork.schema.json',import.meta.url),'utf8'));
 const ajv=new Ajv2020({strict:true,allErrors:true,validateFormats:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
 addFormats(ajv,['uuid','date-time']);
 const validate=ajv.compile(schema);
+const provisionalSchema=JSON.parse(await readFile(new URL('../oes/v1/artwork-draft2.schema.json',import.meta.url),'utf8'));
+const validateProvisional=ajv.compile(provisionalSchema);
 const validateUtc=ajv.compile({type:"string",format:"date-time",pattern:schema.properties.createdAt.pattern});
 const rightsSchema=ajv.compile(schema.$defs.rights);
 const issue=(code,path,message)=>({code,path,message});
 
 export function validateArtwork(document,{publicationTime}={}) {
-  if(document?.schemaVersion!==ARTWORK_VERSION) return {valid:false,errors:[issue('UNSUPPORTED_VERSION','/schemaVersion','Expected '+ARTWORK_VERSION)]};
-  if(!validate(document)) return {valid:false,errors:validate.errors.slice(0,100).map(error=>issue('SCHEMA_INVALID',error.instancePath,error.keyword))};
+  if(![ARTWORK_VERSION,PROVISIONAL_ARTWORK_VERSION].includes(document?.schemaVersion)) return {valid:false,errors:[issue('UNSUPPORTED_VERSION','/schemaVersion','Expected an explicitly supported artwork version')]};
+  const validator=document.schemaVersion===PROVISIONAL_ARTWORK_VERSION?validateProvisional:validate;
+  if(!validator(document)) return {valid:false,errors:validator.errors.slice(0,100).map(error=>issue('SCHEMA_INVALID',error.instancePath,error.keyword))};
   const errors=[];
   const add=(code,path,message)=>{ if(errors.length<100) errors.push(issue(code,path,message)); };
   const ids=new Set(),paths=new Set();
@@ -36,6 +40,15 @@ export function validateArtwork(document,{publicationTime}={}) {
   const primary=document.assets.find(asset=>asset.id===document.primaryAssetId);
   if(!primary) add('MISSING_PRIMARY_ASSET','/primaryAssetId','Primary asset must resolve');
   else if(primary.role!==(document.artworkType==='sculpture'?'model':'image')) add('PRIMARY_ASSET_ROLE','/primaryAssetId','Primary role must match artwork type');
+  if(document.schemaVersion===PROVISIONAL_ARTWORK_VERSION){
+    const q=document.extensions['org.exhibitos.studio/display-reference'],extent=q.rawBounds.max.map((v,i)=>v-q.rawBounds.min[i]);
+    const dimensions=[document.dimensions.width,document.dimensions.height,document.dimensions.depth];
+    const expected=q.referenceHeightMeters/extent[1],tolerance=Math.max(1e-12,Math.abs(expected)*1e-9);
+    if(extent.some((v,i)=>!Number.isFinite(v)||v<=0||v>10000||Math.abs(v-dimensions[i])>Math.max(1e-9,Math.abs(v)*1e-9)))add('PROVISIONAL_BOUNDS_MISMATCH','/dimensions','Dimensions must equal finite raw bounds extents');
+    if(!primary||primary.mime!=='model/gltf-binary'||primary.sha256!==q.assetSha256)add('PROVISIONAL_ASSET_MISMATCH','/extensions/org.exhibitos.studio~1display-reference/assetSha256','Qualification must bind the primary GLB digest');
+    if(document.provenance.scaleConversion!==undefined)add('PROVISIONAL_CONVERSION_INVALID','/provenance/scaleConversion','Unknown units cannot claim a baked unit conversion');
+    if(document.transform.position.some(v=>v!==0)||document.transform.rotation.some((v,i)=>v!==(i===3?1:0))||document.transform.scale.some(v=>v<1e-6||v>100||Math.abs(v-expected)>tolerance))add('PROVISIONAL_POSE_MISMATCH','/transform','Expected the explicit uniform provisional height reference');
+  }
   if(document.artworkType==='sculpture' && document.dimensions.depth===undefined) add('MISSING_DEPTH','/dimensions/depth','Sculpture needs positive physical depth');
   if(Math.abs(Math.hypot(...document.transform.rotation)-1)>1e-6) add('QUATERNION_NOT_NORMALIZED','/transform/rotation','XYZW quaternion norm must be within 1e-6 of one');
   const eventIds=new Set();

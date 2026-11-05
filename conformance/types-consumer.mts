@@ -71,3 +71,12 @@ async function readSurfaceMaterials(bytes:Uint8Array){
  return [] as string[];
 }
 void readSurfaceMaterials;
+
+// New wire-version values are accepted by writers and exposed by all readers.
+import {withOexFile, withOexFileHandle, type ExhibitionV2, type OexProvisionalDisplayManifest} from '../types/index.js';
+declare const v2: ExhibitionV2;
+declare const handle: Parameters<typeof withOexFileHandle>[0];
+void writeOex(v2,new Map(),{createdAt:'',generator:{name:'',version:''}});
+void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});
+void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});
+void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.11'){const m:OexProvisionalDisplayManifest=manifest;void m;}});

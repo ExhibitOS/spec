@@ -11,11 +11,14 @@ import { createHash } from 'node:crypto';
 import { validateArtwork,validateArtworkFiles,validateRights,MAX_ASSET_TOTAL_BYTES } from './artwork.mjs';
 import {OEX_CAPACITY_POLICY} from './oex-policy.mjs';
 export const EXHIBITION_VERSION='1.0.0-draft.1';
+export const PROVISIONAL_EXHIBITION_VERSION='1.0.0-draft.2';
 export const HASH_PROFILE='oes-sorted-json-v1';
 const schemas=await Promise.all(['artwork','exhibition','lifecycle'].map(async name=>JSON.parse(await readFile(new URL(`../oes/v1/${name}.schema.json`,import.meta.url),'utf8'))));
+const provisionalSchemas=await Promise.all(['artwork','exhibition','lifecycle'].map(async name=>JSON.parse(await readFile(new URL(`../oes/v1/${name}-draft2.schema.json`,import.meta.url),'utf8'))));
 const ajv=new Ajv2020({strict:true,allErrors:true,validateFormats:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
-addFormats(ajv,['uuid','date-time']);schemas.forEach(schema=>ajv.addSchema(schema));
+addFormats(ajv,['uuid','date-time']);[...schemas,...provisionalSchemas].forEach(schema=>ajv.addSchema(schema));
 const revisionSchema=ajv.getSchema(schemas[1].$id),lifecycleSchema=ajv.getSchema(schemas[2].$id);
+const provisionalRevisionSchema=ajv.getSchema(provisionalSchemas[1].$id),provisionalLifecycleSchema=ajv.getSchema(provisionalSchemas[2].$id);
 const utcSchema=ajv.compile(schemas[0].properties.createdAt);
 const issue=(code,path,message)=>({code,path,message});
 const result=errors=>({valid:errors.length===0,errors:errors.slice(0,100)});
@@ -68,8 +71,9 @@ export function assetInventory(revision) {
 export function validateExhibition(revision,{publicationTime,archiveProfile}={}) {
   if(archiveProfile!==undefined&&archiveProfile!=='bounded-file-v1')return result([issue('UNSUPPORTED_ARCHIVE_PROFILE','/archiveProfile','Unsupported archive validation profile')]);
   const safety=jsonErrors(revision);if(safety.length)return result(safety);
-  if(revision?.schemaVersion!==EXHIBITION_VERSION)return result([issue('UNSUPPORTED_VERSION','/schemaVersion','Expected '+EXHIBITION_VERSION)]);
-  if(!revisionSchema(revision))return result(schemaErrors(revisionSchema));
+  if(![EXHIBITION_VERSION,PROVISIONAL_EXHIBITION_VERSION].includes(revision?.schemaVersion))return result([issue('UNSUPPORTED_VERSION','/schemaVersion','Expected an explicitly supported exhibition version')]);
+  const validator=revision.schemaVersion===PROVISIONAL_EXHIBITION_VERSION?provisionalRevisionSchema:revisionSchema;
+  if(!validator(revision))return result(schemaErrors(validator));
   const still=validateSpaceStillInventory(revision,{publicationTime});if(!still.valid)return result(still.errors);
   if(Buffer.byteLength(sortedJson(revision))>1048576)return result([issue('DOCUMENT_LIMIT','','Revision exceeds 1MiB')]);
   const errors=[...validateFurnishingInventory(revision).errors];if(publicationTime!==undefined&&(!utcSchema(publicationTime)||!Number.isFinite(Date.parse(publicationTime))))errors.push(issue('INVALID_PUBLICATION_TIME','/publicationTime','Publication time must match the restricted UTC profile'));
@@ -163,8 +167,9 @@ export function validateExhibition(revision,{publicationTime,archiveProfile}={})
 }
 export function validateLifecycle(document,revision,{publication,archiveProfile}={}) {
   const safety=jsonErrors(document);if(safety.length)return result(safety);
-  if(document?.schemaVersion!==EXHIBITION_VERSION)return result([issue('UNSUPPORTED_VERSION','/schemaVersion','Expected '+EXHIBITION_VERSION)]);
-  if(!lifecycleSchema(document))return result(schemaErrors(lifecycleSchema));
+  if(![EXHIBITION_VERSION,PROVISIONAL_EXHIBITION_VERSION].includes(document?.schemaVersion))return result([issue('UNSUPPORTED_VERSION','/schemaVersion','Expected an explicitly supported lifecycle version')]);
+  const validator=document.schemaVersion===PROVISIONAL_EXHIBITION_VERSION?provisionalLifecycleSchema:lifecycleSchema;
+  if(!validator(document))return result(schemaErrors(validator));
   if(Buffer.byteLength(sortedJson(document))>1048576)return result([issue('DOCUMENT_LIMIT','','Lifecycle document exceeds 1MiB')]);
   const errors=[];
   for(const field of ['createdAt','updatedAt','publishedAt','unpublishedAt','frozenAt'])if(document[field]!==undefined)checkTemporal(document[field],'/'+field,errors);
@@ -175,6 +180,7 @@ export function validateLifecycle(document,revision,{publication,archiveProfile}
     return result(errors);
   }
   const time=document.kind==='publication'?document.publishedAt:document.frozenAt;
+  if(document.schemaVersion!==revision?.schemaVersion)return result([issue('VERSION_MISMATCH','/schemaVersion','Lifecycle and revision versions must agree')]);
   const checked=validateExhibition(revision,{publicationTime:time,archiveProfile});errors.push(...checked.errors.map(error=>({...error,path:'/revision'+error.path})));
   if(!checked.valid)return result(errors);
   if(key(document.exhibitionId)!==key(revision.id)||key(document.revisionId)!==key(revision.revisionId))errors.push(issue('REVISION_REFERENCE_MISMATCH','/revisionId','Lifecycle pointer must reference this exact revision'));
