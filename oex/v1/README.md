@@ -262,6 +262,9 @@ that exhibition, with a canonical path derived from each immutable furnishing
 ID, version and SHA-256. A workspace material inventory may coexist. Exact
 bytes, archive layout, a valid GLB without external resources, export rights
 at package creation, room-local references and unique identities are checked.
+Names and provenance must be trimmed and have at most 120 and 1024 UTF-16 code
+units respectively; the semantic validator enforces these limits in addition
+to the schema's Unicode code point limits.
 This is a visual placement record; it does not assert support, collision,
 seating, physical dimensions or any other function of the mesh.
 

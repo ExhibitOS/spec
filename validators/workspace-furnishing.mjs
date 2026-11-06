@@ -21,7 +21,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
  for(const [i,item] of value.furnishings.entries()){
   if(ids.has(item.id)||known.has(item.id))errors.push({code:'FURNISHING_DUPLICATE',path:'/furnishings/'+i,message:'Duplicate identity'});
   ids.add(item.id);known.set(item.id,item);
-  if(item.name.trim()!==item.name||item.provenance.trim()!==item.provenance)errors.push({code:'FURNISHING_TEXT',path:'/furnishings/'+i,message:'Text must be trimmed'});
+  if(item.name.trim()!==item.name||item.provenance.trim()!==item.provenance||item.name.length>120||item.provenance.length>1024)errors.push({code:'FURNISHING_TEXT',path:'/furnishings/'+i,message:'Text must be trimmed and within UTF-16 limits'});
   for(const error of validateRights(item.rights).errors)errors.push({...error,path:'/furnishings/'+i+error.path});
  }
  for(const [i,p] of value.placements.entries()){
