@@ -59,6 +59,12 @@ async function readFurnishingProfile(bytes:Uint8Array){
 }
 void readFurnishingProfile;
 
+import {OEX_WORKSPACE_FURNISHING_VERSION,type OexWorkspaceFurnishingManifest} from '@exhibitos/spec';
+import {validateWorkspaceFurnishings,packageWorkspaceFurnishingManifest} from '@exhibitos/spec/workspace-furnishing';
+const workspaceFurnishingVersion:'1.0.0-draft.13'=OEX_WORKSPACE_FURNISHING_VERSION;
+void workspaceFurnishingVersion;void validateWorkspaceFurnishings;void packageWorkspaceFurnishingManifest;void schemaURL('oex-workspace-furnishing');
+void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.13'){const m:OexWorkspaceFurnishingManifest=manifest;void m.workspaceFurnishingResources;}});
+
 import type {OexSurfaceMaterialManifest} from '@exhibitos/spec';
 import {packageSurfaceMaterialManifest} from '@exhibitos/spec/surface-material-resources';
 async function readSurfaceMaterials(bytes:Uint8Array){

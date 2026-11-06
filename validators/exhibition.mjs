@@ -1,4 +1,5 @@
 import {WORKSPACE_MATERIAL_NAMESPACE,validateWorkspaceMaterialBindings} from './workspace-material.mjs';
+import {WORKSPACE_FURNISHING_NAMESPACE,validateWorkspaceFurnishings} from './workspace-furnishing.mjs';
 import {validateFurnishingInventory} from './furnishings.mjs';
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 ExhibitOS contributors
@@ -79,6 +80,7 @@ export function validateExhibition(revision,{publicationTime,archiveProfile}={})
   if(Buffer.byteLength(sortedJson(revision))>1048576)return result([issue('DOCUMENT_LIMIT','','Revision exceeds 1MiB')]);
   const errors=[...validateFurnishingInventory(revision).errors];if(publicationTime!==undefined&&(!utcSchema(publicationTime)||!Number.isFinite(Date.parse(publicationTime))))errors.push(issue('INVALID_PUBLICATION_TIME','/publicationTime','Publication time must match the restricted UTC profile'));
   if(Object.hasOwn(revision.extensions??{},WORKSPACE_MATERIAL_NAMESPACE)){const result=validateWorkspaceMaterialBindings(revision.extensions[WORKSPACE_MATERIAL_NAMESPACE],revision.surfaces);for(const error of result.errors)errors.push({...error,path:'/extensions/org.exhibitos.studio~1workspace-materials'+error.path});}
+  if(Object.hasOwn(revision.extensions??{},WORKSPACE_FURNISHING_NAMESPACE)){const result=validateWorkspaceFurnishings(revision.extensions[WORKSPACE_FURNISHING_NAMESPACE],revision);for(const error of result.errors)errors.push({...error,path:'/extensions/org.exhibitos.studio~1workspace-furnishings'+error.path});}
   try{footstepResourcesFor(revision);}catch{errors.push(issue('FOOTSTEP_RESOURCE_SELECTION','/extensions/org.exhibitos.viewer~1footstep-resources','Expected a canonical registered footstep selection'));}
   checkTemporal(revision.createdAt,'/createdAt',errors);
   const maps={};for(const name of ['rooms','surfaces','openings','placements','lights','navigation','mediaAssets','audioZones','annotations','scripts'])maps[name]=registry(revision[name],'/'+name,errors);
