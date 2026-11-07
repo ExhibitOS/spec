@@ -355,7 +355,9 @@ architectural wall finish must have depth 0.2 metres; absence does not assert
 physical wall thickness. The model anchor is the opening's bottom centre in
 wall-local XY, at wall-local Z=0, with +Y up and −Z front. The visual has no
 independent position, orientation or scale; deleting or changing its host to
-an incompatible door requires an explicit detach before saving. The visual
+an incompatible door requires an explicit detach before saving. Moving the
+same opening ID, including to another compatible wall, carries its attachment
+with it; all host conditions are rechecked on the new wall. The visual
 does not alter the authoritative opening, collision or navigation.
 
 Detach of the final portal removes its unused descriptor and selects the
