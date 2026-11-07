@@ -48,3 +48,8 @@ test('room-visual bounded file preserves v3, stool and both visual poses',async(
  const f=fixture(),ext=f.e.extensions[WORKSPACE_FURNISHING_NAMESPACE];ext.version=3;ext.furnishings[0].kind='stool';ext.placements.push({...ext.placements[0],id:'70000000-0000-4000-8000-000000000004',position:[-1,0,0]});const dir=await mkdtemp(join(tmpdir(),'room-visual-v3-oex-')),path=join(dir,'test.oex');
  try{await writeOexFile(f.e,{paths:[...f.assets.keys()],get:async p=>f.assets.get(p)},path,options);await withOexFile(path,async value=>{assert.equal(value.manifest.formatVersion,'1.0.0-draft.15');assert.equal(value.manifest.archiveProfile,'bounded-file-v1');assert.deepEqual(await value.files.get(f.entry.path),model);assert.equal(value.exhibition.extensions[WORKSPACE_FURNISHING_NAMESPACE].placements.length,2);});}finally{await rm(dir,{recursive:true,force:true});}
 });
+test('v4 retains room visuals without frame rows and cannot be relabelled as v3',async()=>{
+ const f=fixture(),ext=f.e.extensions[WORKSPACE_FURNISHING_NAMESPACE];ext.version=4;ext.frameAttachments=[];
+ const output=await readOex(await writeOex(f.e,f.assets,options));assert.equal(output.manifest.formatVersion,'1.0.0-draft.16');assert.deepEqual(output.exhibition.extensions[WORKSPACE_FURNISHING_NAMESPACE].frameAttachments,[]);assert.deepEqual(output.files.get(f.entry.path),model);
+ const manifest=structuredClone(output.manifest);manifest.formatVersion='1.0.0-draft.15';const files=[...output.files].map(([name,data])=>({name,data:name==='manifest.json'?JSON.stringify(manifest):data}));await assert.rejects(readOex(buildZip(files)),error=>error.code==='WORKSPACE_FURNISHING_PROFILE_REQUIRED');
+});

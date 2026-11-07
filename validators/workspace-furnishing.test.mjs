@@ -29,3 +29,23 @@ test('room-visual kinds require v3 and retain earlier kinds and poses',()=>{
  for(const kind of ['pedestal','bench','stool']){const f=fixture();f.value.version=3;f.value.furnishings[0].kind=kind;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true,kind);}
  const f=fixture();f.value.version=3;f.value.furnishings[0].kind='unknown';assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
 });
+
+test('v4 pins a reviewed fixed frame to one exact planar artwork placement',()=>{
+ const make=()=>{
+  const f=fixture(),item=f.value.furnishings[0],sha='4b14e45ccf14ed38eea90c50553733a0b97b1671b9ec377d900e5a947545f8b4';
+  item.kind='artwork-frame';item.model.bytes=7892;item.model.sha256=sha;
+  f.value={version:4,furnishings:[item],placements:[],frameAttachments:[{placementId:id(4),artworkRevisionId:id(5),assetId:id(6),furnishingId:item.id,furnishingVersion:1,modelSha256:sha}]};
+  f.exhibition.rooms[0].transform={scale:[1,1,1]};f.exhibition.placements=[{id:id(4),roomId:f.exhibition.rooms[0].id,artworkRevisionId:id(5),assetId:id(6),transform:{scale:[1,1,1]}}];
+  f.exhibition.artworks=[{revisionId:id(5),primaryAssetId:id(6),schemaVersion:'1.0.0-draft.1',artworkType:'image',dimensions:{width:.6,height:.8},transform:{scale:[1,1,1]}}];return f;
+ };
+ const good=make();assert.equal(validateWorkspaceFurnishings(good.value,good.exhibition).valid,true);
+ for(const [mutate,code] of [
+  [f=>f.exhibition.artworks[0].dimensions.height=.6,'FRAME_SIZE_UNSUPPORTED'],
+  [f=>f.exhibition.artworks[0].dimensions.depth=.01,'FRAME_DEPTH_UNSUPPORTED'],
+  [f=>f.exhibition.placements[0].transform.scale=[2,1,1],'FRAME_TRANSFORM_UNSUPPORTED'],
+  [f=>f.exhibition.placements[0].assetId=id(9),'FRAME_TARGET_STALE'],
+  [f=>f.value.frameAttachments[0].modelSha256='b'.repeat(64),'FRAME_ASSET_UNSUPPORTED'],
+  [f=>f.exhibition.extensions={'org.exhibitos.studio/installation':{placements:[{placementId:id(4),frame:{kind:'flat'}}]}},'FRAME_PROCEDURAL_CONFLICT'],
+  [f=>f.value.frameAttachments.push({...f.value.frameAttachments[0]}),'FRAME_TARGET_STALE'],
+ ]){const f=make();mutate(f);const result=validateWorkspaceFurnishings(f.value,f.exhibition);assert.equal(result.valid,false,code);assert.ok(result.errors.some(e=>e.code===code),code);}
+});
