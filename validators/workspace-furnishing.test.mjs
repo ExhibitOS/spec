@@ -58,3 +58,22 @@ test('v5 binds ordinary source records without broadening v4',async()=>{
  const ok=make();assert.equal(validateWorkspaceFurnishings(ok.value,ok.exhibition).valid,true);
  for(const mutate of [f=>f.value.version=4,f=>f.value.furnishings[0].model.bytes++,f=>f.value.frameAttachments[0].modelSha256='a'.repeat(64),f=>f.exhibition.artworks[0].dimensions.height=.6,f=>f.exhibition.artworks[0].dimensions.depth=.025,f=>f.exhibition.placements[0].transform.scale=[1,2,1],f=>f.exhibition.placements[0].assetId=id(9),f=>{f.value.furnishings[0].model.sha256='d4bdc4201fe2e8866652350915799a346ba07cf73078fec9f7f6e275287e918a';f.value.furnishings[0].model.bytes=152056;f.value.frameAttachments[0].modelSha256=f.value.furnishings[0].model.sha256;}]){const f=make();mutate(f);assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);}
 });
+
+
+test('fixed frame records bind each exact original digest and byte count',async()=>{
+ const {artworkFrameModel}=await import('./artwork-frame-models.mjs');
+ const entries=[
+  ['4b14e45ccf14ed38eea90c50553733a0b97b1671b9ec377d900e5a947545f8b4',7892,'thin-brass-frame'],
+  ['50b1caa7c100150f9872236e5866dec072ea2fa86747ce38e1cd3204aa6c5072',78732,'gallery-frame'],
+  ['17c571accc4ed2554731d4ce89f3cad4faa66cf2bca83321ecd92ad2537093d9',101768,'black-aluminum-frame'],
+  ['b21ee369bf9e2d958d9ff2c03cf2457bbd22669c7d1621c379bebcb6330a8c89',147640,'brushed-silver-frame'],
+  ['dd8a991193788ec10868e2c9947855af4b5ca2630ae9c3aecaa6bd7fb8478d15',642804,'classical-gilt-frame'],
+  ['f10da86d63586d113d363a64572fedd7b70f926ad525bc927ab53c4212fd57bd',177988,'dark-baroque-frame'],
+  ['06ac605194e7aa870c4c9c68c17e00b6d1256c421aba6ed9b169e7f873b7b8d9',177500,'natural-oak-flat-frame'],
+  ['369cca20f6afad83040a20a903afaa55034c4767bd09f88520c6a137cdde997d',14068,'neutral-linen-liner-frame'],
+  ['b3f0bf2e6dbe659b1484ea6425848ad96b88d0be4b61ca82f5a4694462a7e03e',196160,'walnut-stepped-frame'],
+  ['8c20559389f667ed97879776ec6fd53bfff1cbd4c174177988cf24fe3732e00b',8728,'white-gallery-box-frame'],
+ ];
+ for(const [sha,bytes,id] of entries){assert.equal(sha.length,64);assert.equal(artworkFrameModel(sha,bytes)?.id,id);assert.equal(artworkFrameModel(sha,bytes+1),undefined);}
+ assert.equal(artworkFrameModel(entries.at(-1)[0]+'7',8728),undefined);
+});
