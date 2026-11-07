@@ -316,7 +316,11 @@ exact SHA-256 and byte count to metre units, a 0.6 × 0.8 opening, wall-side
 anchor Z=0, front −Z, model depth, and a model-specific image-front Z. The
 records cover thin brass, gallery, black aluminum, brushed silver, classical
 gilt, dark baroque, natural oak, neutral linen liner, walnut stepped and white
-gallery box. The float frame is not supported. Record dimensions and offsets
+gallery box. Package draft.25 additionally recognizes the exact black-float
+frame GLB (SHA-256
+`d4bdc4201fe2e8866652350915799a346ba07cf73078fec9f7f6e275287e918a`,
+152,056 bytes) with image-front Z=−0.037 m and depth 0.045 m. Earlier package
+versions do not recognize this record. Record dimensions and offsets
 are authoritative fixed data, not client-provided geometry or proof of bytes.
 
 Frame targets, numeric tolerance, absent image depth, unit transforms, rights,
