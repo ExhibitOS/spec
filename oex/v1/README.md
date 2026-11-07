@@ -278,3 +278,7 @@ individual exhibition package. Existing profiles and fixtures remain unchanged.
 ### Workspace furnishing visual profile v2 (draft.14)
 
 Workspace furnishing extension version 2 adds an explicit `stool` kind to the existing `pedestal` and `bench` kinds. Descriptor identity and room-local placement remain visual-only; no seating or collision semantics are implied. Version 2 requires OEX draft.14, including the same exact resource inventory and rights validation as draft.13. Version 1 continues to require draft.13. Cross-profile relabelling and unsupported extension versions are rejected.
+
+### Workspace furnishing room-visual profile v3 (draft.15)
+
+Version 3 retains the v1/v2 visual kinds and adds `partition`, `info-stand`, `barrier`, and `display-case`. It retains descriptor version 1, room-local poses, rights and exact model inventory and requires OEX draft.15. Earlier profile versions remain unchanged; collision, room division, artwork or text attachment and interactive mechanisms are not implied.

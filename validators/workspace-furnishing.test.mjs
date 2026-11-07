@@ -18,5 +18,14 @@ test('stool requires the explicit visual placements v2 contract',()=>{
  const f=fixture();f.value.furnishings[0].kind='stool';assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
  f.value.version=2;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
  f.value.furnishings[0].kind='unknown';assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
- f.value.furnishings[0].kind='stool';f.value.version=3;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
+ f.value.furnishings[0].kind='stool';f.value.version=4;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
+});
+test('room-visual kinds require v3 and retain earlier kinds and poses',()=>{
+ for(const kind of ['partition','info-stand','barrier','display-case']){
+  const f=fixture();f.value.furnishings[0].kind=kind;
+  for(const version of [1,2]){f.value.version=version;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false,kind+' v'+version);}
+  f.value.version=3;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true,kind);
+ }
+ for(const kind of ['pedestal','bench','stool']){const f=fixture();f.value.version=3;f.value.furnishings[0].kind=kind;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true,kind);}
+ const f=fixture();f.value.version=3;f.value.furnishings[0].kind='unknown';assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
 });
