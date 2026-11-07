@@ -24,7 +24,7 @@ export declare function validateOexManifest(document: unknown): ValidationResult
 export declare function validateOed(document: unknown): ValidationResult;
 export declare function adaptOexManifest(document: unknown, targetVersion: string): ValidationResult & {adapter?: string; document?: OexManifest | OexMediaManifest | OexSpaceStillManifest | OexFloorResourceManifest | OexFurnishingManifest | OexSurfaceMaterialManifest | OexFootstepResourceManifest | OexBoundedFileManifest | OexMaterialCatalogueManifest | OexProvisionalDisplayManifest | OexWorkspaceMaterialManifest | OexWorkspaceFurnishingManifest | OexWorkspaceFurnishingV2Manifest | OexWorkspaceFurnishingV3Manifest | OexWorkspaceFurnishingV4Manifest};
 export declare function fixtureURL(relativePath: string): URL;
-export declare function schemaURL(name: 'artwork'|'artwork-draft2'|'exhibition'|'exhibition-draft2'|'lifecycle'|'lifecycle-draft2'|'oex-provisional-display'|'oex-workspace-material'|'oex-workspace-furnishing'|'oex-workspace-furnishing-v2'|'oex-workspace-furnishing-v3'|'oex-workspace-furnishing-v4'|'oex-workspace-furnishing-v5'|'oex'|'oex-media'|'oex-space-still'|'oex-floor-resources'|'oex-furnishing'|'oex-surface-materials'|'oex-footstep-resources'|'oex-bounded-file'|'oex-material-catalogue'|'space-still'|'oed'|'spatial-scripting'): URL;
+export declare function schemaURL(name: 'artwork'|'artwork-draft2'|'exhibition'|'exhibition-draft2'|'lifecycle'|'lifecycle-draft2'|'oex-provisional-display'|'oex-workspace-material'|'oex-workspace-furnishing'|'oex-workspace-furnishing-v2'|'oex-workspace-furnishing-v3'|'oex-workspace-furnishing-v4'|'oex-workspace-furnishing-v5'|'oex-workspace-furnishing-v6'|'oex'|'oex-media'|'oex-space-still'|'oex-floor-resources'|'oex-furnishing'|'oex-surface-materials'|'oex-footstep-resources'|'oex-bounded-file'|'oex-material-catalogue'|'space-still'|'oed'|'spatial-scripting'): URL;
 export interface ConformanceResult extends ValidationResult { cases: Array<{id: string; valid: boolean}> }
 export declare function runConformance(): Promise<ConformanceResult>;
 
@@ -37,6 +37,7 @@ export declare const OEX_WORKSPACE_FURNISHING_V2_VERSION: '1.0.0-draft.14';
 export declare const OEX_WORKSPACE_FURNISHING_V3_VERSION: '1.0.0-draft.15';
 export declare const OEX_WORKSPACE_FURNISHING_V4_VERSION: '1.0.0-draft.16';
 export declare const OEX_WORKSPACE_FURNISHING_V5_VERSION: '1.0.0-draft.17';
+export declare const OEX_WORKSPACE_FURNISHING_V6_VERSION: '1.0.0-draft.18';
 export declare const OEX_BOUNDED_FILE_VERSION: '1.0.0-draft.9';
 export declare const OEX_MEDIA_VERSION: '1.0.0-draft.2';
 export declare const OEX_FLOOR_RESOURCE_VERSION:'1.0.0-draft.5';
