@@ -37,3 +37,14 @@ test('stool profile supports the bounded file archive without changing prior pro
  const f=fixture();f.e.extensions[WORKSPACE_FURNISHING_NAMESPACE].version=2;f.e.extensions[WORKSPACE_FURNISHING_NAMESPACE].furnishings[0].kind='stool';const dir=await mkdtemp(join(tmpdir(),'stool-v2-oex-')),path=join(dir,'test.oex');
  try{await writeOexFile(f.e,{paths:[...f.assets.keys()],get:async p=>f.assets.get(p)},path,options);await withOexFile(path,async value=>{assert.equal(value.manifest.formatVersion,'1.0.0-draft.14');assert.equal(value.manifest.archiveProfile,'bounded-file-v1');assert.deepEqual(await value.files.get(f.entry.path),model);});}finally{await rm(dir,{recursive:true,force:true});}
 });
+test('room-visual v3 round trips each new kind and refuses earlier profile relabelling',async()=>{
+ for(const kind of ['partition','info-stand','barrier','display-case']){
+  const f=fixture(),ext=f.e.extensions[WORKSPACE_FURNISHING_NAMESPACE];ext.version=3;ext.furnishings[0].kind=kind;
+  const output=await readOex(await writeOex(f.e,f.assets,options));assert.equal(output.manifest.formatVersion,'1.0.0-draft.15');assert.deepEqual(output.files.get(f.entry.path),model);assert.equal(adaptOexManifest(output.manifest,'1.0.0-draft.14').valid,false);
+  const manifest=structuredClone(output.manifest);manifest.formatVersion='1.0.0-draft.14';const files=[...output.files].map(([name,data])=>({name,data:name==='manifest.json'?JSON.stringify(manifest):data}));await assert.rejects(readOex(buildZip(files)),error=>error.code==='WORKSPACE_FURNISHING_PROFILE_REQUIRED');
+ }
+});
+test('room-visual bounded file preserves v3, stool and both visual poses',async()=>{
+ const f=fixture(),ext=f.e.extensions[WORKSPACE_FURNISHING_NAMESPACE];ext.version=3;ext.furnishings[0].kind='stool';ext.placements.push({...ext.placements[0],id:'70000000-0000-4000-8000-000000000004',position:[-1,0,0]});const dir=await mkdtemp(join(tmpdir(),'room-visual-v3-oex-')),path=join(dir,'test.oex');
+ try{await writeOexFile(f.e,{paths:[...f.assets.keys()],get:async p=>f.assets.get(p)},path,options);await withOexFile(path,async value=>{assert.equal(value.manifest.formatVersion,'1.0.0-draft.15');assert.equal(value.manifest.archiveProfile,'bounded-file-v1');assert.deepEqual(await value.files.get(f.entry.path),model);assert.equal(value.exhibition.extensions[WORKSPACE_FURNISHING_NAMESPACE].placements.length,2);});}finally{await rm(dir,{recursive:true,force:true});}
+});
