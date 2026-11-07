@@ -14,3 +14,9 @@ test('rejects aliases, dangling references, unused descriptors, and out-of-room 
 test('rejects a workspace furnishing identity shared with other extension assets',()=>{
  for(const extension of [f=>({'org.exhibitos.viewer/space-still':{asset:{id:f.value.furnishings[0].id}}}),f=>({'org.exhibitos.studio/furnishing-visuals':{assets:[{id:f.value.furnishings[0].id}]}}),f=>({'org.exhibitos.studio/benches':{benches:[{id:f.value.placements[0].id}]}}),f=>({'org.exhibitos.studio/workspace-materials':{materials:[{id:f.value.furnishings[0].id}]}})]){const f=fixture();f.exhibition.extensions=extension(f);assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);}
 });
+test('stool requires the explicit visual placements v2 contract',()=>{
+ const f=fixture();f.value.furnishings[0].kind='stool';assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
+ f.value.version=2;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
+ f.value.furnishings[0].kind='unknown';assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
+ f.value.furnishings[0].kind='stool';f.value.version=3;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
+});

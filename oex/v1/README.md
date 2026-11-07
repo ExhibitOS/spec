@@ -274,3 +274,7 @@ or remap the furnishing identity to the destination owner before allowing edits.
 This profile does not establish ownership, registration or current permission.
 Unused workspace library entries belong in the workspace backup, not an
 individual exhibition package. Existing profiles and fixtures remain unchanged.
+
+### Workspace furnishing visual profile v2 (draft.14)
+
+Workspace furnishing extension version 2 adds an explicit `stool` kind to the existing `pedestal` and `bench` kinds. Descriptor identity and room-local placement remain visual-only; no seating or collision semantics are implied. Version 2 requires OEX draft.14, including the same exact resource inventory and rights validation as draft.13. Version 1 continues to require draft.13. Cross-profile relabelling and unsupported extension versions are rejected.

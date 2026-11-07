@@ -95,3 +95,11 @@ declare const v2Draft: Extract<import('@exhibitos/spec').Lifecycle,{kind:'exhibi
 // @ts-expect-error a v1 draft envelope cannot contain a v2 candidate
 const invalidDraft: import('@exhibitos/spec').Lifecycle = {...v2Draft,schemaVersion:'1.0.0-draft.1'};
 void invalidDraft;
+
+// The new profile is narrowed through each public reader and identity adapter.
+import {OEX_WORKSPACE_FURNISHING_V2_VERSION,adaptOexManifest,type OexWorkspaceFurnishingV2Manifest} from '@exhibitos/spec';
+const stoolProfile:'1.0.0-draft.14'=OEX_WORKSPACE_FURNISHING_V2_VERSION;void stoolProfile;
+void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.14'){const m:OexWorkspaceFurnishingV2Manifest=manifest;void m.workspaceFurnishingResources;}});
+void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.14'){const m:OexWorkspaceFurnishingV2Manifest=manifest;void m;}});
+void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.14'){const m:OexWorkspaceFurnishingV2Manifest=manifest;void m;}});
+const adaptedStool=adaptOexManifest({},stoolProfile).document;if(adaptedStool?.formatVersion==='1.0.0-draft.14'){const m:OexWorkspaceFurnishingV2Manifest=adaptedStool;void m;}
