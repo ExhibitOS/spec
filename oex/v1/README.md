@@ -326,3 +326,10 @@ image plane with the image, and retain exact model bytes in inventory. Legacy
 profiles must not be relabelled; consumers without v5 reject it. The profile
 only describes visual alignment, not physical support, backing, corner
 clearance, wall contact, manufacturing fit or absence of z-fighting.
+
+The fixed model record version 2 for black aluminum, brushed silver and natural
+oak identifies a separate original-derived GLB produced by the
+`omit-unused-invalid-tangent-r1` recipe. Each binds the source v1 SHA and size
+and retains its visual geometry values. Earlier records remain unchanged.
+Readers lacking these exact v2 records reject them; the record does not prove
+current rights or authorize use. The OEX/extension wire versions are unchanged.
