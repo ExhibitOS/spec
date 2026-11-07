@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join,dirname } from 'node:path';
 import { runConformance,fixtureURL,schemaURL,validateOex } from '../index.mjs';
 import { spawnSync } from 'node:child_process';
+import {definitions} from '../scripts/type-definitions.mjs';
 test('public runner validates original assets and positive/negative contracts',async()=>{const result=await runConformance();assert.equal(result.valid,true,JSON.stringify(result));assert.equal(result.cases.length,18);assert.ok(result.cases.every(c=>c.valid));});
 test('fixture and schema locators reject arbitrary paths',()=>{for(const p of ['../package.json','/etc/passwd','fixtures/synthetic/../../package.json','oes/v1/examples/sculpture.json?x'])assert.throws(()=>fixtureURL(p),/UNKNOWN_FIXTURE/);assert.throws(()=>schemaURL('constructor'),/UNKNOWN_SCHEMA/);});
 test('exported schema copies preserve original identity and exact bytes',async()=>{for(const [name,path]of [['artwork','oes/v1/artwork.schema.json'],['exhibition','oes/v1/exhibition.schema.json'],['lifecycle','oes/v1/lifecycle.schema.json'],['oex','oex/v1/manifest.schema.json'],['oed','oed/v1/deployment.schema.json']])assert.deepEqual(await readFile(schemaURL(name)),await readFile(new URL('../'+path,import.meta.url)));});
@@ -15,7 +16,7 @@ test('public OEX API accepts Buffer and offset Uint8Array views consistently',as
 
 test('generator preflights unsupported nested schema keywords and unused refs in an isolated clone',async()=>{
  const root=await mkdtemp(join(tmpdir(),'exhibitos-generator-mutation-'));
- const paths=['oes/v1/spatial-scripting.schema.json','scripts/generate-types.mjs','conformance/api-types.txt','oes/v1/artwork.schema.json','oes/v1/artwork-draft2.schema.json','oes/v1/exhibition.schema.json','oes/v1/exhibition-draft2.schema.json','oes/v1/lifecycle.schema.json','oes/v1/lifecycle-draft2.schema.json','oex/v1/manifest.schema.json','oex/v1/media-manifest.schema.json','oed/v1/deployment.schema.json','oes/extensions/space-still.schema.json','oex/v1/space-still-manifest.schema.json','oex/v1/floor-resource-manifest.schema.json','oex/v1/furnishing-manifest.schema.json','oex/v1/surface-material-manifest.schema.json','oex/v1/footstep-resource-manifest.schema.json','oex/v1/bounded-file-manifest.schema.json','oex/v1/material-catalogue-manifest.schema.json','oex/v1/provisional-display-manifest.schema.json','oex/v1/workspace-material-manifest.schema.json','oex/v1/workspace-furnishing-manifest.schema.json','oex/v1/workspace-furnishing-v2-manifest.schema.json','oex/v1/workspace-furnishing-v3-manifest.schema.json','oex/v1/workspace-furnishing-v4-manifest.schema.json'];
+ const paths=['scripts/generate-types.mjs','scripts/type-definitions.mjs','conformance/api-types.txt',...definitions.map(([,path])=>path)];
  try{
   for(const path of paths){await mkdir(dirname(join(root,path)),{recursive:true});await writeFile(join(root,path),await readFile(new URL('../'+path,import.meta.url)));}
   const generate=()=>spawnSync(process.execPath,[join(root,'scripts/generate-types.mjs')],{cwd:root,encoding:'utf8'});

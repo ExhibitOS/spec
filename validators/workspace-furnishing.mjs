@@ -4,20 +4,22 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import {readFile} from 'node:fs/promises';
+import {artworkFrameModel} from './artwork-frame-models.mjs';
 import {validateRights} from './artwork.mjs';
 const load=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const ajv=new Ajv2020({strict:true,allErrors:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
 addFormats(ajv,['uuid','date-time']);ajv.addSchema(await load('../schemas/artwork.json'));ajv.addSchema(await load('../schemas/workspace-furnishing.json'));
 ajv.addSchema(await load('../schemas/workspace-furnishing-v2.json'));ajv.addSchema(await load('../schemas/workspace-furnishing-v3.json'));
-ajv.addSchema(await load('../schemas/workspace-furnishing-v4.json'));
+ajv.addSchema(await load('../schemas/workspace-furnishing-v4.json'));ajv.addSchema(await load('../schemas/workspace-furnishing-v5.json'));
 const validateV1=ajv.compile(await load('../schemas/workspace-furnishing-placements.json'));
 const validateV2=ajv.compile(await load('../schemas/workspace-furnishing-placements-v2.json'));
 const validateV3=ajv.compile(await load('../schemas/workspace-furnishing-placements-v3.json'));
 const validateV4=ajv.compile(await load('../schemas/workspace-furnishing-placements-v4.json'));
+const validateV5=ajv.compile(await load('../schemas/workspace-furnishing-placements-v5.json'));
 const THIN_BRASS_SHA256='4b14e45ccf14ed38eea90c50553733a0b97b1671b9ec377d900e5a947545f8b4';
 export const WORKSPACE_FURNISHING_NAMESPACE='org.exhibitos.studio/workspace-furnishings';
 export function validateWorkspaceFurnishings(value,exhibition){
- const validate=value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:validateV1;
+ const validate=value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:validateV1;
  if(!validate(value))return {valid:false,errors:validate.errors.slice(0,100).map(e=>({code:'FURNISHING_SCHEMA',path:e.instancePath,message:e.keyword}))};
  if(!Array.isArray(exhibition?.rooms))return {valid:false,errors:[{code:'FURNISHING_ROOMS',path:'',message:'Expected rooms'}]};
  const errors=[],ids=new Set(),rooms=new Map(),known=new Map(),used=new Set();
@@ -42,7 +44,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
   const path='/frameAttachments/'+i,source=known.get(a.furnishingId),placement=(Array.isArray(exhibition.placements)?exhibition.placements:[]).find(p=>p?.id===a.placementId),art=(Array.isArray(exhibition.artworks)?exhibition.artworks:[]).find(x=>x?.revisionId===a.artworkRevisionId);
   if(attached.has(a.placementId)||!placement||!art||placement.artworkRevisionId!==a.artworkRevisionId||placement.assetId!==a.assetId||art.primaryAssetId!==a.assetId){errors.push({code:'FRAME_TARGET_STALE',path,message:'Expected a unique image placement and its exact artwork revision and asset'});continue;}
   attached.add(a.placementId);
-  if(!source||source.kind!=='artwork-frame'||source.model.sha256!==THIN_BRASS_SHA256||source.model.bytes!==7892||a.modelSha256!==source.model.sha256){errors.push({code:'FRAME_ASSET_UNSUPPORTED',path,message:'Expected the reviewed fixed thin-brass source'});continue;}
+  if(!source||source.kind!=='artwork-frame'||(value.version===4?(source.model.sha256!==THIN_BRASS_SHA256||source.model.bytes!==7892):!artworkFrameModel(source.model.sha256,source.model.bytes))||a.modelSha256!==source.model.sha256){errors.push({code:'FRAME_ASSET_UNSUPPORTED',path,message:'Expected a fixed source supported by the selected profile'});continue;}
   used.add(a.furnishingId);
   if(art.artworkType!=='image'||art.schemaVersion!=='1.0.0-draft.1'||!art.dimensions||![art.dimensions.width,art.dimensions.height].every(Number.isFinite)||Math.abs(art.dimensions.width-.6)>1e-6||Math.abs(art.dimensions.height-.8)>1e-6)errors.push({code:'FRAME_SIZE_UNSUPPORTED',path,message:'Expected a 0.6 by 0.8 metre image plane'});
   if(art.dimensions&&Object.hasOwn(art.dimensions,'depth'))errors.push({code:'FRAME_DEPTH_UNSUPPORTED',path,message:'Only a depth-unspecified image plane is supported'});
