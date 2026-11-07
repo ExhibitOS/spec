@@ -53,3 +53,8 @@ test('v4 retains room visuals without frame rows and cannot be relabelled as v3'
  const output=await readOex(await writeOex(f.e,f.assets,options));assert.equal(output.manifest.formatVersion,'1.0.0-draft.16');assert.deepEqual(output.exhibition.extensions[WORKSPACE_FURNISHING_NAMESPACE].frameAttachments,[]);assert.deepEqual(output.files.get(f.entry.path),model);
  const manifest=structuredClone(output.manifest);manifest.formatVersion='1.0.0-draft.15';const files=[...output.files].map(([name,data])=>({name,data:name==='manifest.json'?JSON.stringify(manifest):data}));await assert.rejects(readOex(buildZip(files)),error=>error.code==='WORKSPACE_FURNISHING_PROFILE_REQUIRED');
 });
+test('v5 profile round trips and cannot be relabelled draft.16',async()=>{
+ const f=fixture(),ext=f.e.extensions[WORKSPACE_FURNISHING_NAMESPACE];ext.version=5;ext.frameAttachments=[];
+ const output=await readOex(await writeOex(f.e,f.assets,options));assert.equal(output.manifest.formatVersion,'1.0.0-draft.17');assert.deepEqual(output.files.get(f.entry.path),model);
+ const manifest=structuredClone(output.manifest);manifest.formatVersion='1.0.0-draft.16';const files=[...output.files].map(([name,data])=>({name,data:name==='manifest.json'?JSON.stringify(manifest):data}));await assert.rejects(readOex(buildZip(files)),error=>error.code==='WORKSPACE_FURNISHING_PROFILE_REQUIRED');
+});

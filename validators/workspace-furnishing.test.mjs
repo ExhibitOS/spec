@@ -50,3 +50,11 @@ test('v4 pins a reviewed fixed frame to one exact planar artwork placement',()=>
   [f=>f.value.frameAttachments.push({...f.value.frameAttachments[0]}),'FRAME_TARGET_STALE'],
  ]){const f=make();mutate(f);const result=validateWorkspaceFurnishings(f.value,f.exhibition);assert.equal(result.valid,false,code);assert.ok(result.errors.some(e=>e.code===code),code);}
 });
+
+test('v5 binds ordinary source records without broadening v4',async()=>{
+ const {artworkFrameModel}=await import('./artwork-frame-models.mjs'),sha='b3f0bf2e6dbe659b1484ea6425848ad96b88d0be4b61ca82f5a4694462a7e03e';
+ const make=()=>{const f=fixture(),item=f.value.furnishings[0];item.kind='artwork-frame';item.model.bytes=196160;item.model.sha256=sha;f.value={version:5,furnishings:[item],placements:[],frameAttachments:[{placementId:id(4),artworkRevisionId:id(5),assetId:id(6),furnishingId:item.id,furnishingVersion:1,modelSha256:sha}]};f.exhibition.rooms[0].transform={scale:[1,1,1]};f.exhibition.placements=[{id:id(4),roomId:f.exhibition.rooms[0].id,artworkRevisionId:id(5),assetId:id(6),transform:{scale:[1,1,1]}}];f.exhibition.artworks=[{revisionId:id(5),primaryAssetId:id(6),schemaVersion:'1.0.0-draft.1',artworkType:'image',dimensions:{width:.6,height:.8},transform:{scale:[1,1,1]}}];return f;};
+ assert.equal(artworkFrameModel(sha,196160)?.imagePlaneZ,-.034);assert.equal(artworkFrameModel(sha,196161),undefined);
+ const ok=make();assert.equal(validateWorkspaceFurnishings(ok.value,ok.exhibition).valid,true);
+ for(const mutate of [f=>f.value.version=4,f=>f.value.furnishings[0].model.bytes++,f=>f.value.frameAttachments[0].modelSha256='a'.repeat(64),f=>f.exhibition.artworks[0].dimensions.height=.6,f=>f.exhibition.artworks[0].dimensions.depth=.025,f=>f.exhibition.placements[0].transform.scale=[1,2,1],f=>f.exhibition.placements[0].assetId=id(9),f=>{f.value.furnishings[0].model.sha256='d4bdc4201fe2e8866652350915799a346ba07cf73078fec9f7f6e275287e918a';f.value.furnishings[0].model.bytes=152056;f.value.frameAttachments[0].modelSha256=f.value.furnishings[0].model.sha256;}]){const f=make();mutate(f);assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);}
+});

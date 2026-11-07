@@ -305,3 +305,24 @@ visual alignment only; it does not establish physical support, full-edge
 clearance or compatibility with any other frame asset. Descriptor validation
 is not proof of ownership, current rights, model bytes or approval; consuming
 applications must independently enforce those conditions.
+
+### Fixed ordinary artwork-frame models (draft.17)
+
+OEX `1.0.0-draft.17` carries workspace-furnishing extension version 5 with
+unchanged descriptor and attachment fields. Version 4 and draft.16 retain their
+thin-brass-only semantics. Version 5 uses the version 1 fixed visual model
+records exported by `@exhibitos/spec/artwork-frame-models`; each record binds an
+exact SHA-256 and byte count to metre units, a 0.6 × 0.8 opening, wall-side
+anchor Z=0, front −Z, model depth, and a model-specific image-front Z. The
+records cover thin brass, gallery, black aluminum, brushed silver, classical
+gilt, dark baroque, natural oak, neutral linen liner, walnut stepped and white
+gallery box. The float frame is not supported. Record dimensions and offsets
+are authoritative fixed data, not client-provided geometry or proof of bytes.
+
+Frame targets, numeric tolerance, absent image depth, unit transforms, rights,
+GLB byte verification and no-crop/no-resize requirements remain as in v4.
+Consumers resolve the record from the validated SHA and byte count, align its
+image plane with the image, and retain exact model bytes in inventory. Legacy
+profiles must not be relabelled; consumers without v5 reject it. The profile
+only describes visual alignment, not physical support, backing, corner
+clearance, wall contact, manufacturing fit or absence of z-fighting.
