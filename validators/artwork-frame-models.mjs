@@ -10,6 +10,7 @@ const records = Object.freeze([
  Object.freeze({id:'natural-oak-flat-frame',version:1,sha256:'06ac605194e7aa870c4c9c68c17e00b6d1256c421aba6ed9b169e7f873b7b8d9',bytes:177500,openingWidth:.6,openingHeight:.8,front:'-Z',wallAnchorZ:0,imagePlaneZ:-0.026,depth:0.03}),
  Object.freeze({id:'neutral-linen-liner-frame',version:1,sha256:'369cca20f6afad83040a20a903afaa55034c4767bd09f88520c6a137cdde997d',bytes:14068,openingWidth:.6,openingHeight:.8,front:'-Z',wallAnchorZ:0,imagePlaneZ:-0.012,depth:0.04}),
  Object.freeze({id:'walnut-stepped-frame',version:1,sha256:'b3f0bf2e6dbe659b1484ea6425848ad96b88d0be4b61ca82f5a4694462a7e03e',bytes:196160,openingWidth:.6,openingHeight:.8,front:'-Z',wallAnchorZ:0,imagePlaneZ:-0.034,depth:0.038}),
- Object.freeze({id:'white-gallery-box-frame',version:1,sha256:'8c20559389f667ed97879776ec6fd53bfff1cbd4c174177988cf24fe3732e00b7',bytes:8728,openingWidth:.6,openingHeight:.8,front:'-Z',wallAnchorZ:0,imagePlaneZ:-0.012,depth:0.045}),
+ Object.freeze({id:'white-gallery-box-frame',version:1,sha256:'8c20559389f667ed97879776ec6fd53bfff1cbd4c174177988cf24fe3732e00b',bytes:8728,openingWidth:.6,openingHeight:.8,front:'-Z',wallAnchorZ:0,imagePlaneZ:-0.012,depth:0.045}),
 ]);
+if(records.some(record=>!/^[a-f0-9]{64}$/.test(record.sha256)||!Number.isSafeInteger(record.bytes)||record.bytes<1)||new Set(records.map(record=>record.sha256)).size!==records.length||new Set(records.map(record=>record.id)).size!==records.length)throw Error('ARTWORK_FRAME_MODELS_INVALID');
 export function artworkFrameModel(sha256,bytes){return records.find(record=>record.sha256===sha256&&record.bytes===bytes);}
