@@ -77,3 +77,14 @@ test('fixed frame records bind each exact original digest and byte count',async(
  for(const [sha,bytes,id] of entries){assert.equal(sha.length,64);assert.equal(artworkFrameModel(sha,bytes)?.id,id);assert.equal(artworkFrameModel(sha,bytes+1),undefined);}
  assert.equal(artworkFrameModel(entries.at(-1)[0]+'7',8728),undefined);
 });
+
+
+test('versioned tangent-omission candidates retain source identity and exact geometry',async()=>{
+ const {artworkFrameModel}=await import('./artwork-frame-models.mjs');
+ const candidates=[
+  ['2fb941a9f6ed030638512e917e348a0a3000e29c1133fe3f9670268ff1c4169c',101720,'17c571accc4ed2554731d4ce89f3cad4faa66cf2bca83321ecd92ad2537093d9',101768],
+  ['a0d0c0d3f02fea91b6a09273eec8d200248a16c8caf5139bd029b681af8eddcd',147592,'b21ee369bf9e2d958d9ff2c03cf2457bbd22669c7d1621c379bebcb6330a8c89',147640],
+  ['5af789b1aa8e6aa410b40cf16e27c9e2000f87438f1fa52cb08bc46c19c75778',177476,'06ac605194e7aa870c4c9c68c17e00b6d1256c421aba6ed9b169e7f873b7b8d9',177500],
+ ];
+ for(const [sha,bytes,sourceSha,sourceBytes] of candidates){const model=artworkFrameModel(sha,bytes),source=artworkFrameModel(sourceSha,sourceBytes);assert.equal(model.version,2);assert.equal(model.id,source.id);assert.deepEqual(model.derivedFrom,{version:1,sha256:sourceSha,bytes:sourceBytes,recipe:'omit-unused-invalid-tangent-r1'});for(const key of ['openingWidth','openingHeight','front','wallAnchorZ','imagePlaneZ','depth'])assert.equal(model[key],source[key]);assert.equal(artworkFrameModel(sha,bytes+1),undefined);}
+});
