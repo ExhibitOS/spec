@@ -8,9 +8,12 @@ import {validateRights} from './artwork.mjs';
 const load=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const ajv=new Ajv2020({strict:true,allErrors:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
 addFormats(ajv,['uuid','date-time']);ajv.addSchema(await load('../schemas/artwork.json'));ajv.addSchema(await load('../schemas/workspace-furnishing.json'));
-const validate=ajv.compile(await load('../schemas/workspace-furnishing-placements.json'));
+ajv.addSchema(await load('../schemas/workspace-furnishing-v2.json'));
+const validateV1=ajv.compile(await load('../schemas/workspace-furnishing-placements.json'));
+const validateV2=ajv.compile(await load('../schemas/workspace-furnishing-placements-v2.json'));
 export const WORKSPACE_FURNISHING_NAMESPACE='org.exhibitos.studio/workspace-furnishings';
 export function validateWorkspaceFurnishings(value,exhibition){
+ const validate=value?.version===1?validateV1:value?.version===2?validateV2:validateV1;
  if(!validate(value))return {valid:false,errors:validate.errors.slice(0,100).map(e=>({code:'FURNISHING_SCHEMA',path:e.instancePath,message:e.keyword}))};
  if(!Array.isArray(exhibition?.rooms))return {valid:false,errors:[{code:'FURNISHING_ROOMS',path:'',message:'Expected rooms'}]};
  const errors=[],ids=new Set(),rooms=new Map(),known=new Map(),used=new Set();
