@@ -46,6 +46,7 @@ test('v4 pins a reviewed fixed frame to one exact planar artwork placement',()=>
   [f=>f.exhibition.placements[0].assetId=id(9),'FRAME_TARGET_STALE'],
   [f=>f.value.frameAttachments[0].modelSha256='b'.repeat(64),'FRAME_ASSET_UNSUPPORTED'],
   [f=>f.exhibition.extensions={'org.exhibitos.studio/installation':{placements:[{placementId:id(4),frame:{kind:'flat'}}]}},'FRAME_PROCEDURAL_CONFLICT'],
+  [f=>{const p='10000000-0000-4000-8000-0000000000a4';f.exhibition.placements[0].id=p;f.value.frameAttachments[0].placementId=p;f.exhibition.extensions={'org.exhibitos.studio/installation':{placements:[{placementId:p.toUpperCase(),frame:{kind:'flat'}}]}};},'FRAME_PROCEDURAL_CONFLICT'],
   [f=>f.value.frameAttachments.push({...f.value.frameAttachments[0]}),'FRAME_TARGET_STALE'],
  ]){const f=make();mutate(f);const result=validateWorkspaceFurnishings(f.value,f.exhibition);assert.equal(result.valid,false,code);assert.ok(result.errors.some(e=>e.code===code),code);}
 });

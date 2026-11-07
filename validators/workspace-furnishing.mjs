@@ -48,7 +48,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
   if(art.dimensions&&Object.hasOwn(art.dimensions,'depth'))errors.push({code:'FRAME_DEPTH_UNSUPPORTED',path,message:'Only a depth-unspecified image plane is supported'});
   if(![art.transform,placement.transform,rooms.get(placement.roomId)?.transform].every(t=>Array.isArray(t?.scale)&&t.scale.length===3&&t.scale.every(n=>n===1)))errors.push({code:'FRAME_TRANSFORM_UNSUPPORTED',path,message:'Expected unit-scale artwork, placement and room transforms'});
   const installations=exhibition.extensions?.['org.exhibitos.studio/installation']?.placements;
-  if(Array.isArray(installations)&&installations.some(b=>b?.placementId===a.placementId&&b.frame&&b.frame.kind!=='none'))errors.push({code:'FRAME_PROCEDURAL_CONFLICT',path,message:'A procedural frame already occupies the placement'});
+  if(Array.isArray(installations)&&installations.some(b=>typeof b?.placementId==='string'&&b.placementId.toLowerCase()===a.placementId.toLowerCase()&&b.frame&&b.frame.kind!=='none'))errors.push({code:'FRAME_PROCEDURAL_CONFLICT',path,message:'A procedural frame already occupies the placement'});
  }
  for(const id of known.keys())if(!used.has(id))errors.push({code:'FURNISHING_UNUSED',path:'/furnishings',message:'Every descriptor must be placed'});
  return {valid:errors.length===0,errors:errors.slice(0,100)};

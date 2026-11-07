@@ -112,3 +112,7 @@ void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='
 void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.15'){const m:OexWorkspaceFurnishingV3Manifest=manifest;void m;}});
 void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.15'){const m:OexWorkspaceFurnishingV3Manifest=manifest;void m;}});
 const adaptedRoomVisual=adaptOexManifest({},roomVisualProfile).document;if(adaptedRoomVisual?.formatVersion==='1.0.0-draft.15'){const m:OexWorkspaceFurnishingV3Manifest=adaptedRoomVisual;void m;}
+void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=manifest;void m.workspaceFurnishingResources;}});
+void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=manifest;void m;}});
+void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=manifest;void m;}});
+const adaptedFrame=adaptOexManifest({},frameProfile).document;if(adaptedFrame?.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=adaptedFrame;void m;}
