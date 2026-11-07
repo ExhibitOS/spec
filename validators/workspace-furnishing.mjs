@@ -10,16 +10,17 @@ const load=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'
 const ajv=new Ajv2020({strict:true,allErrors:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
 addFormats(ajv,['uuid','date-time']);ajv.addSchema(await load('../schemas/artwork.json'));ajv.addSchema(await load('../schemas/workspace-furnishing.json'));
 ajv.addSchema(await load('../schemas/workspace-furnishing-v2.json'));ajv.addSchema(await load('../schemas/workspace-furnishing-v3.json'));
-ajv.addSchema(await load('../schemas/workspace-furnishing-v4.json'));ajv.addSchema(await load('../schemas/workspace-furnishing-v5.json'));
+ajv.addSchema(await load('../schemas/workspace-furnishing-v4.json'));ajv.addSchema(await load('../schemas/workspace-furnishing-v5.json'));ajv.addSchema(await load('../schemas/workspace-furnishing-v6.json'));
 const validateV1=ajv.compile(await load('../schemas/workspace-furnishing-placements.json'));
 const validateV2=ajv.compile(await load('../schemas/workspace-furnishing-placements-v2.json'));
 const validateV3=ajv.compile(await load('../schemas/workspace-furnishing-placements-v3.json'));
 const validateV4=ajv.compile(await load('../schemas/workspace-furnishing-placements-v4.json'));
 const validateV5=ajv.compile(await load('../schemas/workspace-furnishing-placements-v5.json'));
+const validateV6=ajv.compile(await load('../schemas/workspace-furnishing-placements-v6.json'));
 const THIN_BRASS_SHA256='4b14e45ccf14ed38eea90c50553733a0b97b1671b9ec377d900e5a947545f8b4';
 export const WORKSPACE_FURNISHING_NAMESPACE='org.exhibitos.studio/workspace-furnishings';
 export function validateWorkspaceFurnishings(value,exhibition){
- const validate=value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:validateV1;
+ const validate=value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:value?.version===6?validateV6:validateV1;
  if(!validate(value))return {valid:false,errors:validate.errors.slice(0,100).map(e=>({code:'FURNISHING_SCHEMA',path:e.instancePath,message:e.keyword}))};
  if(!Array.isArray(exhibition?.rooms))return {valid:false,errors:[{code:'FURNISHING_ROOMS',path:'',message:'Expected rooms'}]};
  const errors=[],ids=new Set(),rooms=new Map(),known=new Map(),used=new Set();
@@ -36,8 +37,26 @@ export function validateWorkspaceFurnishings(value,exhibition){
  for(const [i,p] of value.placements.entries()){
   const room=rooms.get(p.roomId),d=room?.dimensions,position=p.position;
   if(ids.has(p.id))errors.push({code:'FURNISHING_DUPLICATE',path:'/placements/'+i,message:'Duplicate identity'});ids.add(p.id);
-  if(!known.has(p.furnishingId)||known.get(p.furnishingId)?.kind==='artwork-frame'||!d||![d.width,d.height,d.depth,...position,p.yaw,p.scale].every(Number.isFinite)||[d.width,d.height,d.depth].some(n=>n<=0)||Math.abs(position[0])>d.width/2||position[1]<0||position[1]>d.height||Math.abs(position[2])>d.depth/2)errors.push({code:'FURNISHING_REFERENCE',path:'/placements/'+i,message:'Missing room-visual furnishing or invalid room-local position'});
+  if(!known.has(p.furnishingId)||['artwork-frame','portal-finish'].includes(known.get(p.furnishingId)?.kind)||!d||![d.width,d.height,d.depth,...position,p.yaw,p.scale].every(Number.isFinite)||[d.width,d.height,d.depth].some(n=>n<=0)||Math.abs(position[0])>d.width/2||position[1]<0||position[1]>d.height||Math.abs(position[2])>d.depth/2)errors.push({code:'FURNISHING_REFERENCE',path:'/placements/'+i,message:'Missing room-visual furnishing or invalid room-local position'});
   used.add(p.furnishingId);
+ }
+ const openingIds=new Set();
+ for(const [i,a] of (value.openingAttachments??[]).entries()){
+  const path='/openingAttachments/'+i,source=known.get(a.furnishingId),same=(x,y)=>typeof x==='string'&&typeof y==='string'&&x.toLowerCase()===y.toLowerCase();
+  const openings=Array.isArray(exhibition.openings)?exhibition.openings.filter(o=>same(o?.id,a.openingId)):[],opening=openings[0],walls=Array.isArray(exhibition.surfaces)?exhibition.surfaces.filter(s=>same(s?.id,opening?.surfaceId)):[],wall=walls[0],roomRows=exhibition.rooms.filter(r=>same(r?.id,wall?.roomId)),room=roomRows[0];
+  if(openingIds.has(a.openingId.toLowerCase())||openings.length!==1||opening.type!=='door'||walls.length!==1||wall.type!=='wall'||roomRows.length!==1){errors.push({code:'PORTAL_TARGET_STALE',path,message:'Expected a unique existing door and wall'});continue;}openingIds.add(a.openingId.toLowerCase());
+  if(!source||source.kind!=='portal-finish'||source.model.sha256!=='385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b'||source.model.bytes!==164044||a.modelSha256!==source.model.sha256){errors.push({code:'PORTAL_ASSET_UNSUPPORTED',path,message:'Expected the exact fixed portal model'});continue;}used.add(a.furnishingId);
+  if(!opening.dimensions||![opening.dimensions.width,opening.dimensions.height].every(Number.isFinite)||Math.abs(opening.dimensions.width-2.4)>1e-6||Math.abs(opening.dimensions.height-2.6)>1e-6)errors.push({code:'PORTAL_SIZE_UNSUPPORTED',path,message:'Expected a 2.4 by 2.6 metre door'});
+  const level=t=>Array.isArray(t?.scale)&&t.scale.length===3&&t.scale.every(n=>n===1)&&Array.isArray(t.rotation)&&t.rotation.length===4&&t.rotation.every(Number.isFinite)&&t.rotation[0]===0&&t.rotation[2]===0&&Math.abs(t.rotation[1]**2+t.rotation[3]**2-1)<=1e-6;
+  if(![wall.transform,room.transform].every(level)||!Array.isArray(opening.offset)||opening.offset.length!==2||!opening.offset.every(Number.isFinite)||!Array.isArray(wall.transform?.position)||wall.transform.position.length!==3||!wall.transform.position.every(Number.isFinite)||Math.abs(wall.transform.position[1]+opening.offset[1]-1.3)>1e-6)errors.push({code:'PORTAL_TRANSFORM_UNSUPPORTED',path,message:'Expected level unit-scale wall and room with a floor-aligned door'});
+  const ext=exhibition.extensions?.['org.exhibitos.studio/architectural-finishes'];let finish;
+  if(ext!==undefined){
+   const valid=ext&&typeof ext==='object'&&!Array.isArray(ext)&&Object.keys(ext).sort().join(',')==='version,walls'&&ext.version===1&&Array.isArray(ext.walls)&&ext.walls.length<=8;
+   const seen=new Set();let malformed=!valid;
+   if(valid)for(const f of ext.walls){const keys=f&&typeof f==='object'&&!Array.isArray(f)?Object.keys(f).sort().join(','):'';const id=typeof f?.surfaceId==='string'?f.surfaceId.toLowerCase():'';if(keys!=='baseboardHeight,ceilingBand,depth,preset,surfaceId,trimWidth'||!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id)||seen.has(id)||![f.depth,f.trimWidth,f.baseboardHeight].every(Number.isFinite)||f.depth<.02||f.depth>.2||f.trimWidth<.02||f.trimWidth>.08||f.baseboardHeight<.04||f.baseboardHeight>.15||!['plain','painted-edge','dark-edge'].includes(f.preset)||typeof f.ceilingBand!=='boolean')malformed=true;seen.add(id);if(same(id,wall.id))finish=f;}
+   if(malformed)errors.push({code:'PORTAL_WALL_DEPTH_UNSUPPORTED',path,message:'Expected valid, unique architectural wall finishes'});
+  }
+  if(finish&&Math.abs(finish.depth-.2)>1e-6)errors.push({code:'PORTAL_WALL_DEPTH_UNSUPPORTED',path,message:'Expected a 0.2 metre structural wall finish'});
  }
  const attached=new Set();
  for(const [i,a] of (value.frameAttachments??[]).entries()){

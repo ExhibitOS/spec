@@ -337,3 +337,33 @@ oak identifies a separate original-derived GLB produced by the
 and retains its visual geometry values. Earlier records remain unchanged.
 Readers lacking these exact v2 records reject them; the record does not prove
 current rights or authorize use. The OEX/extension wire versions are unchanged.
+
+### Fixed opening visual attachment (draft.18)
+
+OEX `1.0.0-draft.18` carries workspace-furnishings extension version 6. It
+retains the version 5 inventory, visual placements and frame attachments and
+adds a nonempty `openingAttachments` array of closed
+`{openingId,furnishingId,furnishingVersion,modelSha256}` records. A door may
+have at most one attachment; every portal descriptor must be used. The only
+supported `portal-finish` model is the exact 164,044-byte GLB with SHA-256
+`385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b`.
+
+The host is an existing wall door with a 2.4 × 2.6 metre opening, floor-aligned
+in its room, and level unit-scale room and wall transforms. Dimension and
+floor alignment comparisons use a 0.000001 metre numeric tolerance. An explicit
+architectural wall finish must have depth 0.2 metres; absence does not assert
+physical wall thickness. The model anchor is the opening's bottom centre in
+wall-local XY, at wall-local Z=0, with +Y up and −Z front. The visual has no
+independent position, orientation or scale; deleting or changing its host to
+an incompatible door requires an explicit detach before saving. Moving the
+same opening ID, including to another compatible wall, carries its attachment
+with it; all host conditions are rechecked on the new wall. The visual
+does not alter the authoritative opening, collision or navigation.
+
+Detach of the final portal removes its unused descriptor and selects the
+lowest existing furnishing extension version that can represent remaining
+content; with no furnishings, the extension is removed. Version 6 without
+an opening attachment is invalid. Older readers reject draft.18 rather than
+silently dropping the portal. Rights and exact source bytes are checked by the
+consumer. This is a visual alignment contract, not a claim of physical trim
+fit, construction clearance, lighting, automatic resizing or any door motion.
