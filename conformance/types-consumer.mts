@@ -105,7 +105,14 @@ void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='
 const adaptedStool=adaptOexManifest({},stoolProfile).document;if(adaptedStool?.formatVersion==='1.0.0-draft.14'){const m:OexWorkspaceFurnishingV2Manifest=adaptedStool;void m;}
 import {OEX_WORKSPACE_FURNISHING_V3_VERSION,type OexWorkspaceFurnishingV3Manifest} from '@exhibitos/spec';
 const roomVisualProfile:'1.0.0-draft.15'=OEX_WORKSPACE_FURNISHING_V3_VERSION;void roomVisualProfile;
+import {OEX_WORKSPACE_FURNISHING_V4_VERSION,type OexWorkspaceFurnishingV4Manifest} from '@exhibitos/spec';
+const frameProfile:'1.0.0-draft.16'=OEX_WORKSPACE_FURNISHING_V4_VERSION;void frameProfile;
+declare const frameManifest:OexWorkspaceFurnishingV4Manifest;void frameManifest;schemaURL('oex-workspace-furnishing-v4');
 void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.15'){const m:OexWorkspaceFurnishingV3Manifest=manifest;void m.workspaceFurnishingResources;}});
 void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.15'){const m:OexWorkspaceFurnishingV3Manifest=manifest;void m;}});
 void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.15'){const m:OexWorkspaceFurnishingV3Manifest=manifest;void m;}});
 const adaptedRoomVisual=adaptOexManifest({},roomVisualProfile).document;if(adaptedRoomVisual?.formatVersion==='1.0.0-draft.15'){const m:OexWorkspaceFurnishingV3Manifest=adaptedRoomVisual;void m;}
+void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=manifest;void m.workspaceFurnishingResources;}});
+void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=manifest;void m;}});
+void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=manifest;void m;}});
+const adaptedFrame=adaptOexManifest({},frameProfile).document;if(adaptedFrame?.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=adaptedFrame;void m;}

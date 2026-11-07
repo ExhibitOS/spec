@@ -282,3 +282,26 @@ Workspace furnishing extension version 2 adds an explicit `stool` kind to the ex
 ### Workspace furnishing room-visual profile v3 (draft.15)
 
 Version 3 retains the v1/v2 visual kinds and adds `partition`, `info-stand`, `barrier`, and `display-case`. It retains descriptor version 1, room-local poses, rights and exact model inventory and requires OEX draft.15. Earlier profile versions remain unchanged; collision, room division, artwork or text attachment and interactive mechanisms are not implied.
+
+### Workspace artwork-frame candidate
+
+OEX `1.0.0-draft.16` carries workspace-furnishing extension version 4. Frame
+attachments pin a placement, artwork revision and image asset together with the
+registered furnishing ID, version and model SHA-256. They are not room-local
+visual placements. Older extension and OEX versions cannot represent this row;
+unsupported versions are rejected rather than silently downgraded. The OEX
+workspace furnishing resource inventory includes the exact frame model and its
+rights alongside any other workspace furnishing resources.
+
+The initial supported source is the fixed thin-brass GLB, SHA-256
+`4b14e45ccf14ed38eea90c50553733a0b97b1671b9ec377d900e5a947545f8b4`,
+7,892 bytes. It has a nominal 0.6 × 0.8 m opening, wall-side anchor at model
+Z=0, front direction −Z, a reference image plane at Z=−0.012 m, and 0.025 m
+frame depth. A frame is bound only to an image of those metre dimensions within
+1 micrometre numeric tolerance, with no declared artwork depth and unit artwork,
+placement and room scale. A procedural frame on the same placement is rejected.
+The mesh and image are neither resized nor cropped. This contract describes
+visual alignment only; it does not establish physical support, full-edge
+clearance or compatibility with any other frame asset. Descriptor validation
+is not proof of ownership, current rights, model bytes or approval; consuming
+applications must independently enforce those conditions.

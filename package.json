@@ -1,6 +1,6 @@
 {
   "name": "@exhibitos/spec",
-  "version": "0.1.0-draft.20",
+  "version": "0.1.0-draft.21",
   "private": true,
   "type": "module",
   "engines": {
@@ -106,7 +106,10 @@
     "./schemas/oex-workspace-furnishing-v2.json": "./schemas/oex-workspace-furnishing-v2.json",
     "./schemas/workspace-furnishing-v3.json": "./schemas/workspace-furnishing-v3.json",
     "./schemas/workspace-furnishing-placements-v3.json": "./schemas/workspace-furnishing-placements-v3.json",
-    "./schemas/oex-workspace-furnishing-v3.json": "./schemas/oex-workspace-furnishing-v3.json"
+    "./schemas/oex-workspace-furnishing-v3.json": "./schemas/oex-workspace-furnishing-v3.json",
+    "./schemas/workspace-furnishing-v4.json": "./schemas/workspace-furnishing-v4.json",
+    "./schemas/workspace-furnishing-placements-v4.json": "./schemas/workspace-furnishing-placements-v4.json",
+    "./schemas/oex-workspace-furnishing-v4.json": "./schemas/oex-workspace-furnishing-v4.json"
   },
   "types": "./types/index.d.ts",
   "bin": {
