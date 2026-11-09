@@ -67,3 +67,23 @@ test('v6 portal retains exact source, host binding and explicit archive profile'
  const missing=new Map(assets);missing.delete(entry.artifactPath);await assert.rejects(writeOex(f.e,missing,options));const denied=structuredClone(f.e);denied.extensions[WORKSPACE_FURNISHING_NAMESPACE].furnishings[0].rights.permissions.export=false;await assert.rejects(writeOex(denied,assets,options));
  const dir=await mkdtemp(join(tmpdir(),'portal-v6-oex-'));try{const path=join(dir,'test.oex');await writeOexFile(f.e,{paths:[...assets.keys()],get:async p=>assets.get(p)},path,options);await withOexFile(path,async result=>{assert.equal(result.manifest.formatVersion,'1.0.0-draft.18');assert.equal(result.manifest.archiveProfile,'bounded-file-v1');assert.deepEqual(await result.files.get(entry.path),bytes);});}finally{await rm(dir,{recursive:true,force:true});}
 });
+
+test('v7 retains a measured ring receipt and exact original in its explicit archive profile',{skip:!process.env.EXHIBITOS_TEST_RING_GLB},async()=>{
+ const bytes=await readFile(process.env.EXHIBITOS_TEST_RING_GLB),sha=digest(bytes);
+ const f=fixture(),e=f.e,ext=e.extensions[WORKSPACE_FURNISHING_NAMESPACE],item=ext.furnishings[0];
+ const placement=e.placements.find(p=>e.artworks.some(art=>art.revisionId===p.artworkRevisionId&&art.artworkType==='image'));
+ const art=e.artworks.find(a=>a.revisionId===placement.artworkRevisionId);
+ art.dimensions={width:.8,height:.6};
+ item.kind='artwork-frame';
+ item.model={mime:'model/gltf-binary',bytes:bytes.length,sha256:sha};
+ item.fit={version:1,sourceSha256:sha,sourceBytes:bytes.length,geometry:{profile:'straight-ring-v1',openingWidth:.806,openingHeight:.606,imagePlaneZ:-.012}};
+ Object.assign(ext,{version:7,placements:[],openingAttachments:[],frameAttachments:[{placementId:placement.id,artworkRevisionId:art.revisionId,assetId:art.primaryAssetId,furnishingId:item.id,furnishingVersion:1,modelSha256:sha}]});
+ const [entry]=packageWorkspaceFurnishingManifest(e),assets=new Map(original.manifest.assets.map(a=>[a.artifactPath,original.files.get(a.path)]));assets.set(entry.artifactPath,bytes);
+ const output=await readOex(await writeOex(e,assets,options));
+ assert.equal(output.manifest.formatVersion,'1.0.0-draft.19');
+ assert.deepEqual(output.files.get(entry.path),bytes);
+ assert.deepEqual(output.exhibition.extensions[WORKSPACE_FURNISHING_NAMESPACE],ext);
+ assert.equal(adaptOexManifest(output.manifest,'1.0.0-draft.18').valid,false);
+ const old=structuredClone(output.manifest);old.formatVersion='1.0.0-draft.18';
+ await assert.rejects(readOex(buildZip([...output.files].map(([name,data])=>({name,data:name==='manifest.json'?JSON.stringify(old):data})))),error=>error.code==='WORKSPACE_FURNISHING_PROFILE_REQUIRED');
+});
