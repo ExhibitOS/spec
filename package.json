@@ -1,6 +1,6 @@
 {
   "name": "@exhibitos/spec",
-  "version": "0.1.0-draft.26",
+  "version": "0.1.0-draft.28",
   "private": true,
   "type": "module",
   "engines": {
@@ -110,10 +110,21 @@
     "./schemas/workspace-furnishing-v4.json": "./schemas/workspace-furnishing-v4.json",
     "./schemas/workspace-furnishing-placements-v4.json": "./schemas/workspace-furnishing-placements-v4.json",
     "./schemas/oex-workspace-furnishing-v4.json": "./schemas/oex-workspace-furnishing-v4.json",
+    "./workspace-fit-models": {
+      "types": "./types/workspace-fit-models.d.ts",
+      "import": "./validators/workspace-fit-models.mjs"
+    },
+    "./portal-finish-models": {
+      "types": "./types/portal-finish-models.d.ts",
+      "import": "./validators/portal-finish-models.mjs"
+    },
     "./artwork-frame-models": {
       "types": "./types/artwork-frame-models.d.ts",
       "import": "./validators/artwork-frame-models.mjs"
     },
+    "./schemas/workspace-furnishing-v7.json": "./schemas/workspace-furnishing-v7.json",
+    "./schemas/workspace-furnishing-placements-v7.json": "./schemas/workspace-furnishing-placements-v7.json",
+    "./schemas/oex-workspace-furnishing-v7.json": "./schemas/oex-workspace-furnishing-v7.json",
     "./schemas/workspace-furnishing-v6.json": "./schemas/workspace-furnishing-v6.json",
     "./schemas/workspace-furnishing-placements-v6.json": "./schemas/workspace-furnishing-placements-v6.json",
     "./schemas/oex-workspace-furnishing-v6.json": "./schemas/oex-workspace-furnishing-v6.json",

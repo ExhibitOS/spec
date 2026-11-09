@@ -15,6 +15,16 @@ const records = Object.freeze([
  Object.freeze({id:'black-aluminum-frame',version:2,sha256:'2fb941a9f6ed030638512e917e348a0a3000e29c1133fe3f9670268ff1c4169c',bytes:101720,openingWidth:.6,openingHeight:.8,front:'-Z',wallAnchorZ:0,imagePlaneZ:-0.021,depth:0.025,derivedFrom:Object.freeze({version:1,sha256:'17c571accc4ed2554731d4ce89f3cad4faa66cf2bca83321ecd92ad2537093d9',bytes:101768,recipe:'omit-unused-invalid-tangent-r1'})}),
  Object.freeze({id:'brushed-silver-frame',version:2,sha256:'a0d0c0d3f02fea91b6a09273eec8d200248a16c8caf5139bd029b681af8eddcd',bytes:147592,openingWidth:.6,openingHeight:.8,front:'-Z',wallAnchorZ:0,imagePlaneZ:-0.024,depth:0.028,derivedFrom:Object.freeze({version:1,sha256:'b21ee369bf9e2d958d9ff2c03cf2457bbd22669c7d1621c379bebcb6330a8c89',bytes:147640,recipe:'omit-unused-invalid-tangent-r1'})}),
  Object.freeze({id:'natural-oak-flat-frame',version:2,sha256:'5af789b1aa8e6aa410b40cf16e27c9e2000f87438f1fa52cb08bc46c19c75778',bytes:177476,openingWidth:.6,openingHeight:.8,front:'-Z',wallAnchorZ:0,imagePlaneZ:-0.026,depth:0.03,derivedFrom:Object.freeze({version:1,sha256:'06ac605194e7aa870c4c9c68c17e00b6d1256c421aba6ed9b169e7f873b7b8d9',bytes:177500,recipe:'omit-unused-invalid-tangent-r1'})}),
+ Object.freeze({id:'wheat-matte-oak-frame',version:1,sha256:'a96b4942c2cd10b25fe1b33001443e1824fc125bc258f28a68547d38d8c54362',bytes:3380,openingWidth:.940,openingHeight:.738,fit:Object.freeze({minWidth:.800,maxWidth:1,minHeight:.600,maxHeight:.800,edgeClearance:.003}),front:'-Z',wallAnchorZ:0,imagePlaneZ:-.012,depth:.030}),
 ]);
 if(records.some(record=>!/^[a-f0-9]{64}$/.test(record.sha256)||!Number.isSafeInteger(record.bytes)||record.bytes<1)||new Set(records.map(record=>record.sha256)).size!==records.length||new Set(records.map(record=>record.id+'@'+record.version)).size!==records.length||records.some(record=>record.version===2&&(!record.derivedFrom||record.derivedFrom.recipe!=='omit-unused-invalid-tangent-r1'||!records.some(source=>source.id===record.id&&source.version===1&&source.sha256===record.derivedFrom.sha256&&source.bytes===record.derivedFrom.bytes&&source.openingWidth===record.openingWidth&&source.openingHeight===record.openingHeight&&source.front===record.front&&source.wallAnchorZ===record.wallAnchorZ&&source.imagePlaneZ===record.imagePlaneZ&&source.depth===record.depth))))throw Error('ARTWORK_FRAME_MODELS_INVALID');
 export function artworkFrameModel(sha256,bytes){return records.find(record=>record.sha256===sha256&&record.bytes===bytes);}
+
+/** The fixed ring mesh is resized by translating its four corner profiles. */
+export function artworkFrameFit(model,width,height){
+ if(!Number.isFinite(width)||!Number.isFinite(height))return undefined;
+ const fit=model.fit;
+ if(!fit)return Math.abs(width-.6)<=1e-6&&Math.abs(height-.8)<=1e-6?{cornerX:0,cornerY:0}:undefined;
+ if(width<fit.minWidth||width>fit.maxWidth||height<fit.minHeight||height>fit.maxHeight)return undefined;
+ return {cornerX:(width+2*fit.edgeClearance-model.openingWidth)/2,cornerY:(height+2*fit.edgeClearance-model.openingHeight)/2};
+}

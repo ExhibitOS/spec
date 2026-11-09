@@ -110,3 +110,87 @@ test('versioned tangent-omission candidates retain source identity and exact geo
  ];
  for(const [sha,bytes,sourceSha,sourceBytes] of candidates){const model=artworkFrameModel(sha,bytes),source=artworkFrameModel(sourceSha,sourceBytes);assert.equal(model.version,2);assert.equal(model.id,source.id);assert.deepEqual(model.derivedFrom,{version:1,sha256:sourceSha,bytes:sourceBytes,recipe:'omit-unused-invalid-tangent-r1'});for(const key of ['openingWidth','openingHeight','front','wallAnchorZ','imagePlaneZ','depth'])assert.equal(model[key],source[key]);assert.equal(artworkFrameModel(sha,bytes+1),undefined);}
 });
+
+test('measured straight-ring frame fits two image sizes without relaxing legacy bounds',async()=>{
+ const {artworkFrameFit,artworkFrameModel}=await import('./artwork-frame-models.mjs');
+ const model=artworkFrameModel('a96b4942c2cd10b25fe1b33001443e1824fc125bc258f28a68547d38d8c54362',3380);
+ for(const [width,height] of [[.934,.732],[.8,.6]]){
+  const fit=artworkFrameFit(model,width,height);
+  assert.ok(Math.abs(model.openingWidth+2*fit.cornerX-width-.006)<1e-9);
+  assert.ok(Math.abs(model.openingHeight+2*fit.cornerY-height-.006)<1e-9);
+ }
+ assert.equal(artworkFrameFit(model,.799,.6),undefined);
+});
+
+test('asymmetric pale portal requires the measured reciprocal finished walls',async()=>{
+ const {pairedPortalFit}=await import('./portal-finish-models.mjs');
+ const pose=(position,rotation=[0,0,0,1])=>({position,rotation,scale:[1,1,1]});
+ const doc={rooms:[{id:id(1),transform:pose([0,0,0])},{id:id(2),transform:pose([0,0,-7])}],surfaces:[
+  {id:id(3),type:'wall',roomId:id(1),transform:pose([0,2,-1.99])},
+  {id:id(4),type:'wall',roomId:id(2),transform:pose([0,2,4.99],[0,1,0,0])},
+ ],openings:[
+  {id:id(5),type:'door',surfaceId:id(3),offset:[0,-.5],dimensions:{width:2.4,height:3},connectsToOpeningId:id(6)},
+  {id:id(6),type:'door',surfaceId:id(4),offset:[0,-.5],dimensions:{width:2.4,height:3},connectsToOpeningId:id(5)},
+ ],extensions:{'org.exhibitos.studio/architectural-finishes':{version:1,walls:[
+  {surfaceId:id(3),depth:.12,preset:'plain'},
+  {surfaceId:id(4),depth:.12,preset:'dark-edge'},
+ ]}}};
+ assert.equal(pairedPortalFit(doc,id(5)),true);
+ assert.equal(pairedPortalFit(doc,id(6)),false);
+ for(const mutate of [
+  d=>{d.openings[1].connectsToOpeningId=id(7);},
+  d=>{d.surfaces[1].transform.position[2]+=.01;},
+  d=>{d.surfaces[1].transform.rotation=[0,Math.cos(.00025),0,Math.sin(.00025)];},
+  d=>{d.openings[1].dimensions.height=2.6;},
+  d=>{d.extensions['org.exhibitos.studio/architectural-finishes'].walls[0].depth=.2;},
+ ]){const bad=structuredClone(doc);mutate(bad);assert.equal(pairedPortalFit(bad,id(5)),false);}
+});
+
+test('v7 binds measured frame geometry to the source across two image sizes',()=>{
+ const f=fixture(),item=f.value.furnishings[0],sha=item.model.sha256;
+ item.kind='artwork-frame';
+ item.fit={version:1,sourceSha256:sha,sourceBytes:item.model.bytes,geometry:{profile:'straight-ring-v1',openingWidth:.806,openingHeight:.606,imagePlaneZ:-.012}};
+ const transform={scale:[1,1,1]};
+ f.exhibition.rooms[0].transform=transform;
+ f.exhibition.placements=[{id:id(4),roomId:id(1),artworkRevisionId:id(5),assetId:id(6),transform}];
+ f.exhibition.artworks=[{revisionId:id(5),primaryAssetId:id(6),schemaVersion:'1.0.0-draft.1',artworkType:'image',dimensions:{width:.8,height:.6},transform}];
+ f.value={version:7,furnishings:[item],placements:[],openingAttachments:[],frameAttachments:[{placementId:id(4),artworkRevisionId:id(5),assetId:id(6),furnishingId:item.id,furnishingVersion:1,modelSha256:sha}]};
+ assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
+ f.exhibition.artworks[0].dimensions={width:1,height:.8};
+ assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
+ item.fit.sourceBytes++;
+ assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='FURNISHING_FIT_BINDING'));
+ item.fit.sourceBytes--;
+ f.value.version=6;
+ assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
+});
+
+test('v7 mounts an exact measured continuous portal on its plain centred wall',()=>{
+ for(const [width,height,depth] of [[2.4,2.6,.2],[1.4,2.2,.12]]){
+  const f=fixture(),item=f.value.furnishings[0],sha=item.model.sha256;
+  item.kind='portal-finish';
+  item.fit={version:1,sourceSha256:sha,sourceBytes:item.model.bytes,geometry:{profile:'continuous-portal-v1',openingWidth:width,openingHeight:height,minZ:-depth/2,maxZ:depth/2}};
+  const transform={position:[0,1.5,0],rotation:[0,0,0,1],scale:[1,1,1]};
+  f.exhibition.rooms[0].transform=transform;
+  f.exhibition.surfaces=[{id:id(4),roomId:id(1),type:'wall',dimensions:{width:6,height:3},transform}];
+  const opening={id:id(5),surfaceId:id(4),type:'door',dimensions:{width,height},offset:[0,height/2-1.5]};
+  f.exhibition.openings=[opening];
+  const finish={surfaceId:id(4),depth,preset:'plain',trimWidth:.04,baseboardHeight:.1,ceilingBand:false};
+  f.exhibition.extensions={'org.exhibitos.studio/architectural-finishes':{version:1,walls:[finish]}};
+  f.value={version:7,furnishings:[item],placements:[],frameAttachments:[],openingAttachments:[{openingId:opening.id,furnishingId:item.id,furnishingVersion:1,modelSha256:sha}]};
+  assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
+  finish.depth-=.02;
+  assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+  finish.depth=depth;
+  opening.connectsToOpeningId=id(7);
+  assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+  delete opening.connectsToOpeningId;
+  const adjacent={id:id(8),surfaceId:id(4),type:'window',dimensions:{width:1,height:1},offset:[width/2+.52,0]};
+  f.exhibition.openings.push(adjacent);
+  assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+  adjacent.offset[0]+=0.05;
+  assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
+  opening.offset[0]=(6-width)/2-.01;
+  assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+ }
+});

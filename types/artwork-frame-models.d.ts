@@ -1,3 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0
-export interface ArtworkFrameModel {readonly id:string;readonly version:1|2;readonly sha256:string;readonly bytes:number;readonly openingWidth:number;readonly openingHeight:number;readonly front:'-Z';readonly wallAnchorZ:0;readonly imagePlaneZ:number;readonly depth:number;readonly derivedFrom?:Readonly<{version:1;sha256:string;bytes:number;recipe:'omit-unused-invalid-tangent-r1'}>}
+export interface ArtworkFrameModel {readonly id:string;readonly version:1|2;readonly sha256:string;readonly bytes:number;readonly openingWidth:number;readonly openingHeight:number;readonly fit?:Readonly<{minWidth:number;maxWidth:number;minHeight:number;maxHeight:number;edgeClearance:number}>;readonly front:'-Z';readonly wallAnchorZ:0;readonly imagePlaneZ:number;readonly depth:number;readonly derivedFrom?:Readonly<{version:1;sha256:string;bytes:number;recipe:'omit-unused-invalid-tangent-r1'}>}
 export declare function artworkFrameModel(sha256:string,bytes:number):Readonly<ArtworkFrameModel>|undefined;
+export declare function artworkFrameFit(model:Readonly<ArtworkFrameModel>,width:number,height:number):{cornerX:number;cornerY:number}|undefined;
