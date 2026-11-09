@@ -140,6 +140,7 @@ test('asymmetric pale portal requires the measured reciprocal finished walls',as
  for(const mutate of [
   d=>{d.openings[1].connectsToOpeningId=id(7);},
   d=>{d.surfaces[1].transform.position[2]+=.01;},
+  d=>{d.surfaces[1].transform.rotation=[0,Math.cos(.00025),0,Math.sin(.00025)];},
   d=>{d.openings[1].dimensions.height=2.6;},
   d=>{d.extensions['org.exhibitos.studio/architectural-finishes'].walls[0].depth=.2;},
  ]){const bad=structuredClone(doc);mutate(bad);assert.equal(pairedPortalFit(bad,id(5)),false);}

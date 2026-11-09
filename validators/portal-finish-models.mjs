@@ -35,7 +35,7 @@ export function pairedPortalFit(doc,openingId){
  const mate=single(doc.openings,mateId);
  if(!mate||mateId===id||key(mate.connectsToOpeningId)!==id)return false;
  const host=floorPose(doc,opening),other=floorPose(doc,mate);
- if(!host||!other||host.roomId===other.roomId||!near(host.y,other.y)||!near(Math.cos(host.yaw-other.yaw),-1))return false;
+ if(!host||!other||host.roomId===other.roomId||!near(host.y,other.y)||(Math.cos(host.yaw-other.yaw)>=0||!near(Math.sin(host.yaw-other.yaw),0)))return false;
  const [x,z]=rotate(other.x-host.x,other.z-host.z,-host.yaw);
  if(!near(x,0)||!near(z,-.020))return false;
  const finishes=doc.extensions?.['org.exhibitos.studio/architectural-finishes']?.walls;
