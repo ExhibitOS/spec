@@ -5,4 +5,4 @@ export type ContinuousPortalFit={profile:'continuous-portal-v1';openingWidth:num
 export type WorkspaceFitGeometry=StraightRingFit|ContinuousPortalFit;
 export declare function workspaceFitGeometry(descriptor:unknown):WorkspaceFitGeometry|undefined;
 export declare function qualifiedFrameTargetFit(geometry:StraightRingFit,width:number,height:number):{cornerX:number;cornerY:number}|undefined;
-export declare function qualifiedPortalWallFit(geometry:ContinuousPortalFit,opening:{connectsToOpeningId?:string;offset?:number[]},wall:{dimensions?:{width:number;height:number}},finish:{preset:string;depth:number}|undefined):boolean;
+export declare function qualifiedPortalWallFit(geometry:ContinuousPortalFit,opening:{connectsToOpeningId?:string;offset?:number[]},wall:unknown,finish:{preset:string;depth:number}|undefined,openings:unknown):boolean;

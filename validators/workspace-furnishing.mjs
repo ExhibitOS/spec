@@ -64,7 +64,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
    if(valid)for(const f of ext.walls){const keys=f&&typeof f==='object'&&!Array.isArray(f)?Object.keys(f).sort().join(','):'';const id=typeof f?.surfaceId==='string'?f.surfaceId.toLowerCase():'';if(keys!=='baseboardHeight,ceilingBand,depth,preset,surfaceId,trimWidth'||!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id)||seen.has(id)||![f.depth,f.trimWidth,f.baseboardHeight].every(Number.isFinite)||f.depth<.02||f.depth>.2||f.trimWidth<.02||f.trimWidth>.08||f.baseboardHeight<.04||f.baseboardHeight>.15||!['plain','painted-edge','dark-edge'].includes(f.preset)||typeof f.ceilingBand!=='boolean')malformed=true;seen.add(id);if(same(id,wall.id))finish=f;}
    if(malformed)errors.push({code:'PORTAL_WALL_DEPTH_UNSUPPORTED',path,message:'Expected valid, unique architectural wall finishes'});
   }
-  if(fit?.profile==='continuous-portal-v1'?!qualifiedPortalWallFit(fit,opening,wall,finish):model.paired?!pairedPortalFit(exhibition,opening.id):finish&&Math.abs(finish.depth-.2)>1e-6)errors.push({code:'PORTAL_WALL_DEPTH_UNSUPPORTED',path,message:'Expected the fixed model wall finish and reveal'});
+  if(fit?.profile==='continuous-portal-v1'?!qualifiedPortalWallFit(fit,opening,wall,finish,exhibition.openings):model.paired?!pairedPortalFit(exhibition,opening.id):finish&&Math.abs(finish.depth-.2)>1e-6)errors.push({code:'PORTAL_WALL_DEPTH_UNSUPPORTED',path,message:'Expected the fixed model wall finish and reveal'});
  }
  const attached=new Set();
  for(const [i,a] of (value.frameAttachments??[]).entries()){

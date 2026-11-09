@@ -21,11 +21,22 @@ export function qualifiedFrameTargetFit(geometry,width,height){
 }
 
 /** A reusable continuous profile mounts on one plain, centred wall reveal. */
-export function qualifiedPortalWallFit(geometry,opening,wall,finish){
- if(opening.connectsToOpeningId!==undefined||finish?.preset!=='plain'||
+export function qualifiedPortalWallFit(geometry,opening,wall,finish,openings){
+ if(typeof wall?.id!=='string'||opening.connectsToOpeningId!==undefined||finish?.preset!=='plain'||
   !near(geometry.minZ,-finish.depth/2)||!near(geometry.maxZ,finish.depth/2))return false;
  const {width,height}=wall.dimensions??{},[x,y]=opening.offset??[];
  const surround=.045;
- return [width,height,x,y].every(Number.isFinite)&&Math.abs(x)+geometry.openingWidth/2+surround<=width/2+1e-6&&
-  y+geometry.openingHeight/2+surround<=height/2+1e-6;
+ const halfWidth=geometry.openingWidth/2,halfHeight=geometry.openingHeight/2;
+ if(![width,height,x,y].every(Number.isFinite)||Math.abs(x)+halfWidth+surround>width/2+1e-6||
+  y+halfHeight+surround>height/2+1e-6||!Array.isArray(openings))return false;
+ const left=x-halfWidth,right=x+halfWidth,bottom=y-halfHeight,top=y+halfHeight;
+ const rails=[[left-surround,bottom,left,top],[right,bottom,right+surround,top],[left-surround,top,right+surround,top+surround]];
+ for(const other of openings){
+  if(other===opening||other?.id===opening.id||typeof other?.surfaceId!=='string'||other.surfaceId.toLowerCase()!==wall.id.toLowerCase())continue;
+  const [ox,oy]=other.offset??[],ow=other.dimensions?.width,oh=other.dimensions?.height;
+  if(![ox,oy,ow,oh].every(Number.isFinite)||ow<=0||oh<=0)return false;
+  const [l,b,r,t]=[ox-ow/2,oy-oh/2,ox+ow/2,oy+oh/2];
+  if(rails.some(([rl,rb,rr,rt])=>Math.min(r,rr)-Math.max(l,rl)>1e-6&&Math.min(t,rt)-Math.max(b,rb)>1e-6))return false;
+ }
+ return true;
 }

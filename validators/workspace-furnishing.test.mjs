@@ -185,6 +185,11 @@ test('v7 mounts an exact measured continuous portal on its plain centred wall',(
   opening.connectsToOpeningId=id(7);
   assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
   delete opening.connectsToOpeningId;
+  const adjacent={id:id(8),surfaceId:id(4),type:'window',dimensions:{width:1,height:1},offset:[width/2+.52,0]};
+  f.exhibition.openings.push(adjacent);
+  assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+  adjacent.offset[0]+=0.05;
+  assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
   opening.offset[0]=(6-width)/2-.01;
   assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
  }
