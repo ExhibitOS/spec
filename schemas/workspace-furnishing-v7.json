@@ -144,6 +144,97 @@
                 "minZ",
                 "maxZ"
               ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "modular-portal-v1"
+                },
+                "openingWidth": {
+                  "type": "number",
+                  "minimum": 0.9,
+                  "maximum": 3
+                },
+                "openingHeight": {
+                  "type": "number",
+                  "minimum": 2,
+                  "maximum": 3.2
+                },
+                "minZ": {
+                  "type": "number",
+                  "minimum": -0.15,
+                  "maximum": -0.015
+                },
+                "maxZ": {
+                  "type": "number",
+                  "minimum": 0.015,
+                  "maximum": 0.15
+                },
+                "parts": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "node": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 8
+                      },
+                      "min": {
+                        "type": "array",
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "items": {
+                          "type": "number",
+                          "minimum": -4,
+                          "maximum": 4
+                        }
+                      },
+                      "max": {
+                        "type": "array",
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "items": {
+                          "type": "number",
+                          "minimum": -4,
+                          "maximum": 4
+                        }
+                      }
+                    },
+                    "required": [
+                      "node",
+                      "min",
+                      "max"
+                    ]
+                  },
+                  "propertyNames": {
+                    "enum": [
+                      "reveal-left",
+                      "reveal-right",
+                      "reveal-head",
+                      "front-left",
+                      "front-right",
+                      "front-head",
+                      "back-left",
+                      "back-right",
+                      "back-head"
+                    ]
+                  },
+                  "minProperties": 9,
+                  "maxProperties": 9
+                }
+              },
+              "required": [
+                "profile",
+                "openingWidth",
+                "openingHeight",
+                "minZ",
+                "maxZ",
+                "parts"
+              ]
             }
           ]
         }

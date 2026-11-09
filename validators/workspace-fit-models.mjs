@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import {pairedPortalFit} from './portal-finish-models.mjs';
 const near=(a,b)=>typeof a==='number'&&Number.isFinite(a)&&Math.abs(a-b)<=1e-6;
 const finite=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
 const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
@@ -10,8 +11,28 @@ export function workspaceFitGeometry(descriptor){
  const g=fit.geometry,keys=Object.keys(g).sort().join(',');
  if(kind==='artwork-frame'&&g.profile==='straight-ring-v1'&&keys==='imagePlaneZ,openingHeight,openingWidth,profile'&&
   finite(g.openingWidth,.4,2)&&finite(g.openingHeight,.4,2)&&g.imagePlaneZ===-.012)return g;
+ if(kind==='portal-finish'&&modularPortalParts(g))return g;
  if(kind==='portal-finish'&&g.profile==='continuous-portal-v1'&&keys==='maxZ,minZ,openingHeight,openingWidth,profile'&&
   finite(g.openingWidth,.9,3)&&finite(g.openingHeight,2,3.2)&&finite(g.minZ,-.15,-.015)&&finite(g.maxZ,.015,.15))return g;
+}
+
+/** The modular family has three closed reveal sections and two separate
+ * three-section face trims. Roles are assigned by the source worker. */
+export function modularPortalParts(g){
+ if(!object(g)||g.profile!=='modular-portal-v1'||Object.keys(g).sort().join(',')!=='maxZ,minZ,openingHeight,openingWidth,parts,profile'||
+  !finite(g.openingWidth,1.1,2.4)||!finite(g.openingHeight,2.2,3)||!finite(g.minZ,-.1,-.06)||!near(g.maxZ,-g.minZ)||!object(g.parts)||Object.keys(g.parts).length!==9)return false;
+ const nodes=new Set(),half=g.openingWidth/2;
+ for(const face of ['reveal','front','back'])for(const side of ['left','right','head']){
+  const part=g.parts[face+'-'+side],trim=face==='reveal'?.025:.04;
+  if(!object(part)||Object.keys(part).sort().join(',')!=='max,min,node'||!Number.isInteger(part.node)||part.node<0||part.node>8||nodes.has(part.node)||
+   ![part.min,part.max].every(p=>Array.isArray(p)&&p.length===3&&p.every(n=>finite(n,-4,4))))return false;
+  nodes.add(part.node);
+  const x=side==='left'?[-half-trim,-half]:side==='right'?[half,half+trim]:[-half-trim,half+trim];
+  const y=side==='head'?[g.openingHeight,g.openingHeight+trim]:[0,g.openingHeight];
+  const z=face==='front'?[g.maxZ,g.maxZ+.006]:face==='back'?[g.minZ-.006,g.minZ]:[g.minZ,g.maxZ];
+  if(![x,y,z].every(([min,max],axis)=>near(part.min[axis],min)&&near(part.max[axis],max)))return false;
+ }
+ return true;
 }
 
 export function qualifiedFrameTargetFit(geometry,width,height){
@@ -24,9 +45,13 @@ export function qualifiedFrameTargetFit(geometry,width,height){
 export function qualifiedPortalWallFit(geometry,opening,wall,finish,openings){
  if(typeof wall?.id!=='string'||opening.connectsToOpeningId!==undefined||finish?.preset!=='plain'||
   !near(geometry.minZ,-finish.depth/2)||!near(geometry.maxZ,finish.depth/2))return false;
+ return portalRailsFit(geometry.openingWidth,geometry.openingHeight,.045,opening,wall,openings);
+}
+
+function portalRailsFit(openingWidth,openingHeight,surround,opening,wall,openings){
+ if(typeof wall?.id!=='string')return false;
  const {width,height}=wall.dimensions??{},[x,y]=opening.offset??[];
- const surround=.045;
- const halfWidth=geometry.openingWidth/2,halfHeight=geometry.openingHeight/2;
+ const halfWidth=openingWidth/2,halfHeight=openingHeight/2;
  if(![width,height,x,y].every(Number.isFinite)||Math.abs(x)+halfWidth+surround>width/2+1e-6||
   y+halfHeight+surround>height/2+1e-6||!Array.isArray(openings))return false;
  const left=x-halfWidth,right=x+halfWidth,bottom=y-halfHeight,top=y+halfHeight;
@@ -39,4 +64,26 @@ export function qualifiedPortalWallFit(geometry,opening,wall,finish,openings){
   if(rails.some(([rl,rb,rr,rt])=>Math.min(r,rr)-Math.max(l,rl)>1e-6&&Math.min(t,rt)-Math.max(b,rb)>1e-6))return false;
  }
  return true;
+}
+
+/** Modular trim stays 40 mm wide. A reciprocal target reuses the measured
+ * pale-host wall relationship rather than admitting arbitrary wall joins. */
+export function qualifiedModularPortalTarget(geometry,exhibition,openingId){
+ if(!modularPortalParts(geometry)||typeof openingId!=='string'||!Array.isArray(exhibition?.openings)||!Array.isArray(exhibition?.surfaces)||!Array.isArray(exhibition?.rooms))return;
+ const same=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
+ const opening=exhibition.openings.find(o=>same(o?.id,openingId)),wall=exhibition.surfaces.find(w=>same(w?.id,opening?.surfaceId));
+ const width=opening?.dimensions?.width,height=opening?.dimensions?.height;
+ if(opening?.type!=='door'||!finite(width,1.1,2.4)||!finite(height,2.2,3)||!portalRailsFit(width,height,.04,opening,wall,exhibition.openings))return;
+ if(opening.connectsToOpeningId!==undefined){
+  if(!pairedPortalFit(exhibition,opening.id))return;
+  const mate=exhibition.openings.find(o=>same(o.id,opening.connectsToOpeningId)),mateWall=exhibition.surfaces.find(w=>same(w.id,mate?.surfaceId));
+  if(!portalRailsFit(width,height,.04,mate,mateWall,exhibition.openings))return;
+  return {width,height,minZ:-.08,maxZ:.06};
+ }
+ const finishes=exhibition.extensions?.['org.exhibitos.studio/architectural-finishes'];
+ if(finishes!==undefined&&!Array.isArray(finishes?.walls))return;
+ const finish=finishes?.walls.find(f=>same(f?.surfaceId,wall.id));
+ const depth=finish?.depth??.2;
+ if(finish&&finish.preset!=='plain'||!finite(depth,.12,.2))return;
+ return {width,height,minZ:-depth/2,maxZ:depth/2};
 }
