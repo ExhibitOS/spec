@@ -338,14 +338,23 @@ and retains its visual geometry values. Earlier records remain unchanged.
 Readers lacking these exact v2 records reject them; the record does not prove
 current rights or authorize use. The OEX/extension wire versions are unchanged.
 
+Package draft.27 adds the exact Wheat matte-oak ring (SHA-256
+`a96b4942c2cd10b25fe1b33001443e1824fc125bc258f28a68547d38d8c54362`,
+3,380 bytes). On a unit-scale image with no depth, the consumer translates its
+four corner profiles to fit widths from 0.800 to 1.000 m and heights from 0.600
+to 0.800 m, leaving 0.003 m of clearance per edge. The artwork transform and
+frame cross section stay fixed. The original GLB is retained in the inventory
+and fit is derived from the saved image dimensions. Existing model records
+retain their original dimensions and behavior.
+
 ### Fixed opening visual attachment (draft.18)
 
 OEX `1.0.0-draft.18` carries workspace-furnishings extension version 6. It
 retains the version 5 inventory, visual placements and frame attachments and
 adds a nonempty `openingAttachments` array of closed
 `{openingId,furnishingId,furnishingVersion,modelSha256}` records. A door may
-have at most one attachment; every portal descriptor must be used. The only
-supported `portal-finish` model is the exact 164,044-byte GLB with SHA-256
+have at most one attachment; every portal descriptor must be used. The legacy
+`portal-finish` model is the exact 164,044-byte GLB with SHA-256
 `385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b`.
 
 The host is an existing wall door with a 2.4 × 2.6 metre opening, floor-aligned
@@ -359,6 +368,14 @@ an incompatible door requires an explicit detach before saving. Moving the
 same opening ID, including to another compatible wall, carries its attachment
 with it; all host conditions are rechecked on the new wall. The visual
 does not alter the authoritative opening, collision or navigation.
+
+Package draft.27 also admits the exact pale-mineral portal (SHA-256
+`62fd3bc49e0e77ffde26f60dee7ddfbbac0939347d68ea53a94700de0695f1ae`,
+2,468 bytes). It requires reciprocal, opposing 2.4 × 3.0 m doors aligned at
+floor level, with the mate 0.020 m behind the host. The host has a plain
+0.120 m wall extrusion and the mate has a 0.120 m extrusion with an edge
+finish. The floor-centred model spans host-local Z=−0.082 to +0.060 m.
+The same single-opening attachment and native opening geometry are retained.
 
 Detach of the final portal removes its unused descriptor and selects the
 lowest existing furnishing extension version that can represent remaining

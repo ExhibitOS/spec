@@ -110,3 +110,37 @@ test('versioned tangent-omission candidates retain source identity and exact geo
  ];
  for(const [sha,bytes,sourceSha,sourceBytes] of candidates){const model=artworkFrameModel(sha,bytes),source=artworkFrameModel(sourceSha,sourceBytes);assert.equal(model.version,2);assert.equal(model.id,source.id);assert.deepEqual(model.derivedFrom,{version:1,sha256:sourceSha,bytes:sourceBytes,recipe:'omit-unused-invalid-tangent-r1'});for(const key of ['openingWidth','openingHeight','front','wallAnchorZ','imagePlaneZ','depth'])assert.equal(model[key],source[key]);assert.equal(artworkFrameModel(sha,bytes+1),undefined);}
 });
+
+test('measured straight-ring frame fits two image sizes without relaxing legacy bounds',async()=>{
+ const {artworkFrameFit,artworkFrameModel}=await import('./artwork-frame-models.mjs');
+ const model=artworkFrameModel('a96b4942c2cd10b25fe1b33001443e1824fc125bc258f28a68547d38d8c54362',3380);
+ for(const [width,height] of [[.934,.732],[.8,.6]]){
+  const fit=artworkFrameFit(model,width,height);
+  assert.ok(Math.abs(model.openingWidth+2*fit.cornerX-width-.006)<1e-9);
+  assert.ok(Math.abs(model.openingHeight+2*fit.cornerY-height-.006)<1e-9);
+ }
+ assert.equal(artworkFrameFit(model,.799,.6),undefined);
+});
+
+test('asymmetric pale portal requires the measured reciprocal finished walls',async()=>{
+ const {pairedPortalFit}=await import('./portal-finish-models.mjs');
+ const pose=(position,rotation=[0,0,0,1])=>({position,rotation,scale:[1,1,1]});
+ const doc={rooms:[{id:id(1),transform:pose([0,0,0])},{id:id(2),transform:pose([0,0,-7])}],surfaces:[
+  {id:id(3),type:'wall',roomId:id(1),transform:pose([0,2,-1.99])},
+  {id:id(4),type:'wall',roomId:id(2),transform:pose([0,2,4.99],[0,1,0,0])},
+ ],openings:[
+  {id:id(5),type:'door',surfaceId:id(3),offset:[0,-.5],dimensions:{width:2.4,height:3},connectsToOpeningId:id(6)},
+  {id:id(6),type:'door',surfaceId:id(4),offset:[0,-.5],dimensions:{width:2.4,height:3},connectsToOpeningId:id(5)},
+ ],extensions:{'org.exhibitos.studio/architectural-finishes':{version:1,walls:[
+  {surfaceId:id(3),depth:.12,preset:'plain'},
+  {surfaceId:id(4),depth:.12,preset:'dark-edge'},
+ ]}}};
+ assert.equal(pairedPortalFit(doc,id(5)),true);
+ assert.equal(pairedPortalFit(doc,id(6)),false);
+ for(const mutate of [
+  d=>{d.openings[1].connectsToOpeningId=id(7);},
+  d=>{d.surfaces[1].transform.position[2]+=.01;},
+  d=>{d.openings[1].dimensions.height=2.6;},
+  d=>{d.extensions['org.exhibitos.studio/architectural-finishes'].walls[0].depth=.2;},
+ ]){const bad=structuredClone(doc);mutate(bad);assert.equal(pairedPortalFit(bad,id(5)),false);}
+});
