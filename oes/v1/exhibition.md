@@ -151,3 +151,33 @@ light-intensity/show-annotation/play-audio actions. Targets must resolve; delay 
 HTML, external URL or network fetch is part of these core contracts. A future
 execution contract must define permission, CPU/time, scheduling and cancellation
 budgets before enabling scripts; unknown extensions cannot bypass these rules.
+
+## Reusable rectangular portal fit
+
+Package draft.29 adds the explicit `rectangular-portal-v1` geometry alternative
+to workspace furnishings v7. Existing continuous and modular profiles keep their
+prior meaning. Earlier readers reject the unknown profile; no saved source or
+legacy attachment is rewritten. OEX draft.19 carries the same source-bound fit
+receipt and opening attachment.
+
+The producer measures a closed, untextured continuous U-section with a 45 mm
+surround, floor-centred origin and no sill. It binds measured opening dimensions
+and asymmetric Z bounds to the exact original digest and byte count. Names and
+hash allowlists do not establish this eligibility. Unsupported geometry, textures
+or sections are refused rather than approximated. The original GLB and its rights
+remain unchanged; the renderer owns only an adapted geometry copy.
+
+Targets are floor-level rectangular doors, .9–3 m wide and 2–3.2 m high, with
+enough solid wall for the surround and no neighbouring opening intersection.
+An independent target requires one plain wall finish, .03–.2 m thick. The
+reciprocal target currently supports only the measured 2.4 × 3 m paired-wall
+relationship already checked by `pairedPortalFit`; its finished reveal is
+[-.082,+.060] m in the Arrival host coordinates. One attachment on that host
+represents the physical pair. The finish never creates or enlarges an opening,
+changes the existing passage collision, or inserts a full-box collider or sill.
+
+Width and height adaptation preserve the 45 mm section and rectangular corners;
+depth adaptation covers the checked finished faces. This profile admits no
+textures, so it does not claim texture-scale adaptation. Registration, current
+ownership, display/export rights, live capability admission and actual walking
+and visual qualification remain consumer responsibilities.

@@ -12,7 +12,7 @@ export function workspaceFitGeometry(descriptor){
  if(kind==='artwork-frame'&&g.profile==='straight-ring-v1'&&keys==='imagePlaneZ,openingHeight,openingWidth,profile'&&
   finite(g.openingWidth,.4,2)&&finite(g.openingHeight,.4,2)&&g.imagePlaneZ===-.012)return g;
  if(kind==='portal-finish'&&modularPortalParts(g))return g;
- if(kind==='portal-finish'&&g.profile==='continuous-portal-v1'&&keys==='maxZ,minZ,openingHeight,openingWidth,profile'&&
+ if(kind==='portal-finish'&&['continuous-portal-v1','rectangular-portal-v1'].includes(g.profile)&&keys==='maxZ,minZ,openingHeight,openingWidth,profile'&&
   finite(g.openingWidth,.9,3)&&finite(g.openingHeight,2,3.2)&&finite(g.minZ,-.15,-.015)&&finite(g.maxZ,.015,.15))return g;
 }
 
@@ -64,6 +64,34 @@ function portalRailsFit(openingWidth,openingHeight,surround,opening,wall,opening
   if(rails.some(([rl,rb,rr,rt])=>Math.min(r,rr)-Math.max(l,rl)>1e-6&&Math.min(t,rt)-Math.max(b,rb)>1e-6))return false;
  }
  return true;
+}
+
+/** A measured continuous U-section is fitted in the renderer, never by changing
+ * its source or enlarging the host opening. Textured/decorated sections are not
+ * admitted by this profile's binary producer. */
+export function qualifiedRectangularPortalTarget(geometry,exhibition,openingId){
+ if(!object(geometry)||geometry.profile!=='rectangular-portal-v1'||Object.keys(geometry).sort().join(',')!=='maxZ,minZ,openingHeight,openingWidth,profile'||!finite(geometry.openingWidth,.9,3)||!finite(geometry.openingHeight,2,3.2)||!finite(geometry.minZ,-.15,-.015)||!finite(geometry.maxZ,.015,.15)||typeof openingId!=='string'||!Array.isArray(exhibition?.openings)||!Array.isArray(exhibition?.surfaces))return;
+ const same=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
+ const rows=exhibition.openings.filter(o=>same(o?.id,openingId));
+ if(rows.length!==1)return;
+ const opening=rows[0],walls=exhibition.surfaces.filter(w=>same(w?.id,opening.surfaceId));
+ if(walls.length!==1)return;
+ const wall=walls[0],width=opening.dimensions?.width,height=opening.dimensions?.height;
+ if(opening.type!=='door'||!finite(width,.9,3)||!finite(height,2,3.2)||!portalRailsFit(width,height,.045,opening,wall,exhibition.openings))return;
+ if(opening.connectsToOpeningId!==undefined){
+  if(!pairedPortalFit(exhibition,opening.id))return;
+  const mate=exhibition.openings.find(o=>same(o?.id,opening.connectsToOpeningId)),mateWall=exhibition.surfaces.find(w=>same(w?.id,mate?.surfaceId));
+  if(!portalRailsFit(width,height,.045,mate,mateWall,exhibition.openings))return;
+  // Opposite 120 mm structure plus its 2 mm face finish, measured relative
+  // to the Arrival wall. Preserve the approved asymmetric finished envelope.
+  return {width,height,minZ:-.082,maxZ:.060};
+ }
+ const finishes=exhibition.extensions?.['org.exhibitos.studio/architectural-finishes'];
+ if(!Array.isArray(finishes?.walls))return;
+ const finishRows=finishes.walls.filter(f=>same(f?.surfaceId,wall.id));
+ if(finishRows.length!==1||finishRows[0].preset!=='plain'||!finite(finishRows[0].depth,.03,.2))return;
+ const depth=finishRows[0].depth;
+ return {width,height,minZ:-depth/2,maxZ:depth/2};
 }
 
 /** Modular trim stays 40 mm wide. A reciprocal target reuses the measured
