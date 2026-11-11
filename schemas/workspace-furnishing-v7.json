@@ -235,6 +235,42 @@
                 "maxZ",
                 "parts"
               ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "rectangular-portal-v1"
+                },
+                "openingWidth": {
+                  "type": "number",
+                  "minimum": 0.9,
+                  "maximum": 3
+                },
+                "openingHeight": {
+                  "type": "number",
+                  "minimum": 2,
+                  "maximum": 3.2
+                },
+                "minZ": {
+                  "type": "number",
+                  "minimum": -0.15,
+                  "maximum": -0.015
+                },
+                "maxZ": {
+                  "type": "number",
+                  "minimum": 0.015,
+                  "maximum": 0.15
+                }
+              },
+              "required": [
+                "profile",
+                "openingWidth",
+                "openingHeight",
+                "minZ",
+                "maxZ"
+              ]
             }
           ]
         }

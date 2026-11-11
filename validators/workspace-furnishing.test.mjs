@@ -137,6 +137,13 @@ test('asymmetric pale portal requires the measured reciprocal finished walls',as
  ]}}};
  assert.equal(pairedPortalFit(doc,id(5)),true);
  assert.equal(pairedPortalFit(doc,id(6)),false);
+ const {qualifiedRectangularPortalTarget}=await import('./workspace-fit-models.mjs');
+ const fitted=structuredClone(doc);for(const wall of fitted.surfaces)wall.dimensions={width:6,height:4};
+ const measured={profile:'rectangular-portal-v1',openingWidth:1.2,openingHeight:2.2,minZ:-.09,maxZ:.06};
+ assert.deepEqual(qualifiedRectangularPortalTarget(measured,fitted,id(5)),{width:2.4,height:3,minZ:-.082,maxZ:.06});
+ assert.equal(qualifiedRectangularPortalTarget(measured,fitted,id(6)),undefined);
+ fitted.openings.push({id:id(8),surfaceId:id(4),type:'window',dimensions:{width:1,height:1},offset:[1.72,0]});
+ assert.equal(qualifiedRectangularPortalTarget(measured,fitted,id(5)),undefined);
  for(const mutate of [
   d=>{d.openings[1].connectsToOpeningId=id(7);},
   d=>{d.surfaces[1].transform.position[2]+=.01;},
@@ -192,5 +199,26 @@ test('v7 mounts an exact measured continuous portal on its plain centred wall',(
   assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
   opening.offset[0]=(6-width)/2-.01;
   assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+ }
+});
+
+test('v7 rectangular portal fits a newly measured source to two opening sizes without weakening the legacy profile',()=>{
+ for(const [width,height,depth] of [[2.4,3,.12],[1.2,2.2,.2]]){
+  const f=fixture(),item=f.value.furnishings[0];item.kind='portal-finish';
+  item.fit={version:1,sourceSha256:item.model.sha256,sourceBytes:item.model.bytes,geometry:{profile:'rectangular-portal-v1',openingWidth:1.8,openingHeight:2.4,minZ:-.082,maxZ:.06}};
+  const pose={position:[0,2,0],rotation:[0,0,0,1],scale:[1,1,1]};
+  f.exhibition.rooms[0].transform={...pose,position:[0,0,0]};
+  f.exhibition.surfaces=[{id:id(4),roomId:id(1),type:'wall',dimensions:{width:6,height:4},transform:pose}];
+  f.exhibition.openings=[{id:id(5),surfaceId:id(4),type:'door',dimensions:{width,height},offset:[0,height/2-2]}];
+  f.exhibition.extensions={'org.exhibitos.studio/architectural-finishes':{version:1,walls:[{surfaceId:id(4),depth,preset:'plain',trimWidth:.04,baseboardHeight:.1,ceilingBand:false}]}};
+  f.value={version:7,furnishings:[item],placements:[],frameAttachments:[],openingAttachments:[{openingId:id(5),furnishingId:item.id,furnishingVersion:1,modelSha256:item.model.sha256}]};
+  assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);
+  item.fit.geometry.profile='continuous-portal-v1';
+  assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
+  item.fit.geometry.profile='rectangular-portal-v1';
+  f.exhibition.openings.push({id:id(8),surfaceId:id(4),type:'window',dimensions:{width:1,height:1},offset:[width/2+.52,0]});
+  assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
+  f.exhibition.openings.pop();item.fit.sourceSha256='b'.repeat(64);
+  assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
  }
 });

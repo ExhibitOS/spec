@@ -6,7 +6,7 @@ import addFormats from 'ajv-formats';
 import {readFile} from 'node:fs/promises';
 import {portalFinishModel,pairedPortalFit} from './portal-finish-models.mjs';
 import {artworkFrameFit,artworkFrameModel} from './artwork-frame-models.mjs';
-import {qualifiedFrameTargetFit,qualifiedModularPortalTarget,qualifiedPortalWallFit,workspaceFitGeometry} from './workspace-fit-models.mjs';
+import {qualifiedFrameTargetFit,qualifiedModularPortalTarget,qualifiedRectangularPortalTarget,qualifiedPortalWallFit,workspaceFitGeometry} from './workspace-fit-models.mjs';
 import {validateRights} from './artwork.mjs';
 const load=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const ajv=new Ajv2020({strict:true,allErrors:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
@@ -52,7 +52,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
   const openings=Array.isArray(exhibition.openings)?exhibition.openings.filter(o=>same(o?.id,a.openingId)):[],opening=openings[0],walls=Array.isArray(exhibition.surfaces)?exhibition.surfaces.filter(s=>same(s?.id,opening?.surfaceId)):[],wall=walls[0],roomRows=exhibition.rooms.filter(r=>same(r?.id,wall?.roomId)),room=roomRows[0];
   if(openingIds.has(a.openingId.toLowerCase())||openings.length!==1||opening.type!=='door'||walls.length!==1||wall.type!=='wall'||roomRows.length!==1){errors.push({code:'PORTAL_TARGET_STALE',path,message:'Expected a unique existing door and wall'});continue;}openingIds.add(a.openingId.toLowerCase());
   const fit=fits.get(a.furnishingId);
-  const modular=fit?.profile==='modular-portal-v1';
+  const modular=fit?.profile==='modular-portal-v1'||fit?.profile==='rectangular-portal-v1';
   const model=modular?{width:opening.dimensions?.width,height:opening.dimensions?.height,paired:false}:fit?.profile==='continuous-portal-v1'?{width:fit.openingWidth,height:fit.openingHeight,paired:false}:source&&portalFinishModel(source.model.sha256,source.model.bytes);
   if(!source||source.kind!=='portal-finish'||!model||a.modelSha256!==source.model.sha256){errors.push({code:'PORTAL_ASSET_UNSUPPORTED',path,message:'Expected a qualified or fixed portal model'});continue;}used.add(a.furnishingId);
   if(!opening.dimensions||![opening.dimensions.width,opening.dimensions.height].every(Number.isFinite)||Math.abs(opening.dimensions.width-model.width)>1e-6||Math.abs(opening.dimensions.height-model.height)>1e-6)errors.push({code:'PORTAL_SIZE_UNSUPPORTED',path,message:'Expected the fixed model opening dimensions'});
@@ -65,7 +65,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
    if(valid)for(const f of ext.walls){const keys=f&&typeof f==='object'&&!Array.isArray(f)?Object.keys(f).sort().join(','):'';const id=typeof f?.surfaceId==='string'?f.surfaceId.toLowerCase():'';if(keys!=='baseboardHeight,ceilingBand,depth,preset,surfaceId,trimWidth'||!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id)||seen.has(id)||![f.depth,f.trimWidth,f.baseboardHeight].every(Number.isFinite)||f.depth<.02||f.depth>.2||f.trimWidth<.02||f.trimWidth>.08||f.baseboardHeight<.04||f.baseboardHeight>.15||!['plain','painted-edge','dark-edge'].includes(f.preset)||typeof f.ceilingBand!=='boolean')malformed=true;seen.add(id);if(same(id,wall.id))finish=f;}
    if(malformed)errors.push({code:'PORTAL_WALL_DEPTH_UNSUPPORTED',path,message:'Expected valid, unique architectural wall finishes'});
   }
-  if(fit?.profile==='modular-portal-v1'?!qualifiedModularPortalTarget(fit,exhibition,opening.id):fit?.profile==='continuous-portal-v1'?!qualifiedPortalWallFit(fit,opening,wall,finish,exhibition.openings):model.paired?!pairedPortalFit(exhibition,opening.id):finish&&Math.abs(finish.depth-.2)>1e-6)errors.push({code:'PORTAL_WALL_DEPTH_UNSUPPORTED',path,message:'Expected the fixed model wall finish and reveal'});
+  if(fit?.profile==='rectangular-portal-v1'?!qualifiedRectangularPortalTarget(fit,exhibition,opening.id):fit?.profile==='modular-portal-v1'?!qualifiedModularPortalTarget(fit,exhibition,opening.id):fit?.profile==='continuous-portal-v1'?!qualifiedPortalWallFit(fit,opening,wall,finish,exhibition.openings):model.paired?!pairedPortalFit(exhibition,opening.id):finish&&Math.abs(finish.depth-.2)>1e-6)errors.push({code:'PORTAL_WALL_DEPTH_UNSUPPORTED',path,message:'Expected the fixed model wall finish and reveal'});
  }
  const attached=new Set();
  for(const [i,a] of (value.frameAttachments??[]).entries()){
