@@ -21,3 +21,5 @@ export declare const FRAME_IMAGE_FIT_LIMITS:Readonly<{edge:8192;pixels:25165824}
 export declare const FRAME_IMAGE_CONTACT_EPSILON_METRES:0.000001;
 export declare function frameImageFootprintForArtwork(candidate:unknown,artwork:unknown):{width:number;height:number}|undefined;
 export declare function frameImageContactFit(candidate:unknown,attachment:unknown,artwork:unknown,geometry:MeasuredFrameFit):{cornerX:number;cornerY:number}|undefined;
+export declare function qualifiedFrameAttachmentTransform(candidate:unknown,placement:unknown,artwork:unknown,geometry:MeasuredFrameFit|undefined,version:number):{scaleX:number;scaleY:number;rigidFrame:boolean}|undefined;
+export declare function frameAttachmentMetricFit(candidate:unknown,attachment:unknown,artwork:unknown,geometry:MeasuredFrameFit):{cornerX:number;cornerY:number;rigidFrame:boolean}|undefined;

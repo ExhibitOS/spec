@@ -42,7 +42,7 @@ The optional draft.8 resource profile is described in [recorded footsteps](oex/v
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.31` is an ESM Node package; OES wire contracts
+Package `@exhibitos/spec@0.1.0-draft.34` is an ESM Node package; OES wire contracts
 include the existing draft.1 and an explicit provisional display draft.2, and OEX
 has explicit optional profiles through candidate draft.21 (with draft.20 reserved). Earlier schema identities are unchanged.
 Use Node 24.21.0/npm 11.19.0. No stable release or
