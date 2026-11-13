@@ -181,3 +181,7 @@ depth adaptation covers the checked finished faces. This profile admits no
 textures, so it does not claim texture-scale adaptation. Registration, current
 ownership, display/export rights, live capability admission and actual walking
 and visual qualification remain consumer responsibilities.
+
+### Architectural wall-finish capacity
+
+The existing `org.exhibitos.studio/architectural-finishes` version 1 namespace admits at most 20 unique existing wall faces. The portal validator applies the same finite row bound while retaining each wall’s closed fields, depth and paired-finish requirements. This capacity increase does not introduce a new namespace or OEX format, change wall geometry, or authorize ignoring artwork obstruction, source, rights or save validation. Shared Studio consumers retain the 8 KiB metadata, 8 openings per wall and 256 generated boxes / 3072 triangles limits. Earlier saved documents remain valid; consumers that still enforce 8 rows must be updated before consuming larger namespaces.

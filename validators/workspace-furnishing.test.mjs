@@ -233,3 +233,23 @@ test('v9 source-bound miter frames preserve target bindings and reject older env
  for(const version of [4,5,6,7,8]){const f=make();f.value.version=version;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);}
  for(const mutate of [f=>f.value.furnishings[0].fit.sourceBytes++,f=>f.value.furnishings[0].fit.sourceSha256='b'.repeat(64),f=>f.value.furnishings[0].fit.geometry.imagePlaneZ=0,f=>f.value.furnishings[0].fit.geometry.openingWidth=2.1,f=>f.value.frameAttachments[0].modelSha256='b'.repeat(64),f=>f.value.frameAttachments[0].artworkRevisionId=id(99),f=>f.exhibition.artworks[0].dimensions.width=.399,f=>f.exhibition.placements[0].transform={scale:[2,1,1]},f=>f.value.furnishings[0].fit.geometry.profile='straight-ring-v1']){const f=make();mutate(f);assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);}
 });
+
+test('portal validation admits twenty unique existing finished wall faces and refuses a twenty-first or duplicate',()=>{
+ const f=fixture(),pose=(position,rotation=[0,0,0,1])=>({position,rotation,scale:[1,1,1]});
+ f.exhibition.rooms=Array.from({length:6},(_,i)=>({id:id(100+i),dimensions:{width:6,height:3,depth:8},transform:pose([i*10,0,0])}));
+ f.exhibition.surfaces=f.exhibition.rooms.flatMap((room,i)=>[
+  {id:id(200+i*4),roomId:room.id,type:'wall',transform:pose([0,1.5,-4])},
+  {id:id(201+i*4),roomId:room.id,type:'wall',transform:pose([3,1.5,0],[0,-Math.SQRT1_2,0,Math.SQRT1_2])},
+  {id:id(202+i*4),roomId:room.id,type:'wall',transform:pose([0,1.5,4],[0,1,0,0])},
+  {id:id(203+i*4),roomId:room.id,type:'wall',transform:pose([-3,1.5,0],[0,Math.SQRT1_2,0,Math.SQRT1_2])},
+ ]);
+ const source=f.value.furnishings[0];source.kind='portal-finish';source.fit={version:1,sourceSha256:source.model.sha256,sourceBytes:source.model.bytes,geometry:{profile:'continuous-portal-v1',openingWidth:2.4,openingHeight:2.6,minZ:-.06,maxZ:.06}};
+ for(const wall of f.exhibition.surfaces)wall.dimensions={width:wall.id===id(201)||wall.id===id(203)?8:6,height:3};
+ f.exhibition.openings=[{id:id(500),surfaceId:id(200),type:'door',dimensions:{width:2.4,height:2.6},offset:[0,-.2]}];
+ f.value={version:7,furnishings:[source],placements:[],frameAttachments:[],openingAttachments:[{openingId:id(500),furnishingId:source.id,furnishingVersion:1,modelSha256:source.model.sha256}]};
+ const finish=surface=>({surfaceId:surface.id,preset:'plain',depth:.12,trimWidth:.02,baseboardHeight:.04,ceilingBand:false});
+ const rows=f.exhibition.surfaces.slice(0,20).map(finish);f.exhibition.extensions={'org.exhibitos.studio/architectural-finishes':{version:1,walls:rows}};
+ const result=validateWorkspaceFurnishings(f.value,f.exhibition);assert.equal(result.valid,true,JSON.stringify(result));
+ rows.push(finish(f.exhibition.surfaces[20]));assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+ rows.pop();rows[19]={...rows[0],surfaceId:rows[0].surfaceId.toUpperCase()};assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+});
