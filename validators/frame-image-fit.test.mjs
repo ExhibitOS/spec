@@ -71,3 +71,15 @@ test('effective contact footprint must remain inside the existing metric limits'
  assert.ok(qualifiedFrameAttachmentTransform(f.candidate,f.placement,f.art,g,10));assert.equal(frameAttachmentMetricFit(f.candidate,f.row,f.art,g),undefined);
  assert.ok(validateWorkspaceFurnishings(f.value,f.candidate).errors.some(e=>e.code==='FRAME_IMAGE_FIT_UNSUPPORTED'));
 });
+
+test('v11 ceiling rail coexists with positive metric XY frame image contact without a downgrade',()=>{
+ const f=fixture(),room=f.candidate.rooms[0],railId=id(20),railPlacement=id(21),surface=id(22);
+ f.placement.transform.scale=[1.1,.9,1];
+ f.candidate.surfaces=[{id:surface,roomId:room.id,type:'ceiling',dimensions:{width:6,height:8},transform:{position:[0,3,0],rotation:[Math.SQRT1_2,0,0,Math.SQRT1_2],scale:[1,1,1]}}];
+ Object.assign(f.value,{version:11,ceilingAttachments:[{placementId:railPlacement,surfaceId:surface,anchor:[0,0],yaw:0,gap:0}]});
+ f.value.furnishings.push({id:railId,version:1,kind:'ceiling-rail',name:'Synthetic measured rail',rights:structuredClone(f.source.rights),provenance:'Synthetic',model:{mime:'model/gltf-binary',bytes:200,sha256:'c'.repeat(64)},fit:{version:1,sourceSha256:'c'.repeat(64),sourceBytes:200,geometry:{profile:'passive-ceiling-rail-v1',min:[-.5,-.035,-.0175],max:[.5,0,.0175]}}});
+ f.value.placements.push({id:railPlacement,roomId:room.id,furnishingId:railId,furnishingVersion:1,position:[0,3,0],yaw:0,scale:1});
+ assert.equal(validateWorkspaceFurnishings(f.value,f.candidate).valid,true);
+ assert.ok(frameAttachmentMetricFit(f.candidate,f.row,f.art,workspaceFitGeometry(f.source)));
+ const stale=structuredClone(f.value);stale.frameAttachments[0].imageFit.sourceSha256='d'.repeat(64);assert.equal(validateWorkspaceFurnishings(stale,f.candidate).valid,false);
+});

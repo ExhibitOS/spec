@@ -18,3 +18,5 @@ Third-party dependencies retain their respective licenses.
 License texts were obtained without modification from:
 https://www.apache.org/licenses/LICENSE-2.0.txt
 https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt
+
+The retained fixtures/rail-v11/linear-track.glb and LICENSE-NOTICE.txt are CC0-1.0 under that notice; contract code remains Apache-2.0.

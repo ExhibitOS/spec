@@ -165,3 +165,7 @@ for the separate ceiling rail history and are not imported here. See the
 [frame v9 contract](oex/v1/README.md#source-bound-straight-miter-frame-v9).
 The new family requires producer geometry qualification and consumer rendering
 checks; this public package alone does not establish live-owner or browser use.
+
+## Passive ceiling rails, current v11
+
+Workspace kind `ceiling-rail` uses the common descriptor with a source-bound measured fit receipt (`passive-ceiling-rail-v1`, actual transformed `min`/`max`). Version11 preserves version10 frame/image-contact fields and adds a bijection of `ceilingAttachments` to rail placements. Each attachment names the existing ceiling plus surface-local anchor, yaw and gap; its matrix must exactly reconstruct the stored unit placement. Actual measured corners must fit the ceiling and room. Bounds are visual geometry, not a mechanical, collision or electrical claim. No source SHA is an import eligibility rule. OEX uses explicit draft23. Existing files and prior examples remain unchanged; see `fixtures/rail-v11` for the named CC0 source example.

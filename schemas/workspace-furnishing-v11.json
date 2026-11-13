@@ -1,0 +1,415 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exhibitos.github.io/spec/workspace-furnishing/v11/furnishing.schema.json",
+  "title": "Workspace furnishing descriptor candidate v11",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+    },
+    "version": {
+      "const": 1
+    },
+    "kind": {
+      "enum": [
+        "pedestal",
+        "bench",
+        "stool",
+        "partition",
+        "info-stand",
+        "barrier",
+        "display-case",
+        "artwork-frame",
+        "portal-finish",
+        "ceiling-rail"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "At most 120 UTF-16 code units; checked by the semantic validator."
+    },
+    "rights": {
+      "$ref": "https://exhibitos.github.io/spec/oes/v1/1.0.0-draft.1/artwork.schema.json#/$defs/rights"
+    },
+    "provenance": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "At most 1024 UTF-16 code units; checked by the semantic validator."
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mime": {
+          "const": "model/gltf-binary"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 33554432
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "mime",
+        "bytes",
+        "sha256"
+      ]
+    },
+    "fit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 33554432
+        },
+        "geometry": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "straight-ring-v1"
+                },
+                "openingWidth": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2
+                },
+                "openingHeight": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2
+                },
+                "imagePlaneZ": {
+                  "const": -0.012
+                }
+              },
+              "required": [
+                "profile",
+                "openingWidth",
+                "openingHeight",
+                "imagePlaneZ"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "continuous-portal-v1"
+                },
+                "openingWidth": {
+                  "type": "number",
+                  "minimum": 0.9,
+                  "maximum": 3
+                },
+                "openingHeight": {
+                  "type": "number",
+                  "minimum": 2,
+                  "maximum": 3.2
+                },
+                "minZ": {
+                  "type": "number",
+                  "minimum": -0.15,
+                  "maximum": -0.015
+                },
+                "maxZ": {
+                  "type": "number",
+                  "minimum": 0.015,
+                  "maximum": 0.15
+                }
+              },
+              "required": [
+                "profile",
+                "openingWidth",
+                "openingHeight",
+                "minZ",
+                "maxZ"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "modular-portal-v1"
+                },
+                "openingWidth": {
+                  "type": "number",
+                  "minimum": 0.9,
+                  "maximum": 3
+                },
+                "openingHeight": {
+                  "type": "number",
+                  "minimum": 2,
+                  "maximum": 3.2
+                },
+                "minZ": {
+                  "type": "number",
+                  "minimum": -0.15,
+                  "maximum": -0.015
+                },
+                "maxZ": {
+                  "type": "number",
+                  "minimum": 0.015,
+                  "maximum": 0.15
+                },
+                "parts": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "node": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 8
+                      },
+                      "min": {
+                        "type": "array",
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "items": {
+                          "type": "number",
+                          "minimum": -4,
+                          "maximum": 4
+                        }
+                      },
+                      "max": {
+                        "type": "array",
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "items": {
+                          "type": "number",
+                          "minimum": -4,
+                          "maximum": 4
+                        }
+                      }
+                    },
+                    "required": [
+                      "node",
+                      "min",
+                      "max"
+                    ]
+                  },
+                  "propertyNames": {
+                    "enum": [
+                      "reveal-left",
+                      "reveal-right",
+                      "reveal-head",
+                      "front-left",
+                      "front-right",
+                      "front-head",
+                      "back-left",
+                      "back-right",
+                      "back-head"
+                    ]
+                  },
+                  "minProperties": 9,
+                  "maxProperties": 9
+                }
+              },
+              "required": [
+                "profile",
+                "openingWidth",
+                "openingHeight",
+                "minZ",
+                "maxZ",
+                "parts"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "rectangular-portal-v1"
+                },
+                "openingWidth": {
+                  "type": "number",
+                  "minimum": 0.9,
+                  "maximum": 3
+                },
+                "openingHeight": {
+                  "type": "number",
+                  "minimum": 2,
+                  "maximum": 3.2
+                },
+                "minZ": {
+                  "type": "number",
+                  "minimum": -0.15,
+                  "maximum": -0.015
+                },
+                "maxZ": {
+                  "type": "number",
+                  "minimum": 0.015,
+                  "maximum": 0.15
+                }
+              },
+              "required": [
+                "profile",
+                "openingWidth",
+                "openingHeight",
+                "minZ",
+                "maxZ"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "straight-miter-ring-v1"
+                },
+                "openingWidth": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2
+                },
+                "openingHeight": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2
+                },
+                "imagePlaneZ": {
+                  "const": -0.012
+                }
+              },
+              "required": [
+                "profile",
+                "openingWidth",
+                "openingHeight",
+                "imagePlaneZ"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile": {
+                  "const": "passive-ceiling-rail-v1"
+                },
+                "min": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "items": {
+                    "type": "number",
+                    "minimum": -100,
+                    "maximum": 100
+                  }
+                },
+                "max": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "items": {
+                    "type": "number",
+                    "minimum": -100,
+                    "maximum": 100
+                  }
+                }
+              },
+              "required": [
+                "profile",
+                "min",
+                "max"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "sourceSha256",
+        "sourceBytes",
+        "geometry"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "kind",
+    "name",
+    "rights",
+    "provenance",
+    "model"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "ceiling-rail"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "fit"
+        ],
+        "properties": {
+          "fit": {
+            "properties": {
+              "geometry": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "profile": {
+                    "const": "passive-ceiling-rail-v1"
+                  },
+                  "min": {
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "number",
+                      "minimum": -100,
+                      "maximum": 100
+                    }
+                  },
+                  "max": {
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "number",
+                      "minimum": -100,
+                      "maximum": 100
+                    }
+                  }
+                },
+                "required": [
+                  "profile",
+                  "min",
+                  "max"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
+}
