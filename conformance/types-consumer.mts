@@ -116,3 +116,13 @@ void readOex(new Uint8Array()).then(({manifest})=>{if(manifest.formatVersion==='
 void withOexFile('',async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=manifest;void m;}});
 void withOexFileHandle(handle,async ({manifest})=>{if(manifest.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=manifest;void m;}});
 const adaptedFrame=adaptOexManifest({},frameProfile).document;if(adaptedFrame?.formatVersion==='1.0.0-draft.16'){const m:OexWorkspaceFurnishingV4Manifest=adaptedFrame;void m;}
+
+import type {StraightMiterRingFit,MeasuredFrameFit,WorkspaceFitProfile} from '@exhibitos/spec/workspace-fit-models';
+import {qualifiedFrameTargetFit} from '@exhibitos/spec/workspace-fit-models';
+import {OEX_WORKSPACE_FURNISHING_V9_VERSION} from '@exhibitos/spec';
+import type {OexWorkspaceFurnishingV9Manifest} from '@exhibitos/spec';
+const miterFit:StraightMiterRingFit={profile:'straight-miter-ring-v1',openingWidth:.6,openingHeight:.8,imagePlaneZ:-.012};
+const measuredFit:MeasuredFrameFit=miterFit;const miterProfile:WorkspaceFitProfile=miterFit.profile;void miterProfile;void qualifiedFrameTargetFit(measuredFit,.934,.732);
+const v9Version:OexWorkspaceFurnishingV9Manifest['formatVersion']=OEX_WORKSPACE_FURNISHING_V9_VERSION;void v9Version;void schemaURL('oex-workspace-furnishing-v9');
+// @ts-expect-error A new family cannot silently identify as the six-level source profile.
+const wrongMiter:StraightMiterRingFit={...miterFit,profile:'straight-ring-v1'};void wrongMiter;

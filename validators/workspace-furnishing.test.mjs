@@ -222,3 +222,14 @@ test('v7 rectangular portal fits a newly measured source to two opening sizes wi
   assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);
  }
 });
+
+// Synthetic receipt metadata checks only; binary family qualification is the producer's job.
+test('v9 source-bound miter frames preserve target bindings and reject older envelopes',async()=>{
+ const {workspaceFitGeometry,qualifiedFrameTargetFit}=await import('./workspace-fit-models.mjs');
+ const make=()=>{const f=fixture(),item=f.value.furnishings[0],transform={scale:[1,1,1]};item.kind='artwork-frame';item.fit={version:1,sourceSha256:item.model.sha256,sourceBytes:item.model.bytes,geometry:{profile:'straight-miter-ring-v1',openingWidth:.6,openingHeight:.8,imagePlaneZ:-.012}};
+  f.exhibition.rooms[0].transform=transform;f.exhibition.placements=[{id:id(4),roomId:id(1),artworkRevisionId:id(5),assetId:id(6),transform}];f.exhibition.artworks=[{revisionId:id(5),primaryAssetId:id(6),schemaVersion:'1.0.0-draft.1',artworkType:'image',dimensions:{width:.934,height:.732},transform}];
+  f.value={version:9,furnishings:[item],placements:[],openingAttachments:[],frameAttachments:[{placementId:id(4),artworkRevisionId:id(5),assetId:id(6),furnishingId:item.id,furnishingVersion:1,modelSha256:item.model.sha256}]};return f;};
+ for(const [width,height] of [[.934,.732],[.8,.6],[.4,2]]){const f=make();f.exhibition.artworks[0].dimensions={width,height};assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);const g=workspaceFitGeometry(f.value.furnishings[0]),fit=qualifiedFrameTargetFit(g,width,height);assert.ok(Math.abs(g.openingWidth+2*fit.cornerX-width-.006)<1e-9);assert.ok(Math.abs(g.openingHeight+2*fit.cornerY-height-.006)<1e-9);}
+ for(const version of [4,5,6,7,8]){const f=make();f.value.version=version;assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);}
+ for(const mutate of [f=>f.value.furnishings[0].fit.sourceBytes++,f=>f.value.furnishings[0].fit.sourceSha256='b'.repeat(64),f=>f.value.furnishings[0].fit.geometry.imagePlaneZ=0,f=>f.value.furnishings[0].fit.geometry.openingWidth=2.1,f=>f.value.frameAttachments[0].modelSha256='b'.repeat(64),f=>f.value.frameAttachments[0].artworkRevisionId=id(99),f=>f.exhibition.artworks[0].dimensions.width=.399,f=>f.exhibition.placements[0].transform={scale:[2,1,1]},f=>f.value.furnishings[0].fit.geometry.profile='straight-ring-v1']){const f=make();mutate(f);assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,false);}
+});

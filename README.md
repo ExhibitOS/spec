@@ -42,9 +42,9 @@ The optional draft.8 resource profile is described in [recorded footsteps](oex/v
 
 ## Public draft package
 
-Package `@exhibitos/spec@0.1.0-draft.20` is an ESM Node package; OES wire contracts
+Package `@exhibitos/spec@0.1.0-draft.31` is an ESM Node package; OES wire contracts
 include the existing draft.1 and an explicit provisional display draft.2, and OEX
-has explicit optional profiles through candidate draft.15. Earlier schema identities are unchanged.
+has explicit optional profiles through candidate draft.21 (with draft.20 reserved). Earlier schema identities are unchanged.
 Use Node 24.21.0/npm 11.19.0. No stable release or
 npm registry publication exists. Clone this public repository, run
 `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then
@@ -54,7 +54,7 @@ Dependencies come from public npm; offline install needs a populated cache.
 A consumer can vendor the tarball and checksum, verify SHA-256, then install it:
 
 ```sh
-npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.20.tgz
+npm install --ignore-scripts --save-dev ./vendor/exhibitos-spec-0.1.0-draft.31.tgz
 npm ci --ignore-scripts
 npx --no-install exhibitos-conformance
 ```
@@ -156,3 +156,12 @@ export-rights checks; deployed Platform and Manager runtimes do not yet support 
 Workspace furnishing visual placements v2 add the explicit stool kind. The v1 descriptor and draft.13 archive profile remain unchanged; v2 uses draft.14. Older consumers reject the unknown extension version rather than reinterpret it. A stool is a visual model only and does not establish seating or collision behavior.
 
 Workspace furnishing visual placements v3 add explicit partition, information stand, barrier and display case kinds and use OEX draft.15. Earlier v1/v2 profiles are unchanged. These are visual placements only; collision, room division, content attachment, interactive doors and seating are not implied.
+
+## Measured straight miter frame candidate
+
+Package `0.1.0-draft.31` adds source-bound straight miter frame extension v9 and
+OEX `1.0.0-draft.21`. Package draft.30, extension v8 and OEX draft.20 are reserved
+for the separate ceiling rail history and are not imported here. See the
+[frame v9 contract](oex/v1/README.md#source-bound-straight-miter-frame-v9).
+The new family requires producer geometry qualification and consumer rendering
+checks; this public package alone does not establish live-owner or browser use.

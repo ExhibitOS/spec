@@ -9,7 +9,7 @@ export function workspaceFitGeometry(descriptor){
  if(!object(fit)||Object.keys(fit).sort().join(',')!=='geometry,sourceBytes,sourceSha256,version'||fit.version!==1||
   fit.sourceSha256!==model?.sha256||fit.sourceBytes!==model?.bytes||!object(fit.geometry))return;
  const g=fit.geometry,keys=Object.keys(g).sort().join(',');
- if(kind==='artwork-frame'&&g.profile==='straight-ring-v1'&&keys==='imagePlaneZ,openingHeight,openingWidth,profile'&&
+ if(kind==='artwork-frame'&&['straight-ring-v1','straight-miter-ring-v1'].includes(g.profile)&&keys==='imagePlaneZ,openingHeight,openingWidth,profile'&&
   finite(g.openingWidth,.4,2)&&finite(g.openingHeight,.4,2)&&g.imagePlaneZ===-.012)return g;
  if(kind==='portal-finish'&&modularPortalParts(g))return g;
  if(kind==='portal-finish'&&['continuous-portal-v1','rectangular-portal-v1'].includes(g.profile)&&keys==='maxZ,minZ,openingHeight,openingWidth,profile'&&
