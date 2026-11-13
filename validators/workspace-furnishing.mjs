@@ -6,7 +6,7 @@ import addFormats from 'ajv-formats';
 import {readFile} from 'node:fs/promises';
 import {portalFinishModel,pairedPortalFit} from './portal-finish-models.mjs';
 import {artworkFrameFit,artworkFrameModel} from './artwork-frame-models.mjs';
-import {frameImageContactFit,qualifiedFrameTargetFit,qualifiedModularPortalTarget,qualifiedRectangularPortalTarget,qualifiedPortalWallFit,workspaceFitGeometry} from './workspace-fit-models.mjs';
+import {frameImageContactFit,frameAttachmentMetricFit,qualifiedFrameAttachmentTransform,qualifiedFrameTargetFit,qualifiedModularPortalTarget,qualifiedRectangularPortalTarget,qualifiedPortalWallFit,workspaceFitGeometry} from './workspace-fit-models.mjs';
 import {validateRights} from './artwork.mjs';
 const load=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const ajv=new Ajv2020({strict:true,allErrors:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
@@ -84,7 +84,9 @@ export function validateWorkspaceFurnishings(value,exhibition){
   if(art.artworkType!=='image'||art.schemaVersion!=='1.0.0-draft.1'||!art.dimensions||!(qualified?qualifiedFrameTargetFit(qualified,art.dimensions.width,art.dimensions.height):artworkFrameFit(frame,art.dimensions.width,art.dimensions.height)))errors.push({code:'FRAME_SIZE_UNSUPPORTED',path,message:'Expected the fixed model image plane dimensions'});
   if(Object.hasOwn(a,'imageFit'))try{if(!qualified||!frameImageContactFit(exhibition,a,art,qualified))throw Error('FRAME_IMAGE_FIT_UNSUPPORTED');}catch(error){errors.push({code:typeof error?.message==='string'&&error.message.startsWith('FRAME_IMAGE_FIT_')?error.message:'FRAME_IMAGE_FIT_INVALID',path:path+'/imageFit',message:'Expected bound canonical primary image contact metadata'});}
   if(art.dimensions&&Object.hasOwn(art.dimensions,'depth'))errors.push({code:'FRAME_DEPTH_UNSUPPORTED',path,message:'Only a depth-unspecified image plane is supported'});
-  if(![art.transform,placement.transform,rooms.get(placement.roomId)?.transform].every(t=>Array.isArray(t?.scale)&&t.scale.length===3&&t.scale.every(n=>n===1)))errors.push({code:'FRAME_TRANSFORM_UNSUPPORTED',path,message:'Expected unit-scale artwork, placement and room transforms'});
+  const metricTransform=qualifiedFrameAttachmentTransform(exhibition,placement,art,qualified,value.version);
+  if(!metricTransform)errors.push({code:'FRAME_TRANSFORM_UNSUPPORTED',path,message:'Expected rigid transforms or qualified namespace10 measured metric XY placement scale'});
+  else if(metricTransform.rigidFrame&&Object.hasOwn(a,'imageFit'))try{if(!frameAttachmentMetricFit(exhibition,a,art,qualified))errors.push({code:'FRAME_IMAGE_FIT_UNSUPPORTED',path:path+'/imageFit',message:'Expected supported metric contact dimensions'});}catch{/* The canonical imageFit check above reports malformed/stale bindings. */}
   const installations=exhibition.extensions?.['org.exhibitos.studio/installation']?.placements;
   if(Array.isArray(installations)&&installations.some(b=>typeof b?.placementId==='string'&&b.placementId.toLowerCase()===a.placementId.toLowerCase()&&b.frame&&b.frame.kind!=='none'))errors.push({code:'FRAME_PROCEDURAL_CONFLICT',path,message:'A procedural frame already occupies the placement'});
  }

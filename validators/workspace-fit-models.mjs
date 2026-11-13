@@ -157,3 +157,34 @@ export function frameImageContactFit(candidate,attachment,artwork,geometry){
  if(record.art.revisionId!==artwork?.revisionId||record.art.primaryAssetId!==artwork?.primaryAssetId||record.art.dimensions.width!==artwork.dimensions?.width||record.art.dimensions.height!==artwork.dimensions?.height||['artworkRevisionId','assetId','furnishingId','furnishingVersion','modelSha256'].some(k=>record.row[k]!==attachment[k])||!attachment.imageFit||!imageFitEqual(record.fit,attachment.imageFit)||!geometry||['profile','openingWidth','openingHeight','imagePlaneZ'].some(k=>record.geometry[k]!==geometry[k]))return imageFitFail('FRAME_IMAGE_FIT_STALE');
  return {cornerX:(record.footprint.width-geometry.openingWidth)/2,cornerY:(record.footprint.height-geometry.openingHeight)/2};
 }
+
+/** Metric frame qualification. Existing rigid attachments keep their exact path.
+ * Namespace10 measured rings additionally support positive placement XY scale
+ * around unrotated, unit-scale artwork, with unit room and placement Z scales.
+ * The renderer must strip placement scale from the frame pose and fit its hole
+ * in metres; applying the scale to the GLB would stretch its rails and depth. */
+export function qualifiedFrameAttachmentTransform(candidate,placement,artwork,geometry,version){
+ const room=candidate?.rooms?.find(r=>r?.id===placement?.roomId);
+ const unit=t=>Array.isArray(t?.scale)&&t.scale.length===3&&t.scale.every(n=>n===1);
+ if(!unit(artwork?.transform)||!unit(room?.transform))return;
+ if(unit(placement?.transform))return {scaleX:1,scaleY:1,rigidFrame:false};
+ const p=placement?.transform,s=p?.scale,q=artwork?.transform?.rotation;
+ const rotation=t=>Array.isArray(t?.rotation)&&t.rotation.length===4&&t.rotation.every(Number.isFinite)&&Math.abs(t.rotation.reduce((sum,n)=>sum+n*n,0)-1)<=1e-6;
+ if(version!==10||!geometry||!['straight-ring-v1','straight-miter-ring-v1'].includes(geometry.profile)||!finite(geometry.openingWidth,.4,2)||!finite(geometry.openingHeight,.4,2)||geometry.imagePlaneZ!==-.012||!finite(artwork?.dimensions?.width,.4,2)||!finite(artwork?.dimensions?.height,.4,2)||!Array.isArray(s)||s.length!==3||!s.every(n=>finite(n,1e-6,100))||s[2]!==1||!Array.isArray(q)||q.length!==4||!q.every(Number.isFinite)||q[0]!==0||q[1]!==0||q[2]!==0||Math.abs(q[3])!==1||!rotation(p)||!rotation(room.transform))return;
+ if(!qualifiedFrameTargetFit(geometry,artwork?.dimensions?.width*s[0],artwork?.dimensions?.height*s[1]))return;
+ return {scaleX:s[0],scaleY:s[1],rigidFrame:true};
+}
+
+/** Fit only loader-owned frame geometry. Artwork dimensions, transforms, image
+ * pixels and the source GLB remain authoritative and are never rewritten. */
+export function frameAttachmentMetricFit(candidate,attachment,artwork,geometry){
+ const placement=candidate?.placements?.find(p=>p?.id===attachment?.placementId);
+ const transform=qualifiedFrameAttachmentTransform(candidate,placement,artwork,geometry,candidate?.extensions?.['org.exhibitos.studio/workspace-furnishings']?.version);
+ if(!transform)return;
+ const contact=frameImageContactFit(candidate,attachment,artwork,geometry);
+ if(!transform.rigidFrame){const fit=contact??qualifiedFrameTargetFit(geometry,artwork?.dimensions?.width,artwork?.dimensions?.height);return fit&&{...fit,rigidFrame:false};}
+ const footprint=contact?frameImageFootprintForArtwork(candidate,artwork):artwork?.dimensions;
+ const width=footprint?.width*transform.scaleX,height=footprint?.height*transform.scaleY;
+ const fit=qualifiedFrameTargetFit(geometry,width,height);if(!fit)return;
+ return {...(contact?{cornerX:(width-geometry.openingWidth)/2,cornerY:(height-geometry.openingHeight)/2}:fit),rigidFrame:true};
+}
