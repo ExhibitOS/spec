@@ -6,7 +6,7 @@ import addFormats from 'ajv-formats';
 import {readFile} from 'node:fs/promises';
 import {portalFinishModel,pairedPortalFit} from './portal-finish-models.mjs';
 import {artworkFrameFit,artworkFrameModel} from './artwork-frame-models.mjs';
-import {qualifiedFrameTargetFit,qualifiedModularPortalTarget,qualifiedRectangularPortalTarget,qualifiedPortalWallFit,workspaceFitGeometry} from './workspace-fit-models.mjs';
+import {frameImageContactFit,qualifiedFrameTargetFit,qualifiedModularPortalTarget,qualifiedRectangularPortalTarget,qualifiedPortalWallFit,workspaceFitGeometry} from './workspace-fit-models.mjs';
 import {validateRights} from './artwork.mjs';
 const load=async path=>JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
 const ajv=new Ajv2020({strict:true,allErrors:true,coerceTypes:false,useDefaults:false,removeAdditional:false});
@@ -23,10 +23,12 @@ ajv.addSchema(await load('../schemas/workspace-furnishing-v7.json'));
 const validateV7=ajv.compile(await load('../schemas/workspace-furnishing-placements-v7.json'));
 ajv.addSchema(await load('../schemas/workspace-furnishing-v9.json'));
 const validateV9=ajv.compile(await load('../schemas/workspace-furnishing-placements-v9.json'));
+ajv.addSchema(await load('../schemas/workspace-furnishing-v10.json'));
+const validateV10=ajv.compile(await load('../schemas/workspace-furnishing-placements-v10.json'));
 const THIN_BRASS_SHA256='4b14e45ccf14ed38eea90c50553733a0b97b1671b9ec377d900e5a947545f8b4';
 export const WORKSPACE_FURNISHING_NAMESPACE='org.exhibitos.studio/workspace-furnishings';
 export function validateWorkspaceFurnishings(value,exhibition){
- const validate=value?.version===9?validateV9:value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:value?.version===6?validateV6:value?.version===7?validateV7:validateV1;
+ const validate=value?.version===10?validateV10:value?.version===9?validateV9:value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:value?.version===6?validateV6:value?.version===7?validateV7:validateV1;
  if(!validate(value))return {valid:false,errors:validate.errors.slice(0,100).map(e=>({code:'FURNISHING_SCHEMA',path:e.instancePath,message:e.keyword}))};
  if(!Array.isArray(exhibition?.rooms))return {valid:false,errors:[{code:'FURNISHING_ROOMS',path:'',message:'Expected rooms'}]};
  const errors=[],ids=new Set(),rooms=new Map(),known=new Map(),used=new Set(),fits=new Map();
@@ -80,6 +82,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
   if(!source||source.kind!=='artwork-frame'||!frame&&!qualified||(value.version===4&&source.model.sha256!==THIN_BRASS_SHA256)||a.modelSha256!==source.model.sha256){errors.push({code:'FRAME_ASSET_UNSUPPORTED',path,message:'Expected a fixed source supported by the selected profile'});continue;}
   used.add(a.furnishingId);
   if(art.artworkType!=='image'||art.schemaVersion!=='1.0.0-draft.1'||!art.dimensions||!(qualified?qualifiedFrameTargetFit(qualified,art.dimensions.width,art.dimensions.height):artworkFrameFit(frame,art.dimensions.width,art.dimensions.height)))errors.push({code:'FRAME_SIZE_UNSUPPORTED',path,message:'Expected the fixed model image plane dimensions'});
+  if(Object.hasOwn(a,'imageFit'))try{if(!qualified||!frameImageContactFit(exhibition,a,art,qualified))throw Error('FRAME_IMAGE_FIT_UNSUPPORTED');}catch(error){errors.push({code:typeof error?.message==='string'&&error.message.startsWith('FRAME_IMAGE_FIT_')?error.message:'FRAME_IMAGE_FIT_INVALID',path:path+'/imageFit',message:'Expected bound canonical primary image contact metadata'});}
   if(art.dimensions&&Object.hasOwn(art.dimensions,'depth'))errors.push({code:'FRAME_DEPTH_UNSUPPORTED',path,message:'Only a depth-unspecified image plane is supported'});
   if(![art.transform,placement.transform,rooms.get(placement.roomId)?.transform].every(t=>Array.isArray(t?.scale)&&t.scale.length===3&&t.scale.every(n=>n===1)))errors.push({code:'FRAME_TRANSFORM_UNSUPPORTED',path,message:'Expected unit-scale artwork, placement and room transforms'});
   const installations=exhibition.extensions?.['org.exhibitos.studio/installation']?.placements;

@@ -15,3 +15,9 @@ export declare function qualifiedPortalWallFit(geometry:ContinuousPortalFit,open
 export declare function modularPortalParts(geometry:unknown):geometry is ModularPortalFit;
 export declare function qualifiedModularPortalTarget(geometry:ModularPortalFit,exhibition:unknown,openingId:string):{width:number;height:number;minZ:number;maxZ:number}|undefined;
 export declare function qualifiedRectangularPortalTarget(geometry:RectangularPortalFit,exhibition:unknown,openingId:string):{width:number;height:number;minZ:number;maxZ:number}|undefined;
+
+export type FrameImageFit={version:1;profile:'contain-contact-v1';sourceSha256:string;pixelWidth:number;pixelHeight:number};
+export declare const FRAME_IMAGE_FIT_LIMITS:Readonly<{edge:8192;pixels:25165824}>;
+export declare const FRAME_IMAGE_CONTACT_EPSILON_METRES:0.000001;
+export declare function frameImageFootprintForArtwork(candidate:unknown,artwork:unknown):{width:number;height:number}|undefined;
+export declare function frameImageContactFit(candidate:unknown,attachment:unknown,artwork:unknown,geometry:MeasuredFrameFit):{cornerX:number;cornerY:number}|undefined;

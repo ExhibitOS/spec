@@ -115,3 +115,45 @@ export function qualifiedModularPortalTarget(geometry,exhibition,openingId){
  if(finish&&finish.preset!=='plain'||!finite(depth,.12,.2))return;
  return {width,height,minZ:-depth/2,maxZ:depth/2};
 }
+
+
+export const FRAME_IMAGE_FIT_LIMITS=Object.freeze({edge:8192,pixels:25165824});
+export const FRAME_IMAGE_CONTACT_EPSILON_METRES=1e-6;
+const imageFitFail=code=>{throw Error(code);};
+const imageFitKeys=['version','profile','sourceSha256','pixelWidth','pixelHeight'];
+const imageFitEqual=(a,b)=>imageFitKeys.every(key=>a[key]===b[key]);
+function checkedFrameImageFits(candidate){
+ const value=candidate?.extensions?.['org.exhibitos.studio/workspace-furnishings'],rows=value?.frameAttachments??[],records=[];
+ if(!Array.isArray(rows))return imageFitFail('FRAME_IMAGE_FIT_INVALID');
+ for(const row of rows){
+  if(!Object.hasOwn(row??{},'imageFit'))continue;
+  const fit=row.imageFit;
+  if(value.version!==10||!fit||typeof fit!=='object'||Array.isArray(fit)||Object.keys(fit).length!==imageFitKeys.length||!imageFitKeys.every(key=>Object.hasOwn(fit,key))||fit.version!==1||fit.profile!=='contain-contact-v1'||typeof fit.sourceSha256!=='string'||!/^[a-f0-9]{64}$/.test(fit.sourceSha256)||![fit.pixelWidth,fit.pixelHeight].every(n=>Number.isInteger(n)&&n>0&&n<=FRAME_IMAGE_FIT_LIMITS.edge)||fit.pixelWidth*fit.pixelHeight>FRAME_IMAGE_FIT_LIMITS.pixels)return imageFitFail('FRAME_IMAGE_FIT_INVALID');
+  const arts=candidate?.artworks?.filter(a=>a?.revisionId===row.artworkRevisionId)??[],placements=candidate?.placements?.filter(p=>p?.id===row.placementId)??[],art=arts[0],placement=placements[0],assets=art?.assets?.filter(a=>a?.id===row.assetId)??[],asset=assets[0];
+  if(rows.filter(r=>r?.placementId===row.placementId).length!==1||arts.length!==1||placements.length!==1||art.artworkType!=='image'||art.primaryAssetId!==row.assetId||placement.artworkRevisionId!==row.artworkRevisionId||placement.assetId!==row.assetId||assets.length!==1||asset.mime!=='image/png'||asset.sha256!==fit.sourceSha256)return imageFitFail('FRAME_IMAGE_FIT_STALE');
+  const sources=value.furnishings?.filter(s=>s?.id===row.furnishingId&&s?.version===row.furnishingVersion)??[],source=sources[0],geometry=source&&workspaceFitGeometry(source);
+  if(sources.length!==1||source.kind!=='artwork-frame'||source.model?.sha256!==row.modelSha256||!geometry||!['straight-ring-v1','straight-miter-ring-v1'].includes(geometry.profile))return imageFitFail('FRAME_IMAGE_FIT_UNSUPPORTED');
+  const width=art.dimensions?.width,height=art.dimensions?.height;
+  if(!qualifiedFrameTargetFit(geometry,width,height))return imageFitFail('FRAME_IMAGE_FIT_UNSUPPORTED');
+  const ratio=fit.pixelWidth/fit.pixelHeight,footprint=ratio>=width/height?{width,height:width/ratio}:{width:height*ratio,height};
+  if(!qualifiedFrameTargetFit(geometry,footprint.width,footprint.height))return imageFitFail('FRAME_IMAGE_FIT_UNSUPPORTED');
+  const prior=records.find(r=>r.art.revisionId===art.revisionId&&r.art.primaryAssetId===art.primaryAssetId);
+  if(prior&&!imageFitEqual(prior.fit,fit))return imageFitFail('FRAME_IMAGE_FIT_CONFLICT');
+  records.push({row,art,fit,geometry,footprint});
+ }
+ return records;
+}
+/** Gallery footprint is keyed by immutable artwork/primary, not loaded LOD or row order. */
+export function frameImageFootprintForArtwork(candidate,artwork){
+ const records=checkedFrameImageFits(candidate),record=records.find(r=>r.art.revisionId===artwork?.revisionId&&r.art.primaryAssetId===artwork?.primaryAssetId);
+ if(!record)return;
+ if(record.art.dimensions.width!==artwork.dimensions?.width||record.art.dimensions.height!==artwork.dimensions?.height)return imageFitFail('FRAME_IMAGE_FIT_STALE');
+ return {...record.footprint};
+}
+/** Legacy rows retain their existing fit. Issued contact never adds a mat, crop or Z change. */
+export function frameImageContactFit(candidate,attachment,artwork,geometry){
+ const records=checkedFrameImageFits(candidate),record=records.find(r=>r.row.placementId===attachment?.placementId);
+ if(!record){if(Object.hasOwn(attachment??{},'imageFit'))return imageFitFail('FRAME_IMAGE_FIT_STALE');return;}
+ if(record.art.revisionId!==artwork?.revisionId||record.art.primaryAssetId!==artwork?.primaryAssetId||record.art.dimensions.width!==artwork.dimensions?.width||record.art.dimensions.height!==artwork.dimensions?.height||['artworkRevisionId','assetId','furnishingId','furnishingVersion','modelSha256'].some(k=>record.row[k]!==attachment[k])||!attachment.imageFit||!imageFitEqual(record.fit,attachment.imageFit)||!geometry||['profile','openingWidth','openingHeight','imagePlaneZ'].some(k=>record.geometry[k]!==geometry[k]))return imageFitFail('FRAME_IMAGE_FIT_STALE');
+ return {cornerX:(record.footprint.width-geometry.openingWidth)/2,cornerY:(record.footprint.height-geometry.openingHeight)/2};
+}
