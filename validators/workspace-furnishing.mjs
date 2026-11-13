@@ -1,3 +1,4 @@
+import {validateCeilingRailAttachments} from './ceiling-rail.mjs';
 // SPDX-License-Identifier: Apache-2.0
 // Structural and reference checks only. These do not establish ownership,
 // resource availability, current permission or the contents of GLB bytes.
@@ -24,11 +25,13 @@ const validateV7=ajv.compile(await load('../schemas/workspace-furnishing-placeme
 ajv.addSchema(await load('../schemas/workspace-furnishing-v9.json'));
 const validateV9=ajv.compile(await load('../schemas/workspace-furnishing-placements-v9.json'));
 ajv.addSchema(await load('../schemas/workspace-furnishing-v10.json'));
+ajv.addSchema(await load('../schemas/workspace-furnishing-v11.json'));
+const validateV11=ajv.compile(await load('../schemas/workspace-furnishing-placements-v11.json'));
 const validateV10=ajv.compile(await load('../schemas/workspace-furnishing-placements-v10.json'));
 const THIN_BRASS_SHA256='4b14e45ccf14ed38eea90c50553733a0b97b1671b9ec377d900e5a947545f8b4';
 export const WORKSPACE_FURNISHING_NAMESPACE='org.exhibitos.studio/workspace-furnishings';
 export function validateWorkspaceFurnishings(value,exhibition){
- const validate=value?.version===10?validateV10:value?.version===9?validateV9:value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:value?.version===6?validateV6:value?.version===7?validateV7:validateV1;
+ const validate=value?.version===11?validateV11:value?.version===10?validateV10:value?.version===9?validateV9:value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:value?.version===6?validateV6:value?.version===7?validateV7:validateV1;
  if(!validate(value))return {valid:false,errors:validate.errors.slice(0,100).map(e=>({code:'FURNISHING_SCHEMA',path:e.instancePath,message:e.keyword}))};
  if(!Array.isArray(exhibition?.rooms))return {valid:false,errors:[{code:'FURNISHING_ROOMS',path:'',message:'Expected rooms'}]};
  const errors=[],ids=new Set(),rooms=new Map(),known=new Map(),used=new Set(),fits=new Map();
@@ -40,15 +43,16 @@ export function validateWorkspaceFurnishings(value,exhibition){
   if(ids.has(item.id)||known.has(item.id))errors.push({code:'FURNISHING_DUPLICATE',path:'/furnishings/'+i,message:'Duplicate identity'});
   ids.add(item.id);known.set(item.id,item);
   if(item.fit!==undefined){const geometry=workspaceFitGeometry(item);if(geometry)fits.set(item.id,geometry);else errors.push({code:'FURNISHING_FIT_BINDING',path:'/furnishings/'+i+'/fit',message:'Fit must bind to the exact source and kind'});}
+  if(item.kind==='ceiling-rail'&&!fits.has(item.id))errors.push({code:'CEILING_RAIL_SOURCE',path:'/furnishings/'+i,message:'Measured source-bound rail required'});
   if(item.name.trim()!==item.name||item.provenance.trim()!==item.provenance||item.name.length>120||item.provenance.length>1024)errors.push({code:'FURNISHING_TEXT',path:'/furnishings/'+i,message:'Text must be trimmed and within UTF-16 limits'});
   for(const error of validateRights(item.rights).errors)errors.push({...error,path:'/furnishings/'+i+error.path});
  }
  if(value.version===9&&![...fits.values()].some(f=>f.profile==='straight-miter-ring-v1'))errors.push({code:'FURNISHING_FIT_REQUIRED',path:'/furnishings',message:'Profile v9 requires a source-bound straight miter frame'});
  if(value.version===7&&fits.size===0)errors.push({code:'FURNISHING_FIT_REQUIRED',path:'/furnishings',message:'Profile v7 requires a source-bound fit'});
  for(const [i,p] of value.placements.entries()){
-  const room=rooms.get(p.roomId),d=room?.dimensions,position=p.position;
+  const room=rooms.get(p.roomId),d=room?.dimensions,position=p.position,rail=value.version===11&&known.get(p.furnishingId)?.kind==='ceiling-rail';
   if(ids.has(p.id))errors.push({code:'FURNISHING_DUPLICATE',path:'/placements/'+i,message:'Duplicate identity'});ids.add(p.id);
-  if(!known.has(p.furnishingId)||['artwork-frame','portal-finish'].includes(known.get(p.furnishingId)?.kind)||!d||![d.width,d.height,d.depth,...position,p.yaw,p.scale].every(Number.isFinite)||[d.width,d.height,d.depth].some(n=>n<=0)||Math.abs(position[0])>d.width/2||position[1]<0||position[1]>d.height||Math.abs(position[2])>d.depth/2)errors.push({code:'FURNISHING_REFERENCE',path:'/placements/'+i,message:'Missing room-visual furnishing or invalid room-local position'});
+  if(!known.has(p.furnishingId)||['artwork-frame','portal-finish'].includes(known.get(p.furnishingId)?.kind)||!d||![d.width,d.height,d.depth,...position,p.yaw,p.scale].every(Number.isFinite)||[d.width,d.height,d.depth].some(n=>n<=0)||!rail&&(Math.abs(position[0])>d.width/2||position[1]<0||position[1]>d.height||Math.abs(position[2])>d.depth/2))errors.push({code:'FURNISHING_REFERENCE',path:'/placements/'+i,message:'Missing room-visual furnishing or invalid room-local position'});
   used.add(p.furnishingId);
  }
  const openingIds=new Set();
@@ -91,6 +95,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
   if(Array.isArray(installations)&&installations.some(b=>typeof b?.placementId==='string'&&b.placementId.toLowerCase()===a.placementId.toLowerCase()&&b.frame&&b.frame.kind!=='none'))errors.push({code:'FRAME_PROCEDURAL_CONFLICT',path,message:'A procedural frame already occupies the placement'});
  }
  for(const id of known.keys())if(!used.has(id))errors.push({code:'FURNISHING_UNUSED',path:'/furnishings',message:'Every descriptor must be placed'});
+ if(value.version===11)errors.push(...validateCeilingRailAttachments(value,exhibition));
  return {valid:errors.length===0,errors:errors.slice(0,100)};
 }
 

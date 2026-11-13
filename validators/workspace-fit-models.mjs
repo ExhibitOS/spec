@@ -1,3 +1,4 @@
+import {passiveCeilingRailGeometry} from './ceiling-rail.mjs';
 // SPDX-License-Identifier: Apache-2.0
 import {pairedPortalFit} from './portal-finish-models.mjs';
 const near=(a,b)=>typeof a==='number'&&Number.isFinite(a)&&Math.abs(a-b)<=1e-6;
@@ -8,7 +9,9 @@ export function workspaceFitGeometry(descriptor){
  const {fit,model,kind}=descriptor??{};
  if(!object(fit)||Object.keys(fit).sort().join(',')!=='geometry,sourceBytes,sourceSha256,version'||fit.version!==1||
   fit.sourceSha256!==model?.sha256||fit.sourceBytes!==model?.bytes||!object(fit.geometry))return;
- const g=fit.geometry,keys=Object.keys(g).sort().join(',');
+ const g=fit.geometry;
+ if(kind==='ceiling-rail'&&passiveCeilingRailGeometry(g))return g;
+ const keys=Object.keys(g).sort().join(',');
  if(kind==='artwork-frame'&&['straight-ring-v1','straight-miter-ring-v1'].includes(g.profile)&&keys==='imagePlaneZ,openingHeight,openingWidth,profile'&&
   finite(g.openingWidth,.4,2)&&finite(g.openingHeight,.4,2)&&g.imagePlaneZ===-.012)return g;
  if(kind==='portal-finish'&&modularPortalParts(g))return g;
@@ -128,7 +131,7 @@ function checkedFrameImageFits(candidate){
  for(const row of rows){
   if(!Object.hasOwn(row??{},'imageFit'))continue;
   const fit=row.imageFit;
-  if(value.version!==10||!fit||typeof fit!=='object'||Array.isArray(fit)||Object.keys(fit).length!==imageFitKeys.length||!imageFitKeys.every(key=>Object.hasOwn(fit,key))||fit.version!==1||fit.profile!=='contain-contact-v1'||typeof fit.sourceSha256!=='string'||!/^[a-f0-9]{64}$/.test(fit.sourceSha256)||![fit.pixelWidth,fit.pixelHeight].every(n=>Number.isInteger(n)&&n>0&&n<=FRAME_IMAGE_FIT_LIMITS.edge)||fit.pixelWidth*fit.pixelHeight>FRAME_IMAGE_FIT_LIMITS.pixels)return imageFitFail('FRAME_IMAGE_FIT_INVALID');
+  if(![10,11].includes(value.version)||!fit||typeof fit!=='object'||Array.isArray(fit)||Object.keys(fit).length!==imageFitKeys.length||!imageFitKeys.every(key=>Object.hasOwn(fit,key))||fit.version!==1||fit.profile!=='contain-contact-v1'||typeof fit.sourceSha256!=='string'||!/^[a-f0-9]{64}$/.test(fit.sourceSha256)||![fit.pixelWidth,fit.pixelHeight].every(n=>Number.isInteger(n)&&n>0&&n<=FRAME_IMAGE_FIT_LIMITS.edge)||fit.pixelWidth*fit.pixelHeight>FRAME_IMAGE_FIT_LIMITS.pixels)return imageFitFail('FRAME_IMAGE_FIT_INVALID');
   const arts=candidate?.artworks?.filter(a=>a?.revisionId===row.artworkRevisionId)??[],placements=candidate?.placements?.filter(p=>p?.id===row.placementId)??[],art=arts[0],placement=placements[0],assets=art?.assets?.filter(a=>a?.id===row.assetId)??[],asset=assets[0];
   if(rows.filter(r=>r?.placementId===row.placementId).length!==1||arts.length!==1||placements.length!==1||art.artworkType!=='image'||art.primaryAssetId!==row.assetId||placement.artworkRevisionId!==row.artworkRevisionId||placement.assetId!==row.assetId||assets.length!==1||asset.mime!=='image/png'||asset.sha256!==fit.sourceSha256)return imageFitFail('FRAME_IMAGE_FIT_STALE');
   const sources=value.furnishings?.filter(s=>s?.id===row.furnishingId&&s?.version===row.furnishingVersion)??[],source=sources[0],geometry=source&&workspaceFitGeometry(source);
@@ -170,7 +173,7 @@ export function qualifiedFrameAttachmentTransform(candidate,placement,artwork,ge
  if(unit(placement?.transform))return {scaleX:1,scaleY:1,rigidFrame:false};
  const p=placement?.transform,s=p?.scale,q=artwork?.transform?.rotation;
  const rotation=t=>Array.isArray(t?.rotation)&&t.rotation.length===4&&t.rotation.every(Number.isFinite)&&Math.abs(t.rotation.reduce((sum,n)=>sum+n*n,0)-1)<=1e-6;
- if(version!==10||!geometry||!['straight-ring-v1','straight-miter-ring-v1'].includes(geometry.profile)||!finite(geometry.openingWidth,.4,2)||!finite(geometry.openingHeight,.4,2)||geometry.imagePlaneZ!==-.012||!finite(artwork?.dimensions?.width,.4,2)||!finite(artwork?.dimensions?.height,.4,2)||!Array.isArray(s)||s.length!==3||!s.every(n=>finite(n,1e-6,100))||s[2]!==1||!Array.isArray(q)||q.length!==4||!q.every(Number.isFinite)||q[0]!==0||q[1]!==0||q[2]!==0||Math.abs(q[3])!==1||!rotation(p)||!rotation(room.transform))return;
+ if(![10,11].includes(version)||!geometry||!['straight-ring-v1','straight-miter-ring-v1'].includes(geometry.profile)||!finite(geometry.openingWidth,.4,2)||!finite(geometry.openingHeight,.4,2)||geometry.imagePlaneZ!==-.012||!finite(artwork?.dimensions?.width,.4,2)||!finite(artwork?.dimensions?.height,.4,2)||!Array.isArray(s)||s.length!==3||!s.every(n=>finite(n,1e-6,100))||s[2]!==1||!Array.isArray(q)||q.length!==4||!q.every(Number.isFinite)||q[0]!==0||q[1]!==0||q[2]!==0||Math.abs(q[3])!==1||!rotation(p)||!rotation(room.transform))return;
  if(!qualifiedFrameTargetFit(geometry,artwork?.dimensions?.width*s[0],artwork?.dimensions?.height*s[1]))return;
  return {scaleX:s[0],scaleY:s[1],rigidFrame:true};
 }
