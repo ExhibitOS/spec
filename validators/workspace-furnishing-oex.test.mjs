@@ -87,3 +87,14 @@ test('v7 retains a measured ring receipt and exact original in its explicit arch
  const old=structuredClone(output.manifest);old.formatVersion='1.0.0-draft.18';
  await assert.rejects(readOex(buildZip([...output.files].map(([name,data])=>({name,data:name==='manifest.json'?JSON.stringify(old):data})))),error=>error.code==='WORKSPACE_FURNISHING_PROFILE_REQUIRED');
 });
+
+test('v9 archive carries exact synthetic model bytes and cannot be relabelled as v7',async()=>{
+ // This synthetic receipt exercises public metadata/archive dispatch, not producer geometry acceptance.
+ const f=fixture(),e=f.e,ext=e.extensions[WORKSPACE_FURNISHING_NAMESPACE],item=ext.furnishings[0],placement=e.placements.find(p=>e.artworks.some(a=>a.revisionId===p.artworkRevisionId&&a.artworkType==='image')),art=e.artworks.find(a=>a.revisionId===placement.artworkRevisionId);
+ item.kind='artwork-frame';item.fit={version:1,sourceSha256:item.model.sha256,sourceBytes:item.model.bytes,geometry:{profile:'straight-miter-ring-v1',openingWidth:.6,openingHeight:.8,imagePlaneZ:-.012}};
+ Object.assign(ext,{version:9,placements:[],openingAttachments:[],frameAttachments:[{placementId:placement.id,artworkRevisionId:art.revisionId,assetId:art.primaryAssetId,furnishingId:item.id,furnishingVersion:1,modelSha256:item.model.sha256}]});
+ const entry=packageWorkspaceFurnishingManifest(e)[0],assets=new Map(original.manifest.assets.map(a=>[a.artifactPath,original.files.get(a.path)]));assets.set(entry.artifactPath,model);
+ const output=await readOex(await writeOex(e,assets,options));assert.equal(output.manifest.formatVersion,'1.0.0-draft.21');assert.deepEqual(output.files.get(entry.path),model);assert.deepEqual(output.exhibition.extensions[WORKSPACE_FURNISHING_NAMESPACE],ext);assert.equal(adaptOexManifest(output.manifest,'1.0.0-draft.19').valid,false);
+ const old=structuredClone(output.manifest);old.formatVersion='1.0.0-draft.19';await assert.rejects(readOex(buildZip([...output.files].map(([name,data])=>({name,data:name==='manifest.json'?JSON.stringify(old):data})))),error=>error.code==='WORKSPACE_FURNISHING_PROFILE_REQUIRED');
+ const dir=await mkdtemp(join(tmpdir(),'miter-v9-oex-')),path=join(dir,'test.oex');try{await writeOexFile(e,{paths:[...assets.keys()],get:async p=>assets.get(p)},path,options);await withOexFile(path,async value=>{assert.equal(value.manifest.formatVersion,'1.0.0-draft.21');assert.equal(value.manifest.archiveProfile,'bounded-file-v1');assert.deepEqual(await value.files.get(entry.path),model);});}finally{await rm(dir,{recursive:true,force:true});}
+});

@@ -21,10 +21,12 @@ const validateV5=ajv.compile(await load('../schemas/workspace-furnishing-placeme
 const validateV6=ajv.compile(await load('../schemas/workspace-furnishing-placements-v6.json'));
 ajv.addSchema(await load('../schemas/workspace-furnishing-v7.json'));
 const validateV7=ajv.compile(await load('../schemas/workspace-furnishing-placements-v7.json'));
+ajv.addSchema(await load('../schemas/workspace-furnishing-v9.json'));
+const validateV9=ajv.compile(await load('../schemas/workspace-furnishing-placements-v9.json'));
 const THIN_BRASS_SHA256='4b14e45ccf14ed38eea90c50553733a0b97b1671b9ec377d900e5a947545f8b4';
 export const WORKSPACE_FURNISHING_NAMESPACE='org.exhibitos.studio/workspace-furnishings';
 export function validateWorkspaceFurnishings(value,exhibition){
- const validate=value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:value?.version===6?validateV6:value?.version===7?validateV7:validateV1;
+ const validate=value?.version===9?validateV9:value?.version===1?validateV1:value?.version===2?validateV2:value?.version===3?validateV3:value?.version===4?validateV4:value?.version===5?validateV5:value?.version===6?validateV6:value?.version===7?validateV7:validateV1;
  if(!validate(value))return {valid:false,errors:validate.errors.slice(0,100).map(e=>({code:'FURNISHING_SCHEMA',path:e.instancePath,message:e.keyword}))};
  if(!Array.isArray(exhibition?.rooms))return {valid:false,errors:[{code:'FURNISHING_ROOMS',path:'',message:'Expected rooms'}]};
  const errors=[],ids=new Set(),rooms=new Map(),known=new Map(),used=new Set(),fits=new Map();
@@ -39,6 +41,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
   if(item.name.trim()!==item.name||item.provenance.trim()!==item.provenance||item.name.length>120||item.provenance.length>1024)errors.push({code:'FURNISHING_TEXT',path:'/furnishings/'+i,message:'Text must be trimmed and within UTF-16 limits'});
   for(const error of validateRights(item.rights).errors)errors.push({...error,path:'/furnishings/'+i+error.path});
  }
+ if(value.version===9&&![...fits.values()].some(f=>f.profile==='straight-miter-ring-v1'))errors.push({code:'FURNISHING_FIT_REQUIRED',path:'/furnishings',message:'Profile v9 requires a source-bound straight miter frame'});
  if(value.version===7&&fits.size===0)errors.push({code:'FURNISHING_FIT_REQUIRED',path:'/furnishings',message:'Profile v7 requires a source-bound fit'});
  for(const [i,p] of value.placements.entries()){
   const room=rooms.get(p.roomId),d=room?.dimensions,position=p.position;
@@ -72,7 +75,7 @@ export function validateWorkspaceFurnishings(value,exhibition){
   const path='/frameAttachments/'+i,source=known.get(a.furnishingId),placement=(Array.isArray(exhibition.placements)?exhibition.placements:[]).find(p=>p?.id===a.placementId),art=(Array.isArray(exhibition.artworks)?exhibition.artworks:[]).find(x=>x?.revisionId===a.artworkRevisionId);
   if(attached.has(a.placementId)||!placement||!art||placement.artworkRevisionId!==a.artworkRevisionId||placement.assetId!==a.assetId||art.primaryAssetId!==a.assetId){errors.push({code:'FRAME_TARGET_STALE',path,message:'Expected a unique image placement and its exact artwork revision and asset'});continue;}
   attached.add(a.placementId);
-  const fit=fits.get(a.furnishingId),qualified=fit?.profile==='straight-ring-v1'?fit:undefined;
+  const fit=fits.get(a.furnishingId),qualified=fit&&['straight-ring-v1','straight-miter-ring-v1'].includes(fit.profile)?fit:undefined;
   const frame=source&&artworkFrameModel(source.model.sha256,source.model.bytes);
   if(!source||source.kind!=='artwork-frame'||!frame&&!qualified||(value.version===4&&source.model.sha256!==THIN_BRASS_SHA256)||a.modelSha256!==source.model.sha256){errors.push({code:'FRAME_ASSET_UNSUPPORTED',path,message:'Expected a fixed source supported by the selected profile'});continue;}
   used.add(a.furnishingId);

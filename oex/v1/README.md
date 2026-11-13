@@ -384,3 +384,43 @@ an opening attachment is invalid. Older readers reject draft.18 rather than
 silently dropping the portal. Rights and exact source bytes are checked by the
 consumer. This is a visual alignment contract, not a claim of physical trim
 fit, construction clearance, lighting, automatic resizing or any door motion.
+
+## Source-bound straight miter frame v9
+
+OEX `1.0.0-draft.21` carries workspace-furnishing extension version 9. Version 8
+and OEX draft.20 remain reserved for the separate ceiling rail history and are
+not admitted by this package. Descriptor version 1 and fit receipt version 1
+remain distinct from the extension and package versions. Earlier schema bytes
+and IDs are unchanged; older consumers must reject version 9 explicitly.
+
+The new `straight-miter-ring-v1` family is a measured eight-level, straight 45°
+miter cross-section with 15 mm molding. Source opening dimensions are 0.4–2 m
+on each axis, centered on X/Y. The authored wall anchor is Z=0, the artwork plane
+is Z=-0.012 m and the original front points toward -Z. At all four symmetric
+corners, the section (outward XY offset, Z) in metres is:
+`(0,0), (0,-.0238), (.0005,-.0246), (.001,-.025), (.014,-.025),
+(.0147,-.0245), (.015,-.0238), (.015,0)`.
+
+A synthetic metadata example (not a geometry or ownership proof) is:
+
+```json
+{"version":1,"sourceSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","sourceBytes":100,"geometry":{"profile":"straight-miter-ring-v1","openingWidth":0.6,"openingHeight":0.8,"imagePlaneZ":-0.012}}
+```
+
+Only the server's bounded binary worker may issue a source-bound receipt after
+validating the unchanged GLB and measuring this section and its oriented face
+coverage. JSON validation does not prove geometry, ownership or availability.
+No filename, material name or model hash admits a family member. The original
+POSITION, NORMAL, TANGENT, TEXCOORD_0 and constant material remain intact; no
+stripped derivative or generic CAD support is implied. The producer qualifies
+a single static, untextured mesh with supported attributes.
+
+The renderer translates each signed corner in X/Y to fit image widths and
+heights 0.4–2 m with 3 mm clearance per edge, while preserving the section,
+corner angles, normals, tangents, UV and materials. It applies the measured
+image-plane anchor with rigid unit scale. V9 requires at least one new-family
+fit; existing source-bound portals and six-level frames may coexist. Frame
+attachments still bind the exact placement, artwork revision, primary asset,
+furnishing version and source SHA. Selection does not grant export rights.
+Recover by retaining the previous package digest and using the unchanged v7
+source-bound profile for earlier data; no downgrade or data migration is provided.
