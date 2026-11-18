@@ -5,6 +5,19 @@ import {validateWorkspaceFurnishings} from './workspace-furnishing.mjs';
 const id=n=>`10000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function fixture(){const room={id:id(1),dimensions:{width:6,height:3,depth:8}},exhibition={rooms:[room]},descriptor={id:id(2),version:1,kind:'pedestal',name:'Synthetic plinth',rights:{holder:'Synthetic',ownership:'owner',licenseId:'CC0-1.0',creditLine:'Synthetic',permissions:{display:true,download:true,export:true,commercial:true}},provenance:'Synthetic fixture',model:{mime:'model/gltf-binary',bytes:100,sha256:'a'.repeat(64)}},value={version:1,furnishings:[descriptor],placements:[{id:id(3),roomId:room.id,furnishingId:descriptor.id,furnishingVersion:1,position:[1,0,0],yaw:0,scale:1}]};return {exhibition,value};}
 test('accepts a visual placement referencing a declared workspace furnishing',()=>{const f=fixture();assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);});
+test('preserves optional plain-baseboard metadata without relaxing portal fit or closed wall fields',()=>{
+ const make=()=>{
+  const f=fixture(),item=f.value.furnishings[0],pose={position:[0,1.5,0],rotation:[0,0,0,1],scale:[1,1,1]};
+  item.kind='portal-finish';item.model={mime:'model/gltf-binary',bytes:164044,sha256:'385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b'};
+  f.exhibition.rooms[0].transform=structuredClone(pose);f.exhibition.surfaces=[{id:id(4),roomId:id(1),type:'wall',transform:structuredClone(pose)}];
+  f.exhibition.openings=[{id:id(5),surfaceId:id(4),type:'door',dimensions:{width:2.4,height:2.6},offset:[0,-.2]}];
+  f.value={version:6,furnishings:[item],placements:[],frameAttachments:[],openingAttachments:[{openingId:id(5),furnishingId:item.id,furnishingVersion:1,modelSha256:item.model.sha256}]};
+  const wall={surfaceId:id(4),depth:.2,preset:'plain',trimWidth:.02,baseboardHeight:.04,ceilingBand:false};
+  f.exhibition.extensions={'org.exhibitos.studio/architectural-finishes':{version:1,walls:[wall]}};return {...f,wall};
+ };
+ for(const flag of [undefined,false,true]){const f=make();if(flag!==undefined)f.wall.plainBaseboard=flag;const before=structuredClone(f);assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);assert.deepEqual(f,before);}
+ for(const mutate of [f=>{f.wall.plainBaseboard='true';},f=>{f.wall.plainBaseboard=true;f.wall.preset='painted-edge';},f=>{f.wall.plainBaseboard=true;f.wall.depth=.12;},f=>{f.wall.plainBaseboard=true;f.wall.extra=true;}]){const f=make();mutate(f);assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));}
+});
 test('v6 binds only the exact fixed portal to a compatible floor-aligned door',()=>{
  const sha='385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b';
  const make=()=>{const f=fixture(),item=f.value.furnishings[0];item.kind='portal-finish';item.model.sha256=sha;item.model.bytes=164044;const pose={position:[0,1.5,0],rotation:[0,0,0,1],scale:[1,1,1]};f.exhibition.rooms[0].transform=structuredClone(pose);f.exhibition.surfaces=[{id:id(4),roomId:id(1),type:'wall',transform:structuredClone(pose)}];f.exhibition.openings=[{id:id(5),surfaceId:id(4),type:'door',dimensions:{width:2.4,height:2.6},offset:[0,-.2]}];f.value={version:6,furnishings:[item],placements:[],frameAttachments:[],openingAttachments:[{openingId:id(5),furnishingId:item.id,furnishingVersion:1,modelSha256:sha}]};return f;};
