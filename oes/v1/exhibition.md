@@ -6,6 +6,18 @@ scripting execution or a production publication service. The fixture is original
 synthetic data. All new schema/example/code/docs files use Apache-2.0; the existing
 four CC0 fixture files remain unchanged.
 
+The version1 `org.exhibitos.studio/architectural-finishes` wall metadata may
+explicitly include `plainBaseboard: true` only with `preset: "plain"`. Absent or
+false retains the existing plain-wall behavior. The opt-in uses the existing
+bounded `baseboardHeight`; it requests only a lower band, never opening trim or
+a ceiling band. It does not change structural depth, aperture, or portal fit.
+Consumers must qualify and exclude any supported portal-foot intersection in
+the same geometry used for rendering and collision. Unsupported portal profiles
+must not fall back to guessed bounds. Structural metadata acceptance alone does
+not establish that geometry, source bytes, or appearance are qualified. Older
+consumers with closed wall-field validation require a matched update before
+using the new optional field; no automatic migration or installation is implied.
+
 ## Independent validation
 
 Use Node24.21.0/npm11.19.0 and `npm ci --ignore-scripts`, then:
