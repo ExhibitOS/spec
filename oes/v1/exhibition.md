@@ -194,6 +194,19 @@ textures, so it does not claim texture-scale adaptation. Registration, current
 ownership, display/export rights, live capability admission and actual walking
 and visual qualification remain consumer responsibilities.
 
+The registered 164,044-byte modular double-width portal
+(`385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b`)
+also fits a 2.4 × 3 m reciprocal opening at an ordinary coincident room boundary.
+Both 120 mm walls must be upright, full inward-facing room boundaries of the
+same height, with one matching floor-level aperture inside their world overlap.
+The attachment host is plain and its peer is painted-edge. The reveal follows
+the structural depth union. Each room draws its inward face and finish over the
+shared span. Exposed wall ends keep both faces and their finishes. The pair
+shares one reveal and retains both original collision slabs. The
+existing inset, standalone and other portal fit rules retain their existing
+outputs. No attachment fields or stored geometry change.
+
+
 ### Architectural wall-finish capacity
 
 The existing `org.exhibitos.studio/architectural-finishes` version 1 namespace admits at most 20 unique existing wall faces. The portal validator applies the same finite row bound while retaining each wall’s closed fields, depth and paired-finish requirements. This capacity increase does not introduce a new namespace or OEX format, change wall geometry, or authorize ignoring artwork obstruction, source, rights or save validation. Shared Studio consumers retain the 8 KiB metadata, 8 openings per wall and 256 generated boxes / 3072 triangles limits. Earlier saved documents remain valid; consumers that still enforce 8 rows must be updated before consuming larger namespaces.

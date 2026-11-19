@@ -1,6 +1,6 @@
 import {passiveCeilingRailGeometry} from './ceiling-rail.mjs';
 // SPDX-License-Identifier: Apache-2.0
-import {pairedPortalFit} from './portal-finish-models.mjs';
+import {coincidentPortalFit,pairedPortalFit} from './portal-finish-models.mjs';
 const near=(a,b)=>typeof a==='number'&&Number.isFinite(a)&&Math.abs(a-b)<=1e-6;
 const finite=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
 const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
@@ -99,17 +99,26 @@ export function qualifiedRectangularPortalTarget(geometry,exhibition,openingId){
 
 /** Modular trim stays 40 mm wide. A reciprocal target reuses the measured
  * pale-host wall relationship rather than admitting arbitrary wall joins. */
-export function qualifiedModularPortalTarget(geometry,exhibition,openingId){
+export function qualifiedModularPortalTarget(geometry,exhibition,openingId,descriptor){
  if(!modularPortalParts(geometry)||typeof openingId!=='string'||!Array.isArray(exhibition?.openings)||!Array.isArray(exhibition?.surfaces)||!Array.isArray(exhibition?.rooms))return;
  const same=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
  const opening=exhibition.openings.find(o=>same(o?.id,openingId)),wall=exhibition.surfaces.find(w=>same(w?.id,opening?.surfaceId));
  const width=opening?.dimensions?.width,height=opening?.dimensions?.height;
  if(opening?.type!=='door'||!finite(width,1.1,2.4)||!finite(height,2.2,3)||!portalRailsFit(width,height,.04,opening,wall,exhibition.openings))return;
  if(opening.connectsToOpeningId!==undefined){
-  if(!pairedPortalFit(exhibition,opening.id))return;
-  const mate=exhibition.openings.find(o=>same(o.id,opening.connectsToOpeningId)),mateWall=exhibition.surfaces.find(w=>same(w.id,mate?.surfaceId));
+  const inset=pairedPortalFit(exhibition,opening.id);
+  // Public placement IDs can be remapped. Use the installed model's immutable
+  // bytes and its source-bound measured fit to admit the coincident case.
+  const coincident=!inset&&descriptor?.version===1&&descriptor.model?.bytes===164044&&
+   descriptor.model.sha256==='385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b'&&
+   geometry.openingWidth===2.4&&geometry.openingHeight===2.6&&geometry.minZ===-.1&&geometry.maxZ===.1&&
+   workspaceFitGeometry(descriptor)===geometry?coincidentPortalFit(exhibition,opening.id):undefined;
+  if(!inset&&!coincident)return;
+  const mate=exhibition.openings.find(o=>same(o?.id,opening.connectsToOpeningId)),mateWall=exhibition.surfaces.find(w=>same(w?.id,mate?.surfaceId));
   if(!portalRailsFit(width,height,.04,mate,mateWall,exhibition.openings))return;
-  return {width,height,minZ:-.08,maxZ:.06};
+  if(!coincident)return {width,height,minZ:-.08,maxZ:.06};
+  const {minZ,maxZ,...coincidentPair}=coincident;
+  return {width,height,minZ,maxZ,coincidentPair};
  }
  const finishes=exhibition.extensions?.['org.exhibitos.studio/architectural-finishes'];
  if(finishes!==undefined&&!Array.isArray(finishes?.walls))return;

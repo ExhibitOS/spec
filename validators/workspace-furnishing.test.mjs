@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateWorkspaceFurnishings} from './workspace-furnishing.mjs';
+import {qualifiedModularPortalTarget,workspaceFitGeometry} from './workspace-fit-models.mjs';
 const id=n=>`10000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function fixture(){const room={id:id(1),dimensions:{width:6,height:3,depth:8}},exhibition={rooms:[room]},descriptor={id:id(2),version:1,kind:'pedestal',name:'Synthetic plinth',rights:{holder:'Synthetic',ownership:'owner',licenseId:'CC0-1.0',creditLine:'Synthetic',permissions:{display:true,download:true,export:true,commercial:true}},provenance:'Synthetic fixture',model:{mime:'model/gltf-binary',bytes:100,sha256:'a'.repeat(64)}},value={version:1,furnishings:[descriptor],placements:[{id:id(3),roomId:room.id,furnishingId:descriptor.id,furnishingVersion:1,position:[1,0,0],yaw:0,scale:1}]};return {exhibition,value};}
 test('accepts a visual placement referencing a declared workspace furnishing',()=>{const f=fixture();assert.equal(validateWorkspaceFurnishings(f.value,f.exhibition).valid,true);});
@@ -265,4 +266,90 @@ test('portal validation admits twenty unique existing finished wall faces and re
  const result=validateWorkspaceFurnishings(f.value,f.exhibition);assert.equal(result.valid,true,JSON.stringify(result));
  rows.push(finish(f.exhibition.surfaces[20]));assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
  rows.pop();rows[19]={...rows[0],surfaceId:rows[0].surfaceId.toUpperCase()};assert.ok(validateWorkspaceFurnishings(f.value,f.exhibition).errors.some(e=>e.code==='PORTAL_WALL_DEPTH_UNSUPPORTED'));
+});
+
+
+test('the installed modular portal fits only the supported coincident plain/painted room boundary',()=>{
+ const pose=(position,rotation=[0,0,0,1])=>({position,rotation,scale:[1,1,1]});
+ const dimensions={width:4,height:4,depth:4};
+ const rooms=[{id:id(1),dimensions,transform:pose([0,0,0])},{id:id(2),dimensions,transform:pose([0,0,-4])}];
+ const surfaces=[{id:id(3),roomId:id(1),type:'wall',dimensions:{width:4,height:4},transform:pose([0,2,-2])},
+  {id:id(4),roomId:id(2),type:'wall',dimensions:{width:4,height:4},transform:pose([0,2,2],[0,1,0,0])}];
+ const openings=surfaces.map((wall,i)=>({id:id(5+i),surfaceId:wall.id,type:'door',
+  offset:[0,-.5],dimensions:{width:2.4,height:3},connectsToOpeningId:id(6-i)}));
+ const finish=surfaces.map((wall,i)=>({surfaceId:wall.id,preset:i?'painted-edge':'plain',
+  depth:.12,trimWidth:.04,baseboardHeight:.04,ceilingBand:false}));
+ const exhibition={rooms,surfaces,openings,extensions:{'org.exhibitos.studio/architectural-finishes':{version:1,walls:finish}}};
+ const item=fixture().value.furnishings[0];
+ Object.assign(item,{id:id(7),kind:'portal-finish',model:{mime:'model/gltf-binary',bytes:164044,
+  sha256:'385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b'}});
+ const parts={};
+ for(const face of ['front','back','reveal'])for(const side of ['left','right','head']){
+  const trim=face==='reveal'?.025:.04;
+  const [minX,maxX]=side==='left'?[-1.2-trim,-1.2]:side==='right'?[1.2,1.2+trim]:[-1.2-trim,1.2+trim];
+  const [minZ,maxZ]=face==='front'?[.1,.106]:face==='back'?[-.106,-.1]:[-.1,.1];
+  parts[face+'-'+side]={node:Object.keys(parts).length,min:[minX,side==='head'?2.6:0,minZ],
+   max:[maxX,side==='head'?2.6+trim:2.6,maxZ]};
+ }
+ item.fit={version:1,sourceSha256:item.model.sha256,sourceBytes:item.model.bytes,
+  geometry:{profile:'modular-portal-v1',openingWidth:2.4,openingHeight:2.6,minZ:-.1,maxZ:.1,parts}};
+ const value={version:11,furnishings:[item],placements:[],frameAttachments:[],ceilingAttachments:[],
+  openingAttachments:[{openingId:id(5),furnishingId:item.id,furnishingVersion:1,modelSha256:item.model.sha256}]};
+ const target=(doc,source=item)=>qualifiedModularPortalTarget(workspaceFitGeometry(source),doc,id(5),source);
+ const expected={width:2.4,height:3,minZ:-.06,maxZ:.06};
+ assert.deepEqual(target(exhibition),{...expected,coincidentPair:{hostSurfaceId:id(3),peerSurfaceId:id(4),hostSpan:[-2,2],peerSpan:[-2,2]}});
+ assert.equal(validateWorkspaceFurnishings(value,exhibition).valid,true);
+ assert.equal(qualifiedModularPortalTarget(workspaceFitGeometry(item),exhibition,id(5)),undefined);
+ assert.equal(qualifiedModularPortalTarget(workspaceFitGeometry(item),exhibition,id(6),item),undefined);
+ const unrelated=structuredClone(item);unrelated.model.sha256=unrelated.fit.sourceSha256='a'.repeat(64);
+ assert.equal(target(exhibition,unrelated),undefined);
+ // Approved full walls: the two local offsets are both positive, but the
+ // opposite wall normals place both openings at world X=11 and Z=-2.
+ const full=structuredClone(exhibition);
+ full.rooms[0].dimensions={width:10,depth:10,height:4};
+ full.rooms[1].dimensions={width:11,depth:4,height:4};
+ full.rooms[0].transform=pose([13,0,-7]);
+ full.rooms[1].transform=pose([7.5,0,0]);
+ full.surfaces[0].dimensions.width=10;
+ full.surfaces[0].transform=pose([0,2,5],[0,1,0,0]);
+ full.surfaces[1].dimensions.width=11;
+ full.surfaces[1].transform=pose([0,2,-2]);
+ full.openings[0].offset=[2,-.5];
+ full.openings[1].offset=[3.5,-.5];
+ assert.deepEqual(target(full),{...expected,coincidentPair:{hostSurfaceId:id(3),peerSurfaceId:id(4),hostSpan:[0,5],peerSpan:[.5,5.5]}});
+ assert.equal(validateWorkspaceFurnishings(value,full).valid,true);
+ for(const edit of [
+  d=>{d.surfaces[1].dimensions.width-=1;},
+  d=>{d.openings[1].offset[0]= -2;},
+  d=>{d.rooms[1].transform.position[2]+=.01;},
+  d=>{d.openings[0].offset[0]=.5;d.openings[1].offset[0]=5;},
+ ]){
+  const invalid=structuredClone(full);edit(invalid);assert.equal(target(invalid),undefined);
+ }
+ const inset=structuredClone(exhibition);
+ inset.surfaces[0].transform.position[2]+=.01;
+ inset.surfaces[1].transform.position[2]-=.01;
+ assert.deepEqual(target(inset),{...expected,minZ:-.08});
+ const single=structuredClone(exhibition);delete single.openings[0].connectsToOpeningId;
+ assert.deepEqual(target(single),expected);
+ for(const mutate of [
+  d=>{d.rooms[1].transform.position[2]-=.001;},
+  d=>{d.openings[1].offset[0]+=.02;},
+  d=>{d.openings[1].offset[1]+=.02;},
+  d=>{d.openings[1].dimensions.height=2.9;},
+  d=>{d.openings[0].dimensions.width-=.0000009;d.openings[1].dimensions.width+=.0000009;},
+  d=>{for(const [i,opening] of d.openings.entries()){
+   const change=i===0?-.0000009:.0000009;opening.dimensions.height+=change;opening.offset[1]+=change/2;
+  }},
+  d=>{delete d.openings[1].connectsToOpeningId;},
+  d=>{d.surfaces[1].roomId=id(1);},
+  d=>{d.surfaces[1].transform.rotation=[0,0,0,1];},
+  d=>{d.surfaces[1].transform.rotation=[0,Math.cos(.01),0,Math.sin(.01)];},
+  d=>{const yaw=.0005;d.surfaces[0].transform.rotation=[0,Math.sin(yaw/2),0,Math.cos(yaw/2)];
+   d.surfaces[1].transform.rotation=[0,Math.sin((Math.PI+yaw)/2),0,Math.cos((Math.PI+yaw)/2)];},
+  d=>{d.surfaces[1].dimensions.width=3.8;},
+  d=>{d.extensions['org.exhibitos.studio/architectural-finishes'].walls[1].depth=.14;},
+  d=>{d.extensions['org.exhibitos.studio/architectural-finishes'].walls[1].preset='plain';},
+  d=>{d.openings.push({...d.openings[0],id:id(8),offset:[1.4,-1],dimensions:{width:.2,height:1}});},
+ ]){const invalid=structuredClone(exhibition);mutate(invalid);assert.equal(target(invalid),undefined);}
 });

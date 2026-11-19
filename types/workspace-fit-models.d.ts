@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import type {CoincidentPortalPair} from "./portal-finish-models.js";
 export type PassiveCeilingRailFit={profile:'passive-ceiling-rail-v1';min:[number,number,number];max:[number,number,number]};
 export type WorkspaceFitProfile='passive-ceiling-rail-v1'|'straight-miter-ring-v1'|'straight-ring-v1'|'continuous-portal-v1'|'modular-portal-v1'|'rectangular-portal-v1';
 export type StraightRingFit={profile:'straight-ring-v1';openingWidth:number;openingHeight:number;imagePlaneZ:number};
@@ -14,7 +15,7 @@ export declare function workspaceFitGeometry(descriptor:unknown):WorkspaceFitGeo
 export declare function qualifiedFrameTargetFit(geometry:MeasuredFrameFit,width:number,height:number):{cornerX:number;cornerY:number}|undefined;
 export declare function qualifiedPortalWallFit(geometry:ContinuousPortalFit,opening:{connectsToOpeningId?:string;offset?:number[]},wall:unknown,finish:{preset:string;depth:number}|undefined,openings:unknown):boolean;
 export declare function modularPortalParts(geometry:unknown):geometry is ModularPortalFit;
-export declare function qualifiedModularPortalTarget(geometry:ModularPortalFit,exhibition:unknown,openingId:string):{width:number;height:number;minZ:number;maxZ:number}|undefined;
+export declare function qualifiedModularPortalTarget(geometry:ModularPortalFit,exhibition:unknown,openingId:string,descriptor?:unknown):{width:number;height:number;minZ:number;maxZ:number;coincidentPair?:CoincidentPortalPair}|undefined;
 export declare function qualifiedRectangularPortalTarget(geometry:RectangularPortalFit,exhibition:unknown,openingId:string):{width:number;height:number;minZ:number;maxZ:number}|undefined;
 
 export type FrameImageFit={version:1;profile:'contain-contact-v1';sourceSha256:string;pixelWidth:number;pixelHeight:number};
