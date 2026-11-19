@@ -117,8 +117,8 @@ export function qualifiedModularPortalTarget(geometry,exhibition,openingId,descr
   const mate=exhibition.openings.find(o=>same(o?.id,opening.connectsToOpeningId)),mateWall=exhibition.surfaces.find(w=>same(w?.id,mate?.surfaceId));
   if(!portalRailsFit(width,height,.04,mate,mateWall,exhibition.openings))return;
   if(!coincident)return {width,height,minZ:-.08,maxZ:.06};
-  const {minZ,maxZ,hostSurfaceId,peerSurfaceId}=coincident;
-  return {width,height,minZ,maxZ,coincidentPair:{hostSurfaceId,peerSurfaceId}};
+  const {minZ,maxZ,...coincidentPair}=coincident;
+  return {width,height,minZ,maxZ,coincidentPair};
  }
  const finishes=exhibition.extensions?.['org.exhibitos.studio/architectural-finishes'];
  if(finishes!==undefined&&!Array.isArray(finishes?.walls))return;

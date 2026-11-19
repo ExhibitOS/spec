@@ -197,10 +197,12 @@ and visual qualification remain consumer responsibilities.
 The registered 164,044-byte modular double-width portal
 (`385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b`)
 also fits a 2.4 × 3 m reciprocal opening at an ordinary coincident room boundary.
-Both 120 mm walls must be upright, inward-facing and coextensive, with one matching
-floor-level aperture each. The attachment host is plain and its peer is painted-edge.
-The reveal follows the structural depth union. Each room draws its inward wall
-face and finish, with one shared reveal and both original collision slabs. The
+Both 120 mm walls must be upright, full inward-facing room boundaries of the
+same height, with one matching floor-level aperture inside their world overlap.
+The attachment host is plain and its peer is painted-edge. The reveal follows
+the structural depth union. Each room draws its inward face and finish over the
+shared span. Exposed wall ends keep both faces and their finishes. The pair
+shares one reveal and retains both original collision slabs. The
 existing inset, standalone and other portal fit rules retain their existing
 outputs. No attachment fields or stored geometry change.
 

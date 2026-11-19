@@ -41,7 +41,7 @@ function finishedDoorPair(doc,openingId){
  if(!Array.isArray(finishes))return;
  const own=finishes.filter(f=>key(f?.surfaceId)===host.wallId),opposite=finishes.filter(f=>key(f?.surfaceId)===other.wallId);
  if(own.length!==1||opposite.length!==1||!near(own[0].depth,.120)||own[0].preset!=='plain'||!near(opposite[0].depth,.120))return;
- return {host,other,opening,mate,z,own:own[0],opposite:opposite[0]};
+ return {host,other,opening,mate,x,z,own:own[0],opposite:opposite[0]};
 }
 
 /** The asymmetric reveal covers the existing measured inset wall faces. */
@@ -62,20 +62,28 @@ function isInwardRoomBoundary(side){
  return near(Math.abs(nz),1)&&near(nx,0)&&near(z,-Math.sign(nz)*depth/2)&&near(x,0)&&near(span,width);
 }
 
-/** This branch has two coincident wall rectangles and one matching cut each.
- * Each inward-facing wall owns its side of the same structural reveal. */
+/** Both walls are complete room boundaries. Their matching cut must be inside
+ * the physical overlap; either wall can continue past that overlap. */
 export function coincidentPortalFit(doc,openingId){
  const pair=finishedDoorPair(doc,openingId);
  if(!pair||!near(pair.z,0)||pair.opposite.preset!=='painted-edge')return;
- const {host,other,opening,mate,z,own,opposite}=pair;
+ const {host,other,opening,mate,x,z,own,opposite}=pair;
  if(Math.abs(Math.sin(host.yaw-other.yaw))>1e-9||!isInwardRoomBoundary(host)||!isInwardRoomBoundary(other)||
-    !near(host.wall.dimensions.width,other.wall.dimensions.width)||
     !near(host.wall.dimensions.height,other.wall.dimensions.height)||
     !near(opening.dimensions.width,mate.dimensions.width)||
     !near(opening.dimensions.height,mate.dimensions.height)||
-    !near(opening.offset[0],-mate.offset[0])||!near(opening.offset[1],mate.offset[1]))return;
+    !near(opening.offset[1],mate.offset[1]))return;
  const cuts=doc.openings.filter(row=>[host.wallId,other.wallId].includes(key(row?.surfaceId)));
  if(cuts.length!==2)return;
- return {hostSurfaceId:host.wallId,peerSurfaceId:other.wallId,
+ // The opposite wall's local X runs backwards. Transform its center using
+ // the coincident opening centers and intersect the two full wall spans.
+ const center=opening.offset[0]+mate.offset[0]+x;
+ const hostHalf=host.wall.dimensions.width/2,peerHalf=other.wall.dimensions.width/2;
+ const hostSpan=[Math.max(-hostHalf,center-peerHalf),Math.min(hostHalf,center+peerHalf)];
+ const peerSpan=[Math.max(-peerHalf,center-hostHalf),Math.min(peerHalf,center+hostHalf)];
+ const covers=(span,cut)=>cut.offset[0]-cut.dimensions.width/2>=span[0]-1e-6&&
+  cut.offset[0]+cut.dimensions.width/2<=span[1]+1e-6;
+ if(!covers(hostSpan,opening)||!covers(peerSpan,mate))return;
+ return {hostSurfaceId:host.wallId,peerSurfaceId:other.wallId,hostSpan,peerSpan,
   minZ:Math.min(-own.depth/2,z-opposite.depth/2),maxZ:Math.max(own.depth/2,z+opposite.depth/2)};
 }

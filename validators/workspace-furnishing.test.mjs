@@ -297,12 +297,35 @@ test('the installed modular portal fits only the supported coincident plain/pain
   openingAttachments:[{openingId:id(5),furnishingId:item.id,furnishingVersion:1,modelSha256:item.model.sha256}]};
  const target=(doc,source=item)=>qualifiedModularPortalTarget(workspaceFitGeometry(source),doc,id(5),source);
  const expected={width:2.4,height:3,minZ:-.06,maxZ:.06};
- assert.deepEqual(target(exhibition),{...expected,coincidentPair:{hostSurfaceId:id(3),peerSurfaceId:id(4)}});
+ assert.deepEqual(target(exhibition),{...expected,coincidentPair:{hostSurfaceId:id(3),peerSurfaceId:id(4),hostSpan:[-2,2],peerSpan:[-2,2]}});
  assert.equal(validateWorkspaceFurnishings(value,exhibition).valid,true);
  assert.equal(qualifiedModularPortalTarget(workspaceFitGeometry(item),exhibition,id(5)),undefined);
  assert.equal(qualifiedModularPortalTarget(workspaceFitGeometry(item),exhibition,id(6),item),undefined);
  const unrelated=structuredClone(item);unrelated.model.sha256=unrelated.fit.sourceSha256='a'.repeat(64);
  assert.equal(target(exhibition,unrelated),undefined);
+ // Approved full walls: the two local offsets are both positive, but the
+ // opposite wall normals place both openings at world X=11 and Z=-2.
+ const full=structuredClone(exhibition);
+ full.rooms[0].dimensions={width:10,depth:10,height:4};
+ full.rooms[1].dimensions={width:11,depth:4,height:4};
+ full.rooms[0].transform=pose([13,0,-7]);
+ full.rooms[1].transform=pose([7.5,0,0]);
+ full.surfaces[0].dimensions.width=10;
+ full.surfaces[0].transform=pose([0,2,5],[0,1,0,0]);
+ full.surfaces[1].dimensions.width=11;
+ full.surfaces[1].transform=pose([0,2,-2]);
+ full.openings[0].offset=[2,-.5];
+ full.openings[1].offset=[3.5,-.5];
+ assert.deepEqual(target(full),{...expected,coincidentPair:{hostSurfaceId:id(3),peerSurfaceId:id(4),hostSpan:[0,5],peerSpan:[.5,5.5]}});
+ assert.equal(validateWorkspaceFurnishings(value,full).valid,true);
+ for(const edit of [
+  d=>{d.surfaces[1].dimensions.width-=1;},
+  d=>{d.openings[1].offset[0]= -2;},
+  d=>{d.rooms[1].transform.position[2]+=.01;},
+  d=>{d.openings[0].offset[0]=.5;d.openings[1].offset[0]=5;},
+ ]){
+  const invalid=structuredClone(full);edit(invalid);assert.equal(target(invalid),undefined);
+ }
  const inset=structuredClone(exhibition);
  inset.surfaces[0].transform.position[2]+=.01;
  inset.surfaces[1].transform.position[2]-=.01;
