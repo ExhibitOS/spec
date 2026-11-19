@@ -14,7 +14,7 @@ export declare function workspaceFitGeometry(descriptor:unknown):WorkspaceFitGeo
 export declare function qualifiedFrameTargetFit(geometry:MeasuredFrameFit,width:number,height:number):{cornerX:number;cornerY:number}|undefined;
 export declare function qualifiedPortalWallFit(geometry:ContinuousPortalFit,opening:{connectsToOpeningId?:string;offset?:number[]},wall:unknown,finish:{preset:string;depth:number}|undefined,openings:unknown):boolean;
 export declare function modularPortalParts(geometry:unknown):geometry is ModularPortalFit;
-export declare function qualifiedModularPortalTarget(geometry:ModularPortalFit,exhibition:unknown,openingId:string):{width:number;height:number;minZ:number;maxZ:number}|undefined;
+export declare function qualifiedModularPortalTarget(geometry:ModularPortalFit,exhibition:unknown,openingId:string,descriptor?:unknown):{width:number;height:number;minZ:number;maxZ:number;coincidentPair?:{hostSurfaceId:string;peerSurfaceId:string}}|undefined;
 export declare function qualifiedRectangularPortalTarget(geometry:RectangularPortalFit,exhibition:unknown,openingId:string):{width:number;height:number;minZ:number;maxZ:number}|undefined;
 
 export type FrameImageFit={version:1;profile:'contain-contact-v1';sourceSha256:string;pixelWidth:number;pixelHeight:number};
