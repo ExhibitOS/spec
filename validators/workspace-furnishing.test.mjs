@@ -314,6 +314,10 @@ test('the installed modular portal fits only the supported coincident plain/pain
   d=>{d.openings[1].offset[0]+=.02;},
   d=>{d.openings[1].offset[1]+=.02;},
   d=>{d.openings[1].dimensions.height=2.9;},
+  d=>{d.openings[0].dimensions.width-=.0000009;d.openings[1].dimensions.width+=.0000009;},
+  d=>{for(const [i,opening] of d.openings.entries()){
+   const change=i===0?-.0000009:.0000009;opening.dimensions.height+=change;opening.offset[1]+=change/2;
+  }},
   d=>{delete d.openings[1].connectsToOpeningId;},
   d=>{d.surfaces[1].roomId=id(1);},
   d=>{d.surfaces[1].transform.rotation=[0,0,0,1];},

@@ -71,6 +71,8 @@ export function coincidentPortalFit(doc,openingId){
  if(Math.abs(Math.sin(host.yaw-other.yaw))>1e-9||!isInwardRoomBoundary(host)||!isInwardRoomBoundary(other)||
     !near(host.wall.dimensions.width,other.wall.dimensions.width)||
     !near(host.wall.dimensions.height,other.wall.dimensions.height)||
+    !near(opening.dimensions.width,mate.dimensions.width)||
+    !near(opening.dimensions.height,mate.dimensions.height)||
     !near(opening.offset[0],-mate.offset[0])||!near(opening.offset[1],mate.offset[1]))return;
  const cuts=doc.openings.filter(row=>[host.wallId,other.wallId].includes(key(row?.surfaceId)));
  if(cuts.length!==2)return;
