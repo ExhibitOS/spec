@@ -17,14 +17,16 @@ function levelYaw(transform){
 }
 function rotate(x,z,yaw){return [x*Math.cos(yaw)+z*Math.sin(yaw),-x*Math.sin(yaw)+z*Math.cos(yaw)];}
 function floorPose(doc,opening){
- if(opening?.type!=='door'||!near(opening.dimensions?.width,pale.width)||!near(opening.dimensions?.height,pale.height)||!Array.isArray(opening.offset)||opening.offset.length!==2||!opening.offset.every(Number.isFinite))return undefined;
+ const {width,height}=opening?.dimensions??{};
+ if(opening?.type!=='door'||![width,height].every(n=>Number.isFinite(n)&&n>0)||
+    !Array.isArray(opening.offset)||opening.offset.length!==2||!opening.offset.every(Number.isFinite))return undefined;
  const wall=single(doc.surfaces,key(opening.surfaceId)),room=single(doc.rooms,key(wall?.roomId));
  if(wall?.type!=='wall')return undefined;
  const wallYaw=levelYaw(wall.transform),roomYaw=levelYaw(room?.transform);
  if(wallYaw===undefined||roomYaw===undefined)return undefined;
  const [ox,oz]=rotate(opening.offset[0],0,wallYaw),[wx,wy,wz]=wall.transform.position;
  const [x,z]=rotate(wx+ox,wz+oz,roomYaw),[rx,ry,rz]=room.transform.position;
- const floor=wy+opening.offset[1]-pale.height/2;
+ const floor=wy+opening.offset[1]-height/2;
  if(!near(floor,0))return undefined;
  return {wallId:key(wall.id),roomId:key(room.id),x:x+rx,y:floor+ry,z:z+rz,yaw:wallYaw+roomYaw,wallYaw,wall,room};
 }
@@ -47,7 +49,9 @@ function finishedDoorPair(doc,openingId){
 /** The asymmetric reveal covers the existing measured inset wall faces. */
 export function pairedPortalFit(doc,openingId){
  const pair=finishedDoorPair(doc,openingId);
- return !!pair&&near(pair.z,-.020)&&['painted-edge','dark-edge'].includes(pair.opposite.preset);
+ const fixedAperture=opening=>near(opening.dimensions.width,pale.width)&&near(opening.dimensions.height,pale.height);
+ return !!pair&&fixedAperture(pair.opening)&&fixedAperture(pair.mate)&&
+  near(pair.z,-.020)&&['painted-edge','dark-edge'].includes(pair.opposite.preset);
 }
 
 function isInwardRoomBoundary(side){

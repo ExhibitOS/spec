@@ -194,17 +194,23 @@ textures, so it does not claim texture-scale adaptation. Registration, current
 ownership, display/export rights, live capability admission and actual walking
 and visual qualification remain consumer responsibilities.
 
-The registered 164,044-byte modular double-width portal
-(`385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b`)
-also fits a 2.4 × 3 m reciprocal opening at an ordinary coincident room boundary.
-Both 120 mm walls must be upright, full inward-facing room boundaries of the
-same height, with one matching floor-level aperture inside their world overlap.
-The attachment host is plain and its peer is painted-edge. The reveal follows
-the structural depth union. Each room draws its inward face and finish over the
-shared span. Exposed wall ends keep both faces and their finishes. The pair
-shares one reveal and retains both original collision slabs. The
-existing inset, standalone and other portal fit rules retain their existing
-outputs. No attachment fields or stored geometry change.
+A version 1 modular portal descriptor with source-bound measured rails fits a
+reciprocal opening at a coincident room boundary. Both 120 mm walls must be
+upright, full inward-facing boundaries of the same height. Each wall has one
+matching floor-level aperture inside their world overlap. Their actual common
+opening is 1.1–2.4 m wide and 2.2–3 m high, with room for the 40 mm surround
+on both walls. The attachment host is plain and its peer is painted-edge.
+The reveal follows the structural depth union. Each room draws its inward face
+and finish over the shared span. Exposed wall ends keep both faces and finishes.
+One attachment and reveal represent the pair, with the original aperture and
+both collision slabs intact.
+
+The measurement binds the modular recipe to the original model's size and
+digest. Registration and publication still verify actual source bytes and
+applicable rights. IDs may be remapped in OEX or public output without changing
+that binding. The existing 2.4 × 3 m coincident double-width placement remains
+valid. Inset and standalone fit rules retain their existing limits. This uses
+the existing descriptor, attachment fields and wire schemas.
 
 
 ### Architectural wall-finish capacity

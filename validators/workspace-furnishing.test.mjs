@@ -269,7 +269,7 @@ test('portal validation admits twenty unique existing finished wall faces and re
 });
 
 
-test('the installed modular portal fits only the supported coincident plain/painted room boundary',()=>{
+test('source-bound modular portals fit the measured coincident plain/painted room boundary',()=>{
  const pose=(position,rotation=[0,0,0,1])=>({position,rotation,scale:[1,1,1]});
  const dimensions={width:4,height:4,depth:4};
  const rooms=[{id:id(1),dimensions,transform:pose([0,0,0])},{id:id(2),dimensions,transform:pose([0,0,-4])}];
@@ -301,8 +301,30 @@ test('the installed modular portal fits only the supported coincident plain/pain
  assert.equal(validateWorkspaceFurnishings(value,exhibition).valid,true);
  assert.equal(qualifiedModularPortalTarget(workspaceFitGeometry(item),exhibition,id(5)),undefined);
  assert.equal(qualifiedModularPortalTarget(workspaceFitGeometry(item),exhibition,id(6),item),undefined);
- const unrelated=structuredClone(item);unrelated.model.sha256=unrelated.fit.sourceSha256='a'.repeat(64);
- assert.equal(target(exhibition,unrelated),undefined);
+ const wrongDigest=structuredClone(item);wrongDigest.model.sha256='a'.repeat(64);
+ const wrongBytes=structuredClone(item);wrongBytes.fit.sourceBytes++;
+ const wrongSection=structuredClone(item);wrongSection.fit.geometry.parts['front-left'].max[2]+=.002;
+ for(const invalid of [wrongDigest,wrongBytes,wrongSection])assert.equal(target(exhibition,invalid),undefined);
+ assert.equal(qualifiedModularPortalTarget(structuredClone(item.fit.geometry),exhibition,id(5),item),undefined);
+
+ // The alternate geometry token describes a measured nine-rail source with
+ // different clear dimensions and immutable source identity.
+ const alternate=structuredClone(item);
+ alternate.id=id(9);
+ alternate.model={...item.model,bytes:1200,sha256:'a'.repeat(64)};
+ const {geometry}=alternate.fit;
+ alternate.fit.sourceSha256=alternate.model.sha256;
+ alternate.fit.sourceBytes=alternate.model.bytes;
+ geometry.openingWidth=1.1;
+ geometry.openingHeight=2.2;
+ for(const [role,part] of Object.entries(geometry.parts)){
+  part.min[0]+=role.endsWith('-right')?-.65:.65;
+  part.max[0]+=role.endsWith('-left')?.65:-.65;
+  if(role.endsWith('-head'))part.min[1]-=.4;
+  part.max[1]-=.4;
+ }
+ const alternativeValue={...value,furnishings:[alternate],openingAttachments:[{...value.openingAttachments[0],
+  furnishingId:alternate.id,modelSha256:alternate.model.sha256}]};
  // Approved full walls: the two local offsets are both positive, but the
  // opposite wall normals place both openings at world X=11 and Z=-2.
  const full=structuredClone(exhibition);
@@ -318,11 +340,49 @@ test('the installed modular portal fits only the supported coincident plain/pain
  full.openings[1].offset=[3.5,-.5];
  assert.deepEqual(target(full),{...expected,coincidentPair:{hostSurfaceId:id(3),peerSurfaceId:id(4),hostSpan:[0,5],peerSpan:[.5,5.5]}});
  assert.equal(validateWorkspaceFurnishings(value,full).valid,true);
+ for(const [width,height] of [[2.4,3],[2.2,2.8],[2.3,2.9]]){
+  const resized=structuredClone(full);
+  for(const cut of resized.openings){
+   cut.dimensions={width,height};
+   cut.offset[1]=(height-4)/2;
+  }
+  const before=structuredClone(resized);
+  for(const [source,settings] of [[item,value],[alternate,alternativeValue]]){
+   assert.deepEqual(target(resized,source),{...target(full),width,height});
+   assert.equal(validateWorkspaceFurnishings(settings,resized).valid,true);
+   assert.equal(qualifiedModularPortalTarget(workspaceFitGeometry(source),resized,id(6),source),undefined);
+  }
+  assert.deepEqual(resized,before);
+
+  const remapped=structuredClone(resized);
+  const settings=structuredClone(alternativeValue);
+  const [host,peer]=remapped.openings;
+  host.id=id(31);host.connectsToOpeningId=id(32);
+  peer.id=id(32);peer.connectsToOpeningId=id(31);
+  for(const [i,wall] of remapped.surfaces.entries()){
+   wall.id=id(41+i);
+   remapped.openings[i].surfaceId=wall.id;
+   remapped.extensions['org.exhibitos.studio/architectural-finishes'].walls[i].surfaceId=wall.id;
+  }
+  settings.furnishings[0].id=id(51);
+  Object.assign(settings.openingAttachments[0],{openingId:host.id,furnishingId:id(51)});
+  const remappedSource=settings.furnishings[0];
+  assert.deepEqual(qualifiedModularPortalTarget(workspaceFitGeometry(remappedSource),remapped,host.id,remappedSource),
+   {...target(resized,alternate),coincidentPair:{...target(resized,alternate).coincidentPair,hostSurfaceId:id(41),peerSurfaceId:id(42)}});
+  assert.equal(validateWorkspaceFurnishings(settings,remapped).valid,true);
+
+  const fixedInset=structuredClone(resized);
+  fixedInset.rooms[1].transform.position[2]+=.02;
+  assert.equal(target(fixedInset,alternate)!==undefined,width===2.4);
+ }
  for(const edit of [
   d=>{d.surfaces[1].dimensions.width-=1;},
   d=>{d.openings[1].offset[0]= -2;},
   d=>{d.rooms[1].transform.position[2]+=.01;},
   d=>{d.openings[0].offset[0]=.5;d.openings[1].offset[0]=5;},
+  d=>{d.openings[0].offset[0]=1.21;d.openings[1].offset[0]=4.29;},
+  d=>{for(const cut of d.openings){cut.dimensions.width=2.41;}},
+  d=>{for(const cut of d.openings){cut.dimensions.height=2.19;cut.offset[1]=(2.19-4)/2;}},
  ]){
   const invalid=structuredClone(full);edit(invalid);assert.equal(target(invalid),undefined);
  }
