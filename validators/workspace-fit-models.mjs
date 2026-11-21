@@ -107,12 +107,10 @@ export function qualifiedModularPortalTarget(geometry,exhibition,openingId,descr
  if(opening?.type!=='door'||!finite(width,1.1,2.4)||!finite(height,2.2,3)||!portalRailsFit(width,height,.04,opening,wall,exhibition.openings))return;
  if(opening.connectsToOpeningId!==undefined){
   const inset=pairedPortalFit(exhibition,opening.id);
-  // Public placement IDs can be remapped. Use the installed model's immutable
-  // bytes and its source-bound measured fit to admit the coincident case.
-  const coincident=!inset&&descriptor?.version===1&&descriptor.model?.bytes===164044&&
-   descriptor.model.sha256==='385a3a6d5266a5dda5b3fc6e51fd14e0b990e29de66ee27a80b634a93ef2591b'&&
-   geometry.openingWidth===2.4&&geometry.openingHeight===2.6&&geometry.minZ===-.1&&geometry.maxZ===.1&&
-   workspaceFitGeometry(descriptor)===geometry?coincidentPortalFit(exhibition,opening.id):undefined;
+  // The source-bound measured rails survive remapping; a free-standing
+  // geometry object or a receipt for different model bytes does not qualify.
+  const coincident=!inset&&descriptor?.version===1&&workspaceFitGeometry(descriptor)===geometry
+   ?coincidentPortalFit(exhibition,opening.id):undefined;
   if(!inset&&!coincident)return;
   const mate=exhibition.openings.find(o=>same(o?.id,opening.connectsToOpeningId)),mateWall=exhibition.surfaces.find(w=>same(w?.id,mate?.surfaceId));
   if(!portalRailsFit(width,height,.04,mate,mateWall,exhibition.openings))return;
