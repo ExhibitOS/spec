@@ -213,6 +213,18 @@ valid. Inset and standalone fit rules retain their existing limits. This uses
 the existing descriptor, attachment fields and wire schemas.
 
 
+A saved positive-normal structural extent can deepen the plain mounting wall
+of an existing inset modular pair. It requires the one source-bound modular
+attachment on that host and one opening per wall. The attachment, matching
+apertures and floor stay fixed. Modeling the extension adds its depth to the
+host-facing reveal boundary and retains the back boundary. The source-bound
+fit moves the front rails with that face while preserving the trim section.
+The shared authoring validator additionally verifies adjoining geometry and
+any fitted baseboard contact. An extent with a painted return override, a
+second attachment, a legacy opening binding or an extent on the peer is outside
+this attached fit. No attachment fields or schema identity change.
+
+
 ### Architectural wall-finish capacity
 
 The existing `org.exhibitos.studio/architectural-finishes` version 1 namespace admits at most 20 unique existing wall faces. The portal validator applies the same finite row bound while retaining each wall’s closed fields, depth and paired-finish requirements. This capacity increase does not introduce a new namespace or OEX format, change wall geometry, or authorize ignoring artwork obstruction, source, rights or save validation. Shared Studio consumers retain the 8 KiB metadata, 8 openings per wall and 256 generated boxes / 3072 triangles limits. Earlier saved documents remain valid; consumers that still enforce 8 rows must be updated before consuming larger namespaces.
