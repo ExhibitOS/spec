@@ -97,22 +97,25 @@ export function qualifiedRectangularPortalTarget(geometry,exhibition,openingId){
  return {width,height,minZ:-depth/2,maxZ:depth/2};
 }
 
-function attachedInsetPortalDepth(exhibition,opening,mate,geometry,descriptor){
+function attachedPortalDepth(exhibition,opening,mate,geometry,descriptor,inset){
  const value=exhibition.extensions?.['org.exhibitos.studio/paired-wall-structure'];
  if(value===undefined)return 0;
  if(!object(value)||Object.keys(value).sort().join(',')!=='pairs,version'||value.version!==1||!Array.isArray(value.pairs)||!value.pairs.length||value.pairs.length>10)return;
  const same=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
  const walls=[opening.surfaceId,mate.surfaceId];
  const openings=exhibition.openings.filter(item=>walls.some(id=>same(item?.surfaceId,id)));
- const onWall=id=>openings.some(item=>same(item.id,id));
+ const onWall=id=>openings.some(item=>same(item?.id,id));
  const extents=value.pairs.filter(row=>onWall(row?.openingId)||onWall(row?.peerOpeningId));
  if(!extents.length)return 0;
  const extent=extents[0];
- if(extents.length!==1||openings.length!==2||!object(extent)||
+ if(!inset||extents.length!==1||openings.length!==2||!object(extent)||
   Object.keys(extent).sort().join(',')!=='extensionMeters,openingId,peerOpeningId,side'||
   !same(extent.openingId,opening.id)||!same(extent.peerOpeningId,mate.id)||extent.side!=='positive-normal'||
   !Number.isFinite(extent.extensionMeters)||extent.extensionMeters<=0||extent.extensionMeters>.12||
   descriptor?.version!==1||typeof descriptor.model?.sha256!=='string'||workspaceFitGeometry(descriptor)!==geometry)return;
+ const legacy=exhibition.extensions?.['org.exhibitos.studio/furnishing-visuals'];
+ if(legacy!==undefined&&(!Array.isArray(legacy?.bindings)||
+  legacy.bindings.some(row=>row?.hostKind==='opening'&&onWall(row.hostId))))return;
  const workspace=exhibition.extensions?.['org.exhibitos.studio/workspace-furnishings'];
  if(!Array.isArray(workspace?.openingAttachments))return;
  const attached=workspace.openingAttachments.filter(row=>onWall(row?.openingId));
@@ -139,11 +142,9 @@ export function qualifiedModularPortalTarget(geometry,exhibition,openingId,descr
   if(!inset&&!coincident)return;
   const mate=exhibition.openings.find(o=>same(o?.id,opening.connectsToOpeningId)),mateWall=exhibition.surfaces.find(w=>same(w?.id,mate?.surfaceId));
   if(!portalRailsFit(width,height,.04,mate,mateWall,exhibition.openings))return;
-  if(!coincident){
-   const attachedExtent=attachedInsetPortalDepth(exhibition,opening,mate,geometry,descriptor);
-   if(attachedExtent===undefined)return;
-   return {width,height,minZ:-.08,maxZ:.06+attachedExtent,...(attachedExtent>0&&{attachedExtent})};
-  }
+  const attachedExtent=attachedPortalDepth(exhibition,opening,mate,geometry,descriptor,inset);
+  if(attachedExtent===undefined)return;
+  if(!coincident)return {width,height,minZ:-.08,maxZ:.06+attachedExtent,...(attachedExtent>0&&{attachedExtent})};
   const {minZ,maxZ,...coincidentPair}=coincident;
   return {width,height,minZ,maxZ,coincidentPair};
  }
