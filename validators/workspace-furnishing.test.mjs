@@ -390,6 +390,45 @@ test('source-bound modular portals fit the measured coincident plain/painted roo
  inset.surfaces[0].transform.position[2]+=.01;
  inset.surfaces[1].transform.position[2]-=.01;
  assert.deepEqual(target(inset),{...expected,minZ:-.08});
+ const structure='org.exhibitos.studio/paired-wall-structure';
+ const workspace='org.exhibitos.studio/workspace-furnishings';
+ const attachedInset=structuredClone(inset);
+ attachedInset.extensions[workspace]=structuredClone(value);
+ attachedInset.extensions[structure]={version:1,pairs:[{
+  openingId:id(5),peerOpeningId:id(6),side:'positive-normal',extensionMeters:.04,
+ }]};
+ const mounted=attachedInset.extensions[workspace].furnishings[0];
+ assert.deepEqual(target(attachedInset,mounted),{width:2.4,height:3,minZ:-.08,maxZ:.10,attachedExtent:.04});
+ assert.equal(validateWorkspaceFurnishings(attachedInset.extensions[workspace],attachedInset).valid,true);
+ const extendedCoincident=structuredClone(exhibition);
+ extendedCoincident.extensions[workspace]=structuredClone(value);
+ extendedCoincident.extensions[structure]=structuredClone(attachedInset.extensions[structure]);
+ assert.equal(target(extendedCoincident),undefined);
+ assert.equal(validateWorkspaceFurnishings(extendedCoincident.extensions[workspace],extendedCoincident).valid,false);
+ const legacy='org.exhibitos.studio/furnishing-visuals';
+ for(const hostId of [id(5),id(6)]){
+  const ambiguous=structuredClone(attachedInset);
+  ambiguous.extensions[legacy]={version:1,bindings:[{hostKind:'opening',hostId}]};
+  assert.equal(target(ambiguous,ambiguous.extensions[workspace].furnishings[0]),undefined);
+  assert.equal(validateWorkspaceFurnishings(ambiguous.extensions[workspace],ambiguous).valid,false);
+ }
+ const unrelatedLegacy=structuredClone(attachedInset);
+ unrelatedLegacy.extensions[legacy]={version:1,bindings:[{hostKind:'opening',hostId:id(99)}]};
+ assert.deepEqual(target(unrelatedLegacy,unrelatedLegacy.extensions[workspace].furnishings[0]),target(attachedInset,mounted));
+ for(const deny of [
+  d=>{d.extensions[structure].pairs[0].side='negative-normal';},
+  d=>{d.extensions[structure].pairs[0].openingId=id(6);d.extensions[structure].pairs[0].peerOpeningId=id(5);},
+  d=>{d.extensions[structure].pairs[0].revealFinish='painted-edge';},
+  d=>{d.extensions[workspace].openingAttachments=[];},
+  d=>{d.extensions[workspace].openingAttachments[0].modelSha256='0'.repeat(64);},
+  d=>{d.extensions[workspace].openingAttachments.push({...d.extensions[workspace].openingAttachments[0],openingId:id(6)});},
+  d=>{d.extensions[structure].pairs.push({...d.extensions[structure].pairs[0]});},
+  d=>{d.extensions[structure].pairs[0].extensionMeters=.121;},
+  d=>{d.openings[1].offset[0]+=.002;},
+ ]){
+  const invalid=structuredClone(attachedInset);deny(invalid);
+  assert.equal(target(invalid,invalid.extensions[workspace].furnishings[0]),undefined);
+ }
  const single=structuredClone(exhibition);delete single.openings[0].connectsToOpeningId;
  assert.deepEqual(target(single),expected);
  for(const mutate of [
